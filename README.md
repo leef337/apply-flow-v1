@@ -1,4 +1,4 @@
-# FINN Jobs — Easy + Agentic apply (prototype v1)
+# Easy + Agentic apply (prototype v1)
 
 Single-file interactive prototype for the FINN Jobb apply step. Drop into any
 static host (GitHub Pages, Netlify Drop, Vercel) — no build step.
