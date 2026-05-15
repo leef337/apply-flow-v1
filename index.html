@@ -898,6 +898,58 @@
     min-height: 38px;
   }
 
+  /* ─── Site map ─── */
+  .smap-wrap {
+    background: #fafafa; border: 1px solid var(--hair);
+    border-radius: 14px; padding: 20px;
+    overflow-x: auto;
+  }
+  .smap-svg { display: block; max-width: 100%; }
+  .smap-node rect {
+    fill: #fff; stroke: #d4d4d4; stroke-width: 1.2;
+    rx: 10;
+    transition: stroke 160ms var(--ease-modal), fill 160ms var(--ease-modal);
+  }
+  .smap-node.entry rect { fill: #eaf2ff; stroke: #0063fb; }
+  .smap-node.finish rect { fill: #e6f5ec; stroke: #1f8a3b; }
+  .smap-node.edge rect { fill: #fff3e0; stroke: #c97614; stroke-dasharray: 4 3; }
+  .smap-node.magic rect { fill: #f1ebff; stroke: #6f3bd0; }
+  .smap-node text { font-family: var(--sys-text); }
+  .smap-node text.title {
+    font-size: 11px; font-weight: 700; letter-spacing: -0.1px; fill: #1d1d1d;
+  }
+  .smap-node text.sub {
+    font-size: 9px; font-weight: 500; fill: #6b6b6b; letter-spacing: 0.04em;
+  }
+  .smap-link {
+    stroke: #b8b8b8; stroke-width: 1.4; fill: none;
+  }
+  .smap-link.alt { stroke: #c97614; stroke-dasharray: 4 3; }
+  .smap-link.magic { stroke: #6f3bd0; stroke-dasharray: 4 4; }
+  .smap-arrow { fill: #b8b8b8; }
+  .smap-arrow.alt { fill: #c97614; }
+  .smap-arrow.magic { fill: #6f3bd0; }
+  .smap-edgelabel {
+    font-family: var(--sys-text); font-size: 9px; font-weight: 600;
+    fill: #6b6b6b; letter-spacing: 0.04em;
+  }
+  .smap-edgelabel.alt { fill: #c97614; }
+  .smap-edgelabel.magic { fill: #6f3bd0; }
+  .smap-legend {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    margin-top: 14px;
+    font-size: 11px; color: var(--ink-soft);
+  }
+  .smap-legend .row { display: inline-flex; align-items: center; gap: 6px; }
+  .smap-legend .swatch {
+    width: 14px; height: 14px; border-radius: 4px;
+    border: 1px solid #d4d4d4; background: #fff;
+  }
+  .smap-legend .swatch.entry { background: #eaf2ff; border-color: #0063fb; }
+  .smap-legend .swatch.finish { background: #e6f5ec; border-color: #1f8a3b; }
+  .smap-legend .swatch.edge { background: #fff3e0; border-color: #c97614; }
+  .smap-legend .swatch.magic { background: #f1ebff; border-color: #6f3bd0; }
+
   /* ─── Inspect mode overlay ─── */
   .inspect-active * { cursor: crosshair !important; }
   .inspect-hilite {
@@ -4669,7 +4721,7 @@ const HANDOFF = {
 };
 
 function HandoffView() {
-  const [section, setSection] = useState("tokens"); // tokens | components | platform | motion | a11y
+  const [section, setSection] = useState("sitemap"); // sitemap | tokens | components | platform | motion | a11y
   return (
     <section className="surface" aria-label="Developer handoff">
       <h1>Developer handoff</h1>
@@ -4680,6 +4732,7 @@ function HandoffView() {
 
       <div className="ho-tabs" role="tablist">
         {[
+          { id: "sitemap",    label: "Site map" },
           { id: "tokens",     label: "Design tokens" },
           { id: "components", label: "Components" },
           { id: "platform",   label: "Platform map" },
@@ -4692,6 +4745,7 @@ function HandoffView() {
         ))}
       </div>
 
+      {section === "sitemap" && <HandoffSitemap />}
       {section === "tokens" && <HandoffTokens />}
       {section === "components" && <HandoffComponents />}
       {section === "platform" && <HandoffPlatform />}
@@ -4699,6 +4753,204 @@ function HandoffView() {
       {section === "a11y" && <HandoffA11y />}
     </section>
   );
+}
+
+function SmapNode({ x, y, w = 152, h = 44, title, sub, kind }) {
+  return (
+    <g className={"smap-node " + (kind || "")} transform={"translate(" + x + " " + y + ")"}>
+      <rect width={w} height={h} />
+      <text className="title" x={w / 2} y={h / 2 - 2} textAnchor="middle">{title}</text>
+      {sub && <text className="sub" x={w / 2} y={h / 2 + 12} textAnchor="middle">{sub}</text>}
+    </g>
+  );
+}
+
+function SmapArrow({ id, x1, y1, x2, y2, kind, label, labelOffset = -6 }) {
+  // Right-angle Manhattan-style path: vertical first, then horizontal.
+  // For simple straight cases, draws a line.
+  const sameCol = x1 === x2;
+  const sameRow = y1 === y2;
+  const d = sameCol || sameRow
+    ? `M${x1} ${y1} L${x2} ${y2}`
+    : `M${x1} ${y1} L${x1} ${(y1 + y2) / 2} L${x2} ${(y1 + y2) / 2} L${x2} ${y2}`;
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+  return (
+    <g>
+      <path className={"smap-link " + (kind || "")} d={d} markerEnd={`url(#smap-arrow-${kind || "default"})`} />
+      {label && (
+        <text className={"smap-edgelabel " + (kind || "")} x={midX} y={midY + labelOffset} textAnchor="middle">
+          {label}
+        </text>
+      )}
+    </g>
+  );
+}
+
+function HandoffSitemap() {
+  // Co-ordinates are tuned to the 880×720 viewBox.
+  const W = 880, H = 760;
+  const NW = 152, NH = 44;
+  // Helper to get edge midpoints (top/bottom/left/right) of a 152×44 box at (x,y)
+  const top    = (x, y) => [x + NW/2, y];
+  const bot    = (x, y) => [x + NW/2, y + NH];
+  const left   = (x, y) => [x, y + NH/2];
+  const right  = (x, y) => [x + NW, y + NH/2];
+
+  // Positions
+  const job  = [W/2 - NW/2, 16];                   // Job ad (entry)
+  const login= [W/2 - NW/2 - 200, 110];            // Login (edge case)
+  const prevL= [W/2 - NW/2, 110];                  // Preview (loading)
+  const prevR= [W/2 - NW/2, 200];                  // Preview (ready) — main hub
+  const cv1  = [60, 320];                          // CV picker
+  const cv2  = [60, 420];                          // CV preview
+  const lett = [240, 320];                         // Cover letter
+  const tail = [420, 320];                         // Tailor (Q&A)
+  const pers = [600, 320];                         // Personalia editor
+  const ques = [600, 420];                         // Questions editor
+  const miss = [W/2 - NW/2 + 200, 200];            // Missing-info (edge)
+  const send = [W/2 - NW/2, 540];                  // Confirmation (finish)
+  const acti = [W/2 - NW/2, 640];                  // Activity
+  const magic= [W/2 - NW/2 - 230, 540];            // Magic Apply confirmation alt
+  const magP = [W/2 - NW/2 - 230, 440];            // Magic auto-send preview
+
+  return (
+    <div>
+      <p className="lead" style={{ marginBottom: 14 }}>
+        Every screen the seeker can land on, and how to reach it. Solid edges are the happy path;
+        dashed amber edges are edge-case branches (Login, Missing info); dashed violet is the v2.0
+        Magic Apply auto-send variant.
+      </p>
+
+      <div className="smap-wrap">
+        <svg className="smap-svg" viewBox={"0 0 " + W + " " + H} role="img" aria-label="Site map">
+          {/* Arrow heads */}
+          <defs>
+            <marker id="smap-arrow-default" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path className="smap-arrow" d="M0 0 L10 5 L0 10 z" />
+            </marker>
+            <marker id="smap-arrow-alt" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path className="smap-arrow alt" d="M0 0 L10 5 L0 10 z" />
+            </marker>
+            <marker id="smap-arrow-magic" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path className="smap-arrow magic" d="M0 0 L10 5 L0 10 z" />
+            </marker>
+          </defs>
+
+          {/* Edges first so nodes overlap them */}
+          <SmapArrow {...arrow(bot(job[0],job[1]),    top(prevL[0],prevL[1]),  null, "Apply")} />
+          <SmapArrow {...arrow(left(job[0],job[1]),   top(login[0],login[1]),  "alt", "Not logged in")} />
+          <SmapArrow {...arrow(right(login[0],login[1]), left(prevL[0],prevL[1]), "alt", "Login")} />
+          <SmapArrow {...arrow(bot(prevL[0],prevL[1]), top(prevR[0],prevR[1]), null, "Hydrate")} />
+          <SmapArrow {...arrow(right(prevR[0],prevR[1]), left(miss[0],miss[1]), "alt", "Missing field")} />
+          <SmapArrow {...arrow(left(prevR[0],prevR[1]), top(cv1[0]+24,cv1[1]),  null, "CV row")} />
+          <SmapArrow {...arrow(bot(prevR[0],prevR[1]), top(lett[0]+NW/2,lett[1]), null, "Letter row")} />
+          <SmapArrow {...arrow(bot(prevR[0]+30,prevR[1]), top(tail[0]+NW/2,tail[1]), null, "Tilpass")} />
+          <SmapArrow {...arrow(right(prevR[0],prevR[1]), top(pers[0]+NW/2,pers[1]), null, "Personalia")} />
+          <SmapArrow {...arrow(bot(pers[0],pers[1]),  top(ques[0],ques[1]), null, "Questions")} />
+          <SmapArrow {...arrow(bot(cv1[0]+NW/2,cv1[1]), top(cv2[0]+NW/2,cv2[1]), null, "Pick")} />
+          <SmapArrow {...arrow(bot(prevR[0]+NW/2,prevR[1]+200), top(send[0]+NW/2,send[1]), null, "Send")} />
+          <SmapArrow {...arrow(bot(send[0],send[1]),  top(acti[0],acti[1]), null, "Go to Activity")} />
+          {/* Magic Apply branch (v2.0) */}
+          <SmapArrow {...arrow(left(job[0],job[1]),   top(magP[0]+NW/2,magP[1]), "magic", "v2.0 Magic")} />
+          <SmapArrow {...arrow(bot(magP[0],magP[1]),  top(magic[0],magic[1]), "magic", "Auto-send")} />
+          <SmapArrow {...arrow(right(magic[0],magic[1]), left(send[0],send[1]), "magic", "")} />
+
+          {/* Nodes */}
+          <SmapNode x={job[0]}   y={job[1]}   title="Job ad"               sub="STILLINGSANNONSE"      kind="entry" />
+          <SmapNode x={login[0]} y={login[1]} title="Login sheet"          sub="EDGE — NOT LOGGED IN"  kind="edge" />
+          <SmapNode x={prevL[0]} y={prevL[1]} title="Preview · loading"    sub="2 · HYDRATE ROWS" />
+          <SmapNode x={prevR[0]} y={prevR[1]} title="Preview · ready"      sub="3 · HUB" />
+          <SmapNode x={miss[0]}  y={miss[1]}  title="Missing info banner"  sub="EDGE — RECOVERY"       kind="edge" />
+          <SmapNode x={cv1[0]}   y={cv1[1]}   title="CV picker"            sub="4 · CHOOSE CV" />
+          <SmapNode x={cv2[0]}   y={cv2[1]}   title="CV preview"           sub="4b · PREVIEW" />
+          <SmapNode x={lett[0]}  y={lett[1]}  title="Cover letter sheet"   sub="5 · EDIT LETTER" />
+          <SmapNode x={tail[0]}  y={tail[1]}  title="Tailor Q&A"           sub="6 · 3-STEP AGENT" />
+          <SmapNode x={pers[0]}  y={pers[1]}  title="Personalia editor"    sub="7 · EDIT FIELDS" />
+          <SmapNode x={ques[0]}  y={ques[1]}  title="Questions editor"     sub="8 · EMPLOYER Qs" />
+          <SmapNode x={magP[0]}  y={magP[1]}  title="Preview · magic"      sub="V2.0 · AUTO TICK"     kind="magic" />
+          <SmapNode x={magic[0]} y={magic[1]} title="Confirmation · magic" sub="V2.0 · OPTIMISED"     kind="magic" />
+          <SmapNode x={send[0]}  y={send[1]}  title="Confirmation"         sub="9 · APPLICATION SENT" kind="finish" />
+          <SmapNode x={acti[0]}  y={acti[1]}  title="Activity"             sub="10 · DRAFTS / SENT"   kind="finish" />
+        </svg>
+
+        <div className="smap-legend" aria-hidden="true">
+          <span className="row"><span className="swatch entry"  /> Entry point</span>
+          <span className="row"><span className="swatch" /> Standard screen</span>
+          <span className="row"><span className="swatch edge"   /> Edge case branch</span>
+          <span className="row"><span className="swatch magic"  /> v2.0 Magic Apply</span>
+          <span className="row"><span className="swatch finish" /> Terminal / commit</span>
+        </div>
+      </div>
+
+      <div className="ho-section" style={{ marginTop: 26 }}>
+        <h2>Screen reference</h2>
+        <p className="lead">Every screen, the React component that renders it, its purpose, and how the user reaches it.</p>
+        <table className="ho-table">
+          <thead>
+            <tr><th>#</th><th>Screen</th><th>Component</th><th>Purpose</th><th>How to reach it</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Job ad</td><td><code>JobDetailScreen</code></td>
+              <td>Role facts + Apply CTA. Apply lifts to an Extended FAB on Android.</td>
+              <td>Default entry. Dev panel → Screens → "1 · Job ad".</td></tr>
+            <tr><td>1a</td><td>Login sheet</td><td><code>LoginSheet</code></td>
+              <td>Auth gate before applying.</td>
+              <td>Apply tap when User state = "Not logged in".</td></tr>
+            <tr><td>2</td><td>Preview · loading</td><td><code>ApplicationPreviewSheet</code></td>
+              <td>Sheet slides up immediately; rows hydrate (personalia → CV → letter).</td>
+              <td>Apply tap from Job ad (logged in).</td></tr>
+            <tr><td>3</td><td>Preview · ready</td><td><code>ApplicationPreviewSheet</code></td>
+              <td>All rows attached; Send enabled. Hub for every edit branch.</td>
+              <td>After loading completes (~1.7s). Dev panel → "3 · Preview (ready)".</td></tr>
+            <tr><td>3a</td><td>Job ad (in-sheet tab)</td><td><code>JobAdContent</code> (embedded)</td>
+              <td>Read the ad without losing the draft.</td>
+              <td>Inside Preview sheet → tap "Job ad" tab.</td></tr>
+            <tr><td>3b</td><td>Missing info</td><td>inline banner in <code>ApplicationPreviewSheet</code></td>
+              <td>Friendly recovery state when a field is blank.</td>
+              <td>User state = Missing personalia / CV / questions.</td></tr>
+            <tr><td>4</td><td>CV picker</td><td><code>EditSheet</code> (rowId="cv")</td>
+              <td>Choose Profile / Tailored / Existing PDF / Upload new.</td>
+              <td>Preview → tap CV row (eye or Endre).</td></tr>
+            <tr><td>4b</td><td>CV preview</td><td><code>CVPreviewSheet</code></td>
+              <td>Render the chosen CV; "Add to application" commits, back returns to picker.</td>
+              <td>Tap an option in the CV picker.</td></tr>
+            <tr><td>5</td><td>Cover letter sheet</td><td><code>CoverLetterSheet</code></td>
+              <td>Full AI-drafted letter + "Bruk dette" / "Skriv om" / "Skriv selv".</td>
+              <td>Preview → tap letter row.</td></tr>
+            <tr><td>5b</td><td>Select letter</td><td><code>SelectLetterSheet</code></td>
+              <td>Pick a saved letter or upload a new one.</td>
+              <td>Cover letter sheet → "Skriv selv" / file pick.</td></tr>
+            <tr><td>6</td><td>Tailor Q&A</td><td><code>TailorSheet</code></td>
+              <td>3-step opt-in agentic Q&A (years, public sector, start date).</td>
+              <td>Preview → "Tilpass for denne jobben".</td></tr>
+            <tr><td>7</td><td>Personalia editor</td><td><code>EditSheet</code> (rowId="personalia")</td>
+              <td>Edit phone / email / location; save just for this app or to profile.</td>
+              <td>Preview → tap Personalia "Endre".</td></tr>
+            <tr><td>8</td><td>Questions editor</td><td><code>EditSheet</code> (rowId="questions")</td>
+              <td>Answer the employer's manual questions.</td>
+              <td>Preview → tap Spørsmål "Endre".</td></tr>
+            <tr><td>9</td><td>Confirmation</td><td><code>ConfirmationScreen</code></td>
+              <td>"Application sent" success with reminder card.</td>
+              <td>Send tap from Preview.</td></tr>
+            <tr><td>10</td><td>Activity</td><td><code>ActivityScreen</code></td>
+              <td>Drafts + Sent tabs; tap a draft to resume Preview.</td>
+              <td>Confirmation → "Go to Activity"; OR draft chip in Preview.</td></tr>
+            <tr><td>V2</td><td>Magic Apply</td><td>auto-driven <code>ApplicationPreviewSheet</code></td>
+              <td>Rows tick off automatically, application auto-sends.</td>
+              <td>Version = 2.0 → Apply from Job ad. Or drop Magic Apply story into MVP in Storymap.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+// Helper for the SVG arrows above
+function arrow(p1, p2, kind, label) {
+  return { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], kind, label };
 }
 
 function HandoffTokens() {
