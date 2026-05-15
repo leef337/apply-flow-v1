@@ -231,10 +231,38 @@
     100% { box-shadow: 0 0 0 24px rgba(31, 138, 59, 0); }
   }
 
+  /* ─── Site header (brand + top tabs row) ─── */
+  .site-header {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 1080px; margin: 0 auto 28px;
+    gap: 24px; flex-wrap: wrap;
+  }
+  .site-brand {
+    display: inline-flex; align-items: center; gap: 12px;
+    color: #fff; font-family: var(--sys-text);
+    text-decoration: none;
+    letter-spacing: -0.2px;
+  }
+  .site-brand .mark {
+    height: 28px; width: auto;
+    flex-shrink: 0;
+    display: inline-flex;
+  }
+  .site-brand .divider {
+    width: 1px; height: 22px;
+    background: rgba(255,255,255,0.18);
+    flex-shrink: 0;
+  }
+  .site-brand .wordmark {
+    font-size: 15px; font-weight: 600;
+    color: #ededed;
+    letter-spacing: -0.1px;
+  }
+
   /* ─── Top tabs (Prototype / Opportunity tree / Impact–Effort) ─── */
   .topnav {
-    display: flex; justify-content: center;
-    margin: 0 auto 28px; max-width: 1080px;
+    display: flex; justify-content: flex-end;
+    margin: 0; flex: 1;
   }
   .topnav-inner {
     position: relative;
@@ -5991,7 +6019,18 @@ function AppShell() {
 
   return (
     <>
-      <TopNav view={view} onChange={setView} />
+      <div className="site-header">
+        <div className="site-brand" aria-label="FINN User Connect">
+          <img
+            className="mark"
+            src="assets/finn-logo.png"
+            alt="FINN"
+          />
+          <span className="divider" aria-hidden="true" />
+          <span className="wordmark">User Connect</span>
+        </div>
+        <TopNav view={view} onChange={setView} />
+      </div>
       {view === "tree" && (
         <div key="tree-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
           <OpportunityTreeView />
