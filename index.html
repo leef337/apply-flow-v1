@@ -1595,7 +1595,7 @@ const PLATFORM_FONTS = {
 const PLATFORM_RADII = {
   ios:     { button: 14,  sheet: 18, card: 14 },
   android: { button: 100, sheet: 28, card: 16 },
-  web:     { button: 100, sheet: 16, card: 8 },
+  web:     { button: 8,   sheet: 16, card: 8 },
 };
 
 // ===========================================================
@@ -1921,7 +1921,9 @@ function AndroidKeyboard({ open }) {
 const DEVICE_METRICS = {
   ios:     { statusBarH: 54, homeArea: 34 },
   android: { statusBarH: 36, homeArea: 18 },
-  web:     { statusBarH: 70, homeArea: 4  },
+  // Web chrome (28 OS bar + ~46 address bar) ≈ 82px tall; add a few px so the
+  // NavBar content (back chevron, title, trailing icons) breathes below it.
+  web:     { statusBarH: 92, homeArea: 4  },
 };
 function useMetrics() {
   return DEVICE_METRICS[usePlatform()];
