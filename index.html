@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0063fb">
 <title>FINN Jobs — Easy + Agentic apply (iOS prototype v1)</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -951,6 +955,121 @@
   .dev-toggle.on .switch { background: #0063fb; }
   .dev-toggle.on .switch::after { transform: translateX(16px); }
 
+  /* ─── Mobile fullscreen mode (≤ 640px) ─── */
+  @media (max-width: 640px) {
+    html, body {
+      background: #000;
+      height: 100%;
+    }
+    body {
+      padding: 0;
+      display: block;
+    }
+    #root { max-width: none; }
+    .topnav {
+      position: sticky; top: 0; z-index: 100;
+      margin: 0; padding: 8px 12px;
+      background: rgba(20,20,20,0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      justify-content: flex-start;
+      max-width: none;
+    }
+    .topnav::-webkit-scrollbar { display: none; }
+    .topnav-inner {
+      flex: 0 0 auto;
+      min-width: max-content;
+    }
+    .layout {
+      display: block;
+      gap: 0;
+    }
+    .stage {
+      display: block;
+      padding: 0;
+      position: relative;
+      width: 100%;
+      min-height: calc(100vh - 56px);
+      min-height: calc(100dvh - 56px);
+      background: #fff;
+    }
+    /* In mobile, the iPhone bezel is replaced by the device itself.
+       Each Device renders its inner content full-bleed — no fake bezel/shadow/status-bar. */
+    .stage .device-mobile {
+      width: 100% !important;
+      height: calc(100vh - 56px) !important;
+      height: calc(100dvh - 56px) !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      max-width: none !important;
+    }
+    .stage .device-chrome { display: none !important; }
+    /* Surfaces (Tree, Matrix, Storymap, Handoff) get reasonable mobile padding */
+    .surface {
+      border-radius: 0;
+      box-shadow: none;
+      padding: 20px 16px 28px;
+      max-width: none;
+      margin: 0;
+    }
+    .otree-cols { grid-template-columns: 1fr; }
+    .matrix-wrap { grid-template-columns: 1fr; }
+    .matrix-stage { padding: 28px 24px 36px 44px; }
+    .storymap-columns,
+    .sm-grid {
+      min-width: max-content;
+    }
+    .sm-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* Dev panel hidden by default on mobile — accessed via the floating button. */
+    .dev-panel-mobile-hidden { display: none; }
+    /* Floating controls button */
+    .mob-fab {
+      position: fixed; right: 14px; bottom: 14px; z-index: 110;
+      width: 52px; height: 52px; border-radius: 9999px;
+      background: #0063fb; color: #fff;
+      border: 0; cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0,99,251,0.45), 0 2px 4px rgba(0,0,0,0.20);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 120ms var(--ease-tap);
+    }
+    .mob-fab:active { transform: scale(0.96); }
+    /* Dev sheet — slide up from bottom */
+    .mob-sheet-back {
+      position: fixed; inset: 0; z-index: 120;
+      background: rgba(0,0,0,0.50);
+      animation: fadein 220ms var(--ease-modal);
+    }
+    .mob-sheet {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 130;
+      max-height: 80vh; max-height: 80dvh;
+      background: #1f1f20;
+      border-top-left-radius: 22px;
+      border-top-right-radius: 22px;
+      padding: 12px 18px 24px;
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      animation: slideup 440ms var(--ease-modal);
+      overflow-y: auto;
+    }
+    .mob-sheet .handle {
+      width: 40px; height: 5px; border-radius: 9999px;
+      background: #444; margin: 4px auto 14px;
+    }
+    .mob-sheet h3 {
+      margin: 0 0 10px;
+      font-size: 11px; color: #cfcfcf;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+    /* In the strategy views, hide the floating dev button (not relevant) — keep on Prototype */
+  }
+
   /* ─── BETA mini-pill ─── */
   .beta-pill {
     display: inline-flex; align-items: center;
@@ -1089,22 +1208,39 @@ const PLATFORM_RADII = {
 // ===========================================================
 // iOS Device frame (390 × 844 logical pts — iPhone 15)
 // ===========================================================
+function useIsMobile() {
+  const [m, setM] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const fn = (e) => setM(e.matches);
+    if (mq.addEventListener) mq.addEventListener("change", fn);
+    else mq.addListener(fn);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", fn);
+      else mq.removeListener(fn);
+    };
+  }, []);
+  return m;
+}
+
 function IOSDevice({ children }) {
+  const isMobile = useIsMobile();
   return (
-    <div style={{
+    <div className={"device-bezel " + (isMobile ? "device-mobile" : "")} style={{
       width: 390, height: 844, borderRadius: 47, overflow: "hidden",
       position: "relative", background: "#fff",
       boxShadow: "0 50px 110px rgba(0,0,0,.45), 0 0 0 8px #111, 0 0 0 9px #2c2c2c",
       fontFamily: PLATFORM_FONTS.ios, color: "#1d1d1d",
     }}>
       {/* Dynamic Island */}
-      <div style={{
+      <div className="device-chrome" style={{
         position: "absolute", top: 11, left: "50%", transform: "translateX(-50%)",
         width: 122, height: 36, borderRadius: 22, background: "#000", zIndex: 100,
         pointerEvents: "none",
       }} />
       {/* Status bar */}
-      <div style={{
+      <div className="device-chrome" style={{
         position: "absolute", top: 0, left: 0, right: 0,
         height: 54, display: "flex", alignItems: "center",
         justifyContent: "space-between", padding: "16px 32px 0", zIndex: 90,
@@ -1132,7 +1268,7 @@ function IOSDevice({ children }) {
       </div>
       {children}
       {/* Home indicator */}
-      <div style={{
+      <div className="device-chrome" style={{
         position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
         width: 139, height: 5, borderRadius: 100,
         background: "rgba(0,0,0,0.28)", zIndex: 100, pointerEvents: "none",
@@ -1145,21 +1281,22 @@ function IOSDevice({ children }) {
 // Android Device frame (Pixel-style, Material 3 chrome)
 // ===========================================================
 function AndroidDevice({ children }) {
+  const isMobile = useIsMobile();
   return (
-    <div style={{
+    <div className={"device-bezel " + (isMobile ? "device-mobile" : "")} style={{
       width: 390, height: 844, borderRadius: 38, overflow: "hidden",
       position: "relative", background: "#fff",
       boxShadow: "0 50px 110px rgba(0,0,0,.45), 0 0 0 6px #1a1a1a, 0 0 0 7px #2c2c2c",
       fontFamily: PLATFORM_FONTS.android, color: "#1d1d1d",
     }}>
       {/* Punch-hole front camera */}
-      <div style={{
+      <div className="device-chrome" style={{
         position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)",
         width: 11, height: 11, borderRadius: 9999, background: "#000", zIndex: 100,
         pointerEvents: "none",
       }} />
       {/* Material status bar */}
-      <div style={{
+      <div className="device-chrome" style={{
         position: "absolute", top: 0, left: 0, right: 0,
         height: 32, display: "flex", alignItems: "center",
         justifyContent: "space-between", padding: "8px 18px 0", zIndex: 90,
@@ -1181,7 +1318,7 @@ function AndroidDevice({ children }) {
       </div>
       {children}
       {/* Gesture pill — slightly darker, full-width-ish bar */}
-      <div style={{
+      <div className="device-chrome" style={{
         position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
         width: 108, height: 4, borderRadius: 4,
         background: "rgba(0,0,0,0.55)", zIndex: 100, pointerEvents: "none",
@@ -1194,8 +1331,9 @@ function AndroidDevice({ children }) {
 // Web frame — mobile browser chrome (Chrome / Safari mobile)
 // ===========================================================
 function WebFrame({ children }) {
+  const isMobile = useIsMobile();
   return (
-    <div style={{
+    <div className={"device-bezel " + (isMobile ? "device-mobile" : "")} style={{
       width: 390, height: 844, borderRadius: 32, overflow: "hidden",
       position: "relative", background: "#fff",
       boxShadow: "0 50px 110px rgba(0,0,0,.45), 0 0 0 6px #1a1a1a, 0 0 0 7px #2c2c2c",
@@ -5126,6 +5264,8 @@ function featuresInVersion(stories, version) {
 function deepCloneJSON(o) { return JSON.parse(JSON.stringify(o)); }
 
 function AppShell() {
+  const isMobile = useIsMobile();
+  const [mobSheet, setMobSheet] = useState(false);
   const [view, setView] = useState("prototype"); // prototype | tree | matrix | storymap
   const [storyVersion, setStoryVersion] = useState("all"); // all | mvp | v1 | v2
   const [version, setVersion] = useState("mvp"); // dev panel toggle: mvp | v1 | v2
@@ -5480,7 +5620,41 @@ function AppShell() {
       </div>
       </LangCtx.Provider>
 
-      <div className="dev-panel">
+      {isMobile && !mobSheet && (
+        <button className="mob-fab" onClick={() => { haptic("tap"); setMobSheet(true); }}
+          aria-label="Open dev controls">
+          <Icon name="edit" size={22} color="#fff" stroke={2.2} />
+        </button>
+      )}
+      {isMobile && mobSheet && (
+        <div className="mob-sheet-back" onClick={() => setMobSheet(false)} />
+      )}
+      <div
+        className={"dev-panel" + (isMobile && !mobSheet ? " dev-panel-mobile-hidden" : "")}
+        style={isMobile ? {
+          position: "fixed", left: 0, right: 0, bottom: 0,
+          top: "auto", maxHeight: "82vh", zIndex: 130,
+          borderRadius: "22px 22px 0 0",
+          margin: 0, padding: "12px 18px 24px",
+          paddingBottom: "max(24px, env(safe-area-inset-bottom))",
+          overflowY: "auto",
+          animation: mobSheet ? "slideup 440ms var(--ease-modal)" : undefined,
+        } : undefined}>
+        {isMobile && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#444", margin: "4px auto 0" }} />
+              <button onClick={() => setMobSheet(false)}
+                style={{ position: "absolute", top: 12, right: 14,
+                  width: 28, height: 28, borderRadius: 9999, background: "#333", border: 0,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer" }}
+                aria-label="Close">
+                <Icon name="x" size={14} color="#ededed" stroke={2.4} />
+              </button>
+            </div>
+          </>
+        )}
         <h3>Easy + Agentic apply</h3>
         <Segmented
           label="Language"
