@@ -52,10 +52,10 @@
   }
   #root { width: 100%; max-width: 1080px; }
   .layout {
-    display: grid; grid-template-columns: 1fr 280px; gap: 40px;
+    display: grid; grid-template-columns: 1fr 340px; gap: 40px;
     align-items: start;
   }
-  @media (max-width: 880px) {
+  @media (max-width: 960px) {
     .layout { grid-template-columns: 1fr; }
     .dev-panel { order: -1; }
   }
@@ -776,6 +776,192 @@
     background: #f0f5ff;
     outline: 2px dashed rgba(0,99,251,0.45);
     outline-offset: -4px;
+  }
+
+  /* ─── Handoff view ─── */
+  .ho-grid {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin: 0 0 26px;
+  }
+  .ho-card {
+    background: #fff; border: 1px solid var(--hair);
+    border-radius: 14px; padding: 16px;
+  }
+  .ho-card h3 {
+    margin: 0 0 12px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  .ho-card h2 {
+    margin: 0 0 14px;
+    font-size: 16px; font-weight: 700; letter-spacing: -0.2px;
+    color: var(--ink);
+  }
+  .ho-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--hair);
+    font-size: 12px; color: var(--ink-mute);
+  }
+  .ho-row:first-of-type { border-top: 0; }
+  .ho-row .swatch {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .ho-row .name { flex: 1; font-weight: 600; color: var(--ink); }
+  .ho-row .token, .ho-row .val {
+    font-family: var(--w-font-family-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    color: var(--ink-soft); font-size: 11px;
+  }
+  .ho-row .val { color: var(--ink); }
+  .ho-section {
+    margin-bottom: 26px;
+  }
+  .ho-section h2 {
+    margin: 0 0 4px; font-size: 18px; font-weight: 700;
+    letter-spacing: -0.2px; color: var(--ink);
+  }
+  .ho-section .lead {
+    margin: 0 0 14px; font-size: 13px; color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .ho-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12px;
+  }
+  .ho-table th, .ho-table td {
+    text-align: left; padding: 9px 10px;
+    border-bottom: 1px solid var(--hair);
+    vertical-align: top;
+  }
+  .ho-table th {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    background: #fafafa;
+  }
+  .ho-table code, .ho-row code {
+    font-family: var(--w-font-family-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-size: 11px;
+    background: #f4f5f8; color: #1d1d1d;
+    padding: 1px 6px; border-radius: 4px;
+    line-height: 1.4;
+  }
+  .ho-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .ho-pill.ios   { background: #eaf2ff; color: #0063fb; }
+  .ho-pill.and   { background: #e6f5ec; color: #1f8a3b; }
+  .ho-pill.web   { background: #f1ebff; color: #6f3bd0; }
+  .ho-pill.gray  { background: #f0f0f3; color: #404040; }
+  .ho-tabs {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin: 0 0 18px;
+  }
+  .ho-tabs button {
+    appearance: none; border: 1px solid var(--hair);
+    background: #fff; padding: 7px 12px; border-radius: 999px;
+    font: 600 12px/1 var(--sys-text); letter-spacing: -0.05px;
+    color: var(--ink-mute); cursor: pointer;
+    transition: background 160ms var(--ease-modal), color 160ms var(--ease-modal), border-color 160ms var(--ease-modal);
+  }
+  .ho-tabs button:hover { color: var(--ink); border-color: #c9c9c9; }
+  .ho-tabs button.active {
+    background: #0063fb; color: #fff; border-color: #0063fb;
+  }
+  .ho-states {
+    display: grid; gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    margin-top: 8px;
+  }
+  .ho-state {
+    border: 1px dashed var(--hair); border-radius: 8px;
+    padding: 8px;
+    display: flex; flex-direction: column; gap: 6px;
+    background: #fafafa;
+  }
+  .ho-state .label {
+    font-size: 10px; font-weight: 700; color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .ho-state .demo {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 38px;
+  }
+
+  /* ─── Inspect mode overlay ─── */
+  .inspect-active * { cursor: crosshair !important; }
+  .inspect-hilite {
+    outline: 2px solid #0063fb !important;
+    outline-offset: 1px !important;
+    box-shadow: 0 0 0 4px rgba(0,99,251,0.18) !important;
+  }
+  .inspect-pop {
+    position: fixed; z-index: 999;
+    background: #1d1d1d; color: #fff;
+    border-radius: 10px; padding: 10px 12px;
+    font-family: var(--w-font-family-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-size: 11px; line-height: 1.55;
+    max-width: 280px; pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.30);
+    animation: fadein 160ms var(--ease-modal);
+  }
+  .inspect-pop .key { color: #9eb3ff; }
+  .inspect-pop .val { color: #ededed; }
+  .inspect-pop .tag {
+    display: inline-block; padding: 1px 6px;
+    background: #0063fb; color: #fff;
+    border-radius: 4px;
+    font-size: 10px; letter-spacing: 0.05em;
+    margin-bottom: 5px;
+  }
+
+  /* ─── iOS-style toggle switch (dark panel) ─── */
+  .dev-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    padding: 9px 12px; border-radius: 10px;
+    background: transparent; border: 1px solid #383838;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), border-color 160ms var(--ease-modal);
+  }
+  .dev-toggle:hover { background: #2e2e2e; border-color: #555; }
+  .dev-toggle .label {
+    color: #ededed; font-size: 13px; font-weight: 500;
+    letter-spacing: -0.1px;
+  }
+  .dev-toggle .switch {
+    position: relative; flex-shrink: 0;
+    width: 38px; height: 22px; border-radius: 9999px;
+    background: #3a3a3a;
+    transition: background 220ms var(--ease-modal);
+  }
+  .dev-toggle .switch::after {
+    content: ""; position: absolute;
+    top: 2px; left: 2px; width: 18px; height: 18px;
+    border-radius: 9999px; background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    transition: transform 220ms var(--ease-modal);
+  }
+  .dev-toggle.on .switch { background: #0063fb; }
+  .dev-toggle.on .switch::after { transform: translateX(16px); }
+
+  /* ─── BETA mini-pill ─── */
+  .beta-pill {
+    display: inline-flex; align-items: center;
+    font-size: 9px; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 2px 5px; border-radius: 4px;
+    background: linear-gradient(135deg, #ffce2e 0%, #f0a800 100%);
+    color: #4a2e00;
+    margin-left: 6px;
+    line-height: 1.2;
+    text-transform: uppercase;
   }
   .sm-now-badge {
     display: inline-flex; align-items: center; gap: 4px;
@@ -4167,6 +4353,425 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
   );
 }
 
+// ─── Developer handoff data ────────────────────────────────────────────────
+const HANDOFF = {
+  tokens: {
+    colour: [
+      { name: "Brand · FINN Blue",      token: "--finn-blue",       hex: "#0063fb" },
+      { name: "Brand · Blue soft",      token: "--finn-blue-soft",  hex: "#eaf2ff" },
+      { name: "Ink · default",          token: "--ink",             hex: "#1d1d1d" },
+      { name: "Ink · subtle",           token: "--ink-soft",        hex: "#6b6b6b" },
+      { name: "Hair / divider",         token: "--hair",            hex: "#ededed" },
+      { name: "App background",         token: "--bg-app",          hex: "#f2f2f7" },
+      { name: "Positive",               token: "--green",           hex: "#1f8a3b" },
+      { name: "Negative",               token: "--red",             hex: "#cc1414" },
+      { name: "Warning soft",           token: "--warn-soft",       hex: "#fdedb0" },
+    ],
+    type: [
+      { role: "Display / Confirmation", size: 26, weight: 700, lh: 1.2, use: "Confirmation hero" },
+      { role: "Title H1 — Job ad",      size: 22, weight: 700, lh: 1.25, use: "Job role on the ad" },
+      { role: "Section H2",             size: 18, weight: 700, lh: 1.3, use: "About the role" },
+      { role: "Sheet H2",               size: 17, weight: 700, lh: 1.2, use: "Sheet header centred title" },
+      { role: "Row title",              size: 16, weight: 600, lh: 1.25, use: "PreviewRow title, Send button label" },
+      { role: "Body",                   size: 15, weight: 500, lh: 1.55, use: "Editor body, picker option" },
+      { role: "Detail",                 size: 13, weight: 500, lh: 1.4, use: "Row subtitle, company name" },
+      { role: "Caption",                size: 12, weight: 500, lh: 1.35, use: "Chips, pills, status copy" },
+      { role: "Eyebrow",                size: 11, weight: 600, lh: 1.2, use: "Uppercase labels, 'APPLYING AS'" },
+    ],
+    spacing: [4, 6, 8, 10, 12, 14, 16, 20, 24, 32],
+    radii: [
+      { label: "Pill",          val: 9999, use: "Chips, pills, dots, segmented controls" },
+      { label: "Sheet (iOS)",   val: 18,   use: "Top corners of bottom sheets" },
+      { label: "Sheet (Android)",val: 28,  use: "Material 3 bottom sheets" },
+      { label: "Button",        val: 14,   use: "Primary CTA, picker options" },
+      { label: "Card",          val: 12,   use: "Source pills, fact cards" },
+      { label: "Row chip",      val: 10,   use: "Source-pill backgrounds" },
+    ],
+    shadows: [
+      { label: "Sheet",     val: "0 -4px 24px rgba(0,0,0,.10)",       use: "Bottom-sheet top edge" },
+      { label: "Floating",  val: "0 4px 12px rgba(0,99,251,.28)",     use: "Selected source pill, primary CTA" },
+      { label: "Press",     val: "0 1px 2px rgba(0,0,0,.08)",         use: "Pressed buttons, hovered cards" },
+      { label: "Magic FAB", val: "0 4px 10px rgba(0,99,251,.30)",     use: "Magic Apply sparkle badge" },
+    ],
+    motion: [
+      { name: "Sheet present",     dur: "440ms", curve: "var(--ease-modal)",   note: "iOS modal curve — confident in, gentle land" },
+      { name: "Backdrop fade",     dur: "300ms", curve: "var(--ease-modal)",   note: "Co-times with sheet present" },
+      { name: "Tab indicator",     dur: "320ms", curve: "var(--ease-modal)",   note: "Sliding pill between tabs" },
+      { name: "Status icon popin", dur: "520ms", curve: "var(--ease-spring)",  note: "Status icon arrival" },
+      { name: "Row fade-up",       dur: "260ms", curve: "var(--ease-out)",     note: "Body content reveal" },
+      { name: "Press scale",       dur: "100ms", curve: "var(--ease-tap)",     note: "Tap feedback (scale 0.97)" },
+      { name: "Spinner",           dur: "1.6s",  curve: "cubic-bezier(.5,0,.5,1)", note: "Soft, looping" },
+      { name: "Pulse",             dur: "2.2s",  curve: "ease-in-out",          note: "Magic banner sparkle breathing" },
+    ],
+  },
+  components: [
+    {
+      id: "primary-button",
+      name: "Primary button",
+      summary: "Filled, brand-blue, 52pt tall on iOS. Default action everywhere.",
+      states: ["default", "pressed (0.97 scale)", "loading (spinner + status copy)", "disabled (opacity 0.6)"],
+      tokens: { background: "--finn-blue (#0063fb)", text: "#fff", radius: "14px", height: "52px" },
+      ios: "UIButton with Configuration.filled() · `.tint(.blue500)`",
+      android: "Material 3 FilledButton; Extended FAB on the Job ad screen (Material pattern)",
+      web: "<button> with `bg-finn-blue text-white rounded-xl` — keep hover state subtle (#0058e0)",
+    },
+    {
+      id: "secondary-row-action",
+      name: "Row action ('Endre')",
+      summary: "Text-only button with blue label + chevron-right. Used on PreviewRow.",
+      states: ["default", "pressed (0.97)", "disabled (gray)"],
+      tokens: { color: "--finn-blue", "min-height": "44pt (touch target)", "padding-left": "8px" },
+      ios: "Plain UIButton with custom title attributes",
+      android: "TextButton with trailing icon (KeyboardArrowRight)",
+      web: "<button> with `text-finn-blue inline-flex items-center gap-1`",
+    },
+    {
+      id: "pill",
+      name: "Pill / chip",
+      summary: "Rounded 9999 background with brand-soft tint. Used for source pills, job-match score, drafts indicator.",
+      states: ["default", "pressed", "selected (filled blue)"],
+      tokens: { padding: "5px 10px", radius: "9999", "font-size": "12px", "font-weight": "600" },
+      ios: "Custom UILabel with `.layer.cornerRadius = .infinity`",
+      android: "Material InputChip / AssistChip",
+      web: "<span> styled as pill — no need for a real button unless tappable",
+    },
+    {
+      id: "status-icon",
+      name: "Row status icon",
+      summary: "32pt circular badge in the leading position of each PreviewRow.",
+      states: ["loading (spinner)", "done (check-circle, brand-green)", "ai (sparkle, brand-blue)", "missing (alert, brand-red)", "queued (empty ring, gray)"],
+      tokens: { size: "32pt", "icon-size": "18-28pt", "ring-stroke": "2-2.5px" },
+      ios: "UIImageView with SF Symbols (`checkmark.circle`, `sparkles`, `exclamationmark.triangle`)",
+      android: "Material Icons (`check_circle`, `auto_awesome`, `warning`)",
+      web: "Lucide icons (`check`, `sparkle`, `alert-triangle`)",
+    },
+    {
+      id: "preview-row",
+      name: "Application preview row",
+      summary: "Status icon · title + source pill · subtitle · eye (optional) · Endre action.",
+      states: ["loading", "done", "ai", "missing", "queued (Magic Apply)"],
+      tokens: { padding: "16px", "row-gap": "14px" },
+      ios: "Custom UIStackView or SwiftUI HStack",
+      android: "Compose Row with leading Box + Column + trailing buttons",
+      web: "<div className='flex items-center gap-4 py-4'>",
+    },
+    {
+      id: "bottom-sheet",
+      name: "Bottom sheet (application preview, picker, etc)",
+      summary: "Slides up from bottom; backdrop dims content above; iOS-style 18pt top corners (28dp on Android).",
+      states: ["presenting", "expanded", "dragging (not yet)", "dismissed"],
+      tokens: { "top-radius-ios": "18pt", "top-radius-android": "28dp", backdrop: "rgba(0,0,0,0.30)" },
+      ios: "UISheetPresentationController with `.medium()` + `.large()` detents",
+      android: "Material ModalBottomSheet (Compose), with grab handle by default",
+      web: "Headless UI Dialog or custom — pair with backdrop-blur on focus",
+    },
+    {
+      id: "tab-segmented",
+      name: "Segmented in-sheet tabs",
+      summary: "iOS-style segmented control inside the preview sheet for Application ↔ Job ad.",
+      states: ["default", "active (white pill background + boxShadow)", "transitioning (left animates)"],
+      tokens: { container: "#eef0f5", "active-bg": "#fff", radius: "8-10px" },
+      ios: "UISegmentedControl",
+      android: "Material 3 SegmentedButton",
+      web: "Custom radio group styled as pills, or use shadcn/ui Tabs",
+    },
+    {
+      id: "top-nav",
+      name: "Top tabs (Prototype / Tree / Matrix / Storymap / Handoff)",
+      summary: "Project-wide tab nav with sliding indicator. Pure UI affordance — not part of the app surface.",
+      states: ["default", "hover (text only)", "active (blue pill slides under label)"],
+      tokens: { indicator: "--finn-blue", radius: "10-14px" },
+      ios: "Not applicable — this is the dev surface, not in the iOS app",
+      android: "Not applicable — dev surface",
+      web: "Pure CSS + JS (ResizeObserver for indicator position)",
+    },
+    {
+      id: "primary-cta-android",
+      name: "Apply CTA (Android variant)",
+      summary: "On Android, the Apply primary action lifts to an Extended FAB anchored bottom-right (Material pattern).",
+      states: ["default", "pressed (Material ripple)"],
+      tokens: { background: "--finn-blue", elevation: "Material level 3 shadow stack" },
+      ios: "Standard PrimaryButton at the screen bottom",
+      android: "ExtendedFloatingActionButton(text = 'Søk', icon = Icons.AutoMirrored.Send)",
+      web: "Sticky bottom bar with the same Primary button — match touch target",
+    },
+  ],
+  states: {
+    user: [
+      { id: "ready",              when: "Default. Profile + CV available, no missing data." },
+      { id: "missing-personalia", when: "Phone number missing — show red row + recovery CTA." },
+      { id: "missing-cv",         when: "No CV attached — Send disabled until resolved." },
+      { id: "missing-questions",  when: "Employer question unanswered — friendly banner + CTA." },
+      { id: "not-logged-in",      when: "Auth required — present login sheet on Apply tap." },
+      { id: "already-applied",    when: "Replace Apply CTA with 'Application sent' confirmation card." },
+    ],
+    application: ["draft", "sent"],
+    loading: ["loading-cv", "loading-letter", "ready"],
+    magic:   ["idle", "running (steps 0-4)", "sent"],
+  },
+  a11y: [
+    "All interactive surfaces meet a 44pt minimum touch target.",
+    "Source pills carry an aria-label that includes the source (e.g. 'AI draft, editable').",
+    "Tab containers carry role='tablist'; buttons inside use role='tab' + aria-selected.",
+    "Animation respects prefers-reduced-motion in future work — currently always-on for prototype clarity.",
+    "Norwegian and English strings co-located at call sites for translator review.",
+    "Sheet backdrops are tappable to dismiss; expose 'Cancel' / 'Tilbake' chevrons for keyboard users.",
+    "Colour-only signals (source pills, status pills) always carry an icon or label as well.",
+  ],
+};
+
+function HandoffView() {
+  const [section, setSection] = useState("tokens"); // tokens | components | platform | motion | a11y
+  return (
+    <section className="surface" aria-label="Developer handoff">
+      <h1>Developer handoff</h1>
+      <p className="sub">
+        Specs and patterns for engineers picking up this prototype. Tokens map to FINN's WARP
+        design system; the same components have iOS, Android, and Web equivalents documented per row.
+      </p>
+
+      <div className="ho-tabs" role="tablist">
+        {[
+          { id: "tokens",     label: "Design tokens" },
+          { id: "components", label: "Components" },
+          { id: "platform",   label: "Platform map" },
+          { id: "motion",     label: "Motion" },
+          { id: "a11y",       label: "A11y" },
+        ].map(t => (
+          <button key={t.id} role="tab" aria-selected={section === t.id}
+            className={section === t.id ? "active" : ""}
+            onClick={() => setSection(t.id)}>{t.label}</button>
+        ))}
+      </div>
+
+      {section === "tokens" && <HandoffTokens />}
+      {section === "components" && <HandoffComponents />}
+      {section === "platform" && <HandoffPlatform />}
+      {section === "motion" && <HandoffMotion />}
+      {section === "a11y" && <HandoffA11y />}
+    </section>
+  );
+}
+
+function HandoffTokens() {
+  return (
+    <>
+      <div className="ho-grid">
+        <div className="ho-card">
+          <h3>Colour</h3>
+          {HANDOFF.tokens.colour.map(c => (
+            <div key={c.token} className="ho-row">
+              <span className="swatch" style={{ background: c.hex }} />
+              <span className="name">{c.name}</span>
+              <span className="token">{c.token}</span>
+              <span className="val">{c.hex}</span>
+            </div>
+          ))}
+        </div>
+        <div className="ho-card">
+          <h3>Radii</h3>
+          {HANDOFF.tokens.radii.map(r => (
+            <div key={r.label} className="ho-row">
+              <div style={{ width: 28, height: 28, background: "#0063fb", borderRadius: Math.min(r.val, 14) }} />
+              <span className="name">{r.label}</span>
+              <span className="val">{r.val}{typeof r.val === "number" ? "px" : ""}</span>
+              <span className="token">{r.use}</span>
+            </div>
+          ))}
+        </div>
+        <div className="ho-card">
+          <h3>Spacing scale (px)</h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "8px 0" }}>
+            {HANDOFF.tokens.spacing.map(s => (
+              <div key={s} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                <div style={{ width: s, height: 28, background: "#0063fb", borderRadius: 4 }} />
+                <span style={{ fontSize: 11, color: "#6b6b6b" }}>{s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="ho-section">
+        <h2>Type</h2>
+        <p className="lead">
+          Brand face is FINNType — loaded from /fonts in this build. Falls back to SF Pro on iOS / macOS.
+        </p>
+        <table className="ho-table">
+          <thead>
+            <tr><th>Role</th><th>Size</th><th>Weight</th><th>LH</th><th>Use</th><th>Sample</th></tr>
+          </thead>
+          <tbody>
+            {HANDOFF.tokens.type.map(t => (
+              <tr key={t.role}>
+                <td><strong>{t.role}</strong></td>
+                <td>{t.size}px</td>
+                <td>{t.weight}</td>
+                <td>{t.lh}</td>
+                <td>{t.use}</td>
+                <td style={{ fontSize: t.size, fontWeight: t.weight, lineHeight: t.lh }}>The quick brown fox</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="ho-section">
+        <h2>Shadows</h2>
+        <div className="ho-grid">
+          {HANDOFF.tokens.shadows.map(s => (
+            <div key={s.label} className="ho-card" style={{ padding: 18 }}>
+              <div style={{ height: 56, borderRadius: 14, background: "#fff", boxShadow: s.val, marginBottom: 10 }} />
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{s.label}</div>
+              <code style={{ fontSize: 10, color: "#6b6b6b" }}>{s.val}</code>
+              <div style={{ fontSize: 11, color: "#6b6b6b", marginTop: 4 }}>{s.use}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function HandoffComponents() {
+  return (
+    <table className="ho-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>States</th>
+          <th>Tokens</th>
+          <th>iOS</th>
+          <th>Android</th>
+          <th>Web</th>
+        </tr>
+      </thead>
+      <tbody>
+        {HANDOFF.components.map(c => (
+          <tr key={c.id}>
+            <td>
+              <strong>{c.name}</strong>
+              <div style={{ fontSize: 11, color: "#6b6b6b", marginTop: 4, maxWidth: 220 }}>{c.summary}</div>
+            </td>
+            <td>
+              {c.states.map(s => <span key={s} className="ho-pill gray" style={{ marginRight: 4, marginBottom: 4 }}>{s}</span>)}
+            </td>
+            <td>
+              {Object.entries(c.tokens).map(([k, v]) => (
+                <div key={k} style={{ marginBottom: 4 }}>
+                  <code>{k}</code>: <code>{v}</code>
+                </div>
+              ))}
+            </td>
+            <td><span className="ho-pill ios">iOS</span><div style={{ marginTop: 6 }}><code>{c.ios}</code></div></td>
+            <td><span className="ho-pill and">Material</span><div style={{ marginTop: 6 }}><code>{c.android}</code></div></td>
+            <td><span className="ho-pill web">Web</span><div style={{ marginTop: 6 }}><code>{c.web}</code></div></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function HandoffPlatform() {
+  return (
+    <>
+      <p className="lead" style={{ marginBottom: 16 }}>
+        The prototype renders an iOS device frame by default. Flip the <strong>Platform</strong> toggle in the
+        dev panel to see the Material 3 / Android frame or a web-style frame. Status bar, gestures, primary
+        action positioning, and corner radii change with the platform.
+      </p>
+      <table className="ho-table">
+        <thead>
+          <tr><th>Pattern</th><th>iOS (HIG)</th><th>Android (Material 3)</th><th>Web</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Apply primary action</strong></td>
+            <td>Sticky full-width PrimaryButton at the bottom of the job ad.</td>
+            <td>Extended FAB anchored bottom-right.</td>
+            <td>Sticky bottom bar OR right-aligned button on desktop layout.</td></tr>
+          <tr><td><strong>Bottom sheet</strong></td>
+            <td>UISheetPresentationController with .medium() + .large() detents.</td>
+            <td>ModalBottomSheet (Compose) with grab handle.</td>
+            <td>Dialog / Drawer with backdrop-blur. Match radius (16-20px).</td></tr>
+          <tr><td><strong>Navigation back</strong></td>
+            <td>Edge-swipe gesture; chevron-left top-left.</td>
+            <td>System back gesture; up-affordance in app bar.</td>
+            <td>Breadcrumb / back button. Don't depend on browser back.</td></tr>
+          <tr><td><strong>Source provenance</strong></td>
+            <td>Inline pill, role .accessibilityHint.</td>
+            <td>InputChip with leading icon; same a11y description.</td>
+            <td>Pill (badge) — never colour-only.</td></tr>
+          <tr><td><strong>Confirm send</strong></td>
+            <td>SF Symbols `checkmark.circle.fill` + popin + haptic .success.</td>
+            <td>Material `check_circle` + Snackbar instead of full-screen if mid-flow.</td>
+            <td>Full-screen success card; CTA back to Activity.</td></tr>
+          <tr><td><strong>Magic Apply (v2)</strong></td>
+            <td>Stage progressive checkmark popins; haptic .light per step, .success on land.</td>
+            <td>Same staged ticks; consider Material LinearProgressIndicator at top.</td>
+            <td>Same animation; subtle <code>aria-live="polite"</code> announcer per step.</td></tr>
+        </tbody>
+      </table>
+    </>
+  );
+}
+
+function HandoffMotion() {
+  return (
+    <table className="ho-table">
+      <thead>
+        <tr><th>Animation</th><th>Duration</th><th>Curve</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        {HANDOFF.tokens.motion.map(m => (
+          <tr key={m.name}>
+            <td><strong>{m.name}</strong></td>
+            <td><code>{m.dur}</code></td>
+            <td><code>{m.curve}</code></td>
+            <td>{m.note}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function HandoffA11y() {
+  return (
+    <div className="ho-card">
+      <h3>Accessibility checklist</h3>
+      <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7, color: "var(--ink-mute)" }}>
+        {HANDOFF.a11y.map((line, i) => <li key={i} style={{ marginBottom: 6 }}>{line}</li>)}
+      </ul>
+      <h3 style={{ marginTop: 24 }}>State machine summary</h3>
+      <pre style={{
+        margin: 0, padding: 14, background: "#fafafa",
+        borderRadius: 8, fontSize: 11, lineHeight: 1.6,
+        overflowX: "auto",
+        fontFamily: "var(--w-font-family-mono, ui-monospace, 'SF Mono', Menlo, monospace)",
+        color: "var(--ink)",
+      }}>
+{`stillingsannonse (job ad)
+   ↓  user taps Apply
+preview (loading: cv → letter → ready)
+   ↓  ↓  ↑ source pills, Endre opens picker
+   ↓  ↓
+   ↓  user taps Endre on CV row
+   ↓  ⇒ edit:cv (picker)  →  cv-preview  →  Add to application
+   ↓                              ↑  ←  back to picker
+   user taps Send
+       ↓ (if missing → friendly recovery state)
+   confirmation (sent)
+       ↓
+   activity (drafts | sent)
+
+v2.0 'Magic Apply' branch:
+   stillingsannonse → preview (magic) → ticks 1→4 → confirmation`}
+      </pre>
+    </div>
+  );
+}
+
 function SmCard({ story, release, now, draggable, onDragStart }) {
   return (
     <div className={"sm-card " + release + (story.feature ? " sm-card-feature" : "")}
@@ -4191,6 +4796,7 @@ function TopNav({ view, onChange }) {
     { id: "tree",      label: "Opportunity tree" },
     { id: "matrix",    label: "Impact–Effort" },
     { id: "storymap",  label: "Storymap" },
+    { id: "handoff",   label: "Handoff" },
   ];
   const containerRef = useRef(null);
   const btnRefs = useRef({});
@@ -4580,6 +5186,33 @@ function AppShell() {
     setSolutions(SOLUTIONS.map(s => ({ ...s })));
     try { localStorage.removeItem("vend-solutions"); } catch (_) {}
   }
+
+  // Inspect mode — click any element on the iPhone to see its computed specs.
+  const [inspect, setInspect] = useState(false);
+  const [inspectInfo, setInspectInfo] = useState(null);
+  function onStageClick(e) {
+    if (!inspect) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const el = e.target;
+    if (!el || el.nodeType !== 1) return;
+    const cs = window.getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    setInspectInfo({
+      tag: el.tagName.toLowerCase(),
+      cls: (el.className && typeof el.className === "string") ? el.className.slice(0, 60) : "",
+      w: Math.round(rect.width),
+      h: Math.round(rect.height),
+      font: cs.fontFamily.split(",")[0].replace(/['"]/g, ""),
+      size: cs.fontSize,
+      weight: cs.fontWeight,
+      color: cs.color,
+      bg: cs.backgroundColor,
+      pad: cs.padding,
+      radius: cs.borderRadius,
+      x: e.clientX, y: e.clientY,
+    });
+  }
   const [userState, setUserState] = useState("ready");
   const [screen, setScreen] = useState("jobad");
   const [overlay, setOverlay] = useState(null);
@@ -4735,10 +5368,30 @@ function AppShell() {
           />
         </div>
       )}
+      {view === "handoff" && (
+        <div key="handoff-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
+          <HandoffView />
+        </div>
+      )}
+      {inspect && inspectInfo && (
+        <div className="inspect-pop" style={{
+          left: Math.min(inspectInfo.x + 14, window.innerWidth - 300),
+          top:  Math.min(inspectInfo.y + 14, window.innerHeight - 200),
+        }}>
+          <span className="tag">{inspectInfo.tag}</span>
+          <div><span className="key">size</span> <span className="val">{inspectInfo.w}×{inspectInfo.h}</span></div>
+          <div><span className="key">font</span> <span className="val">{inspectInfo.font} · {inspectInfo.size} · {inspectInfo.weight}</span></div>
+          <div><span className="key">color</span> <span className="val">{inspectInfo.color}</span></div>
+          <div><span className="key">bg</span> <span className="val">{inspectInfo.bg}</span></div>
+          <div><span className="key">padding</span> <span className="val">{inspectInfo.pad}</span></div>
+          <div><span className="key">radius</span> <span className="val">{inspectInfo.radius}</span></div>
+          {inspectInfo.cls && <div style={{ marginTop: 6, color: "#9eb3ff" }}>{inspectInfo.cls}</div>}
+        </div>
+      )}
       {view === "prototype" && (
     <div className="layout">
       <LangCtx.Provider value={lang}>
-      <div className="stage">
+      <div className={"stage" + (inspect ? " inspect-active" : "")} onClickCapture={onStageClick}>
         <Device platform={platform}>
           <div style={{
             position: "absolute", inset: 0,
@@ -4838,6 +5491,41 @@ function AppShell() {
             { id: "en", label: "EN" },
             { id: "no", label: "NO" },
           ]} />
+
+        <Segmented
+          label="Platform"
+          badge="Beta"
+          valueLabel={platform === "ios" ? "iOS HIG" : platform === "android" ? "Material 3" : "Web"}
+          value={platform}
+          onChange={setPlatform}
+          options={[
+            { id: "ios",     label: "iOS",     icon: <AppleGlyph /> },
+            { id: "android", label: "Android", icon: <AndroidGlyph /> },
+            { id: "web",     label: "Web",     icon: <GlobeGlyph /> },
+          ]} />
+
+        <div className="controls-group">
+          <div
+            className={"dev-toggle" + (inspect ? " on" : "")}
+            role="switch"
+            aria-checked={inspect}
+            tabIndex={0}
+            onClick={() => { setInspect(v => !v); setInspectInfo(null); }}
+            onKeyDown={(e) => {
+              if (e.key === " " || e.key === "Enter") {
+                e.preventDefault();
+                setInspect(v => !v); setInspectInfo(null);
+              }
+            }}>
+            <span className="label">Inspect mode</span>
+            <span className="switch" aria-hidden="true" />
+          </div>
+          <p className="hint" style={{ marginTop: 6 }}>
+            {inspect
+              ? "Click any element on the iPhone to inspect specs."
+              : "Tap to enable inline spec inspection."}
+          </p>
+        </div>
 
         <Dropdown
           label="User state"
@@ -4953,13 +5641,16 @@ const GlobeGlyph = () => (
   </svg>
 );
 
-function Segmented({ label, valueLabel, options, value, onChange }) {
+function Segmented({ label, valueLabel, options, value, onChange, badge }) {
   const idx = Math.max(0, options.findIndex(o => o.id === value));
   const count = options.length;
   return (
     <div className="controls-group">
       <div className="controls-label">
-        <span>{label}</span>
+        <span style={{ display: "inline-flex", alignItems: "center" }}>
+          {label}
+          {badge && <span className="beta-pill">{badge}</span>}
+        </span>
         {valueLabel && <span className="value">{valueLabel}</span>}
       </div>
       <div className="seg" role="tablist" aria-label={label}>
