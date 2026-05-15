@@ -525,40 +525,51 @@
   /* ─── Password gate ─── */
   .pwgate {
     position: fixed; inset: 0; z-index: 999;
-    background: #1a1a1a;
+    background:
+      radial-gradient(80% 60% at 50% 40%, #262626 0%, #161616 60%, #0f0f0f 100%);
     display: flex; align-items: center; justify-content: center;
     padding: 24px;
     animation: fadein 360ms var(--ease-modal);
   }
   .pwgate-card {
-    width: 100%; max-width: 380px;
-    background: #242424; border: 1px solid #2e2e2e;
-    border-radius: 22px; padding: 28px 26px;
+    width: 100%; max-width: 320px;
+    background: #1f1f20;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 24px 22px 20px;
     color: #ededed; text-align: center;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.55),
+      0 1px 0 rgba(255,255,255,0.04) inset;
   }
   .pwgate-card h1 {
-    margin: 0 0 6px; font-size: 18px; font-weight: 700;
+    margin: 0 0 6px; font-size: 17px; font-weight: 700;
     letter-spacing: -0.2px; color: #fff;
+    line-height: 1.3;
   }
-  .pwgate-card p {
-    margin: 0 0 22px; font-size: 13px; color: #9a9a9a;
-    line-height: 1.5;
+  .pwgate-card .pwgate-sub {
+    margin: 0 0 18px; font-size: 13px; color: #9a9a9a;
+    line-height: 1.45;
   }
-  .pwgate-card form { display: flex; flex-direction: column; gap: 12px; }
+  .pwgate-card form {
+    display: flex; flex-direction: column; gap: 10px;
+    margin: 0;
+  }
   .pwgate-card input {
-    appearance: none; width: 100%;
-    background: #1c1c1c; color: #fff;
-    border: 1px solid #383838; border-radius: 12px;
-    padding: 12px 14px;
-    font: 500 15px/1.2 var(--sys-text); letter-spacing: -0.1px;
+    appearance: none; -webkit-appearance: none;
+    width: 100%; box-sizing: border-box;
+    background: #131313; color: #fff;
+    border: 1px solid #2f2f2f; border-radius: 10px;
+    padding: 0 14px; height: 44px;
+    font: 500 14px/1 var(--sys-text); letter-spacing: -0.1px;
+    text-align: center;
     transition: border-color 160ms var(--ease-modal),
                 box-shadow 160ms var(--ease-modal);
   }
-  .pwgate-card input::placeholder { color: #6b6b6b; }
+  .pwgate-card input::placeholder { color: #5a5a5a; font-weight: 500; }
   .pwgate-card input:focus {
     outline: none; border-color: #0063fb;
-    box-shadow: 0 0 0 3px rgba(0,99,251,0.30);
+    box-shadow: 0 0 0 3px rgba(0,99,251,0.25);
   }
   .pwgate-card input.err {
     border-color: #cc1414;
@@ -567,24 +578,33 @@
   }
   @keyframes pwshake {
     0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(7px); }
-    60% { transform: translateX(-4px); }
-    80% { transform: translateX(3px); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
   }
   .pwgate-card button {
     appearance: none; border: 0;
     background: #0063fb; color: #fff;
-    font: 600 15px/1 var(--sys-text); letter-spacing: -0.1px;
-    border-radius: 12px; padding: 13px 14px;
+    font: 600 14px/1 var(--sys-text); letter-spacing: -0.05px;
+    border-radius: 10px; padding: 0;
+    height: 44px;
     cursor: pointer;
     transition: background 160ms var(--ease-modal),
                 transform 100ms var(--ease-tap);
   }
   .pwgate-card button:hover { background: #0058e0; }
-  .pwgate-card button:active { transform: scale(0.97); }
-  .pwgate-err { color: #ff8080; font-size: 12px; margin: 4px 0 0; }
-  .pwgate-foot { color: #6b6b6b; font-size: 11px; margin-top: 18px; }
+  .pwgate-card button:active { transform: scale(0.98); }
+  .pwgate-err {
+    color: #ff8080; font-size: 12px; line-height: 1.3;
+    margin: 2px 0 -2px;
+  }
+  .pwgate-foot {
+    color: #6b6b6b; font-size: 11px;
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
 
   /* ─── Dev-panel dropdowns ─── */
   .dev-select {
@@ -4454,13 +4474,14 @@ function PasswordGate({ onUnlock }) {
     <div className="pwgate">
       <div className="pwgate-card">
         <h1>FINN Jobs · Apply prototype</h1>
-        <p>Internal preview. Enter the password to continue.</p>
+        <p className="pwgate-sub">Internal preview. Enter the password to continue.</p>
         <form onSubmit={submit}>
           <input
             type="password"
             placeholder="Password"
             value={pw}
             autoFocus
+            autoComplete="current-password"
             className={err ? "err" : ""}
             onChange={(e) => { setPw(e.target.value); if (err) setErr(false); }}
           />
