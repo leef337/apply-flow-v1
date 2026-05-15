@@ -1076,11 +1076,10 @@
     font-size: 9px; font-weight: 800;
     letter-spacing: 0.08em; text-transform: uppercase;
     padding: 2px 5px; border-radius: 4px;
-    background: linear-gradient(135deg, #ffce2e 0%, #f0a800 100%);
-    color: #4a2e00;
+    background: linear-gradient(135deg, #9aefff 0%, #62E3FF 100%);
+    color: #073b56;
     margin-left: 6px;
     line-height: 1.2;
-    text-transform: uppercase;
   }
   .sm-now-badge {
     display: inline-flex; align-items: center; gap: 4px;
@@ -1593,6 +1592,8 @@ function Fact({ label, children }) {
 // `embedded` skips the logo + company + title block (the sheet header already shows them).
 function JobAdContent({ job, embedded = false }) {
   const t = useT();
+  const platform = usePlatform();
+  const cardR = PLATFORM_RADII[platform].card;
   return (
     <>
       <div style={{ padding: embedded ? "8px 20px 16px" : "18px 20px 22px" }}>
@@ -1616,9 +1617,10 @@ function JobAdContent({ job, embedded = false }) {
       </div>
 
       <div style={{
-        margin: "0 16px 20px", padding: 16, borderRadius: 14,
+        margin: "0 16px 20px", padding: 16, borderRadius: cardR,
         background: "#f7f7f9", display: "grid", gap: 16,
         gridTemplateColumns: "1fr 1fr",
+        boxShadow: platform === "android" ? "0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06)" : "none",
       }}>
         <Fact label={t({ en: "Deadline", no: "Frist" })}>
           {t({ en: "26 May 2026", no: "26. mai 2026" })}
@@ -2036,7 +2038,7 @@ function ApplicationPreviewSheet({
         {anyMissing && sheetTab === "application" && (
           <div style={{
             margin: "0 16px 8px", padding: "12px 14px",
-            background: "#fadddd", borderRadius: 12,
+            background: "#fadddd", borderRadius: PLATFORM_RADII[platform].card,
             display: "flex", gap: 10, alignItems: "flex-start",
             animation: "fadein 300ms var(--ease-modal)",
           }}>
@@ -2060,7 +2062,7 @@ function ApplicationPreviewSheet({
             margin: "0 16px 10px", padding: "10px 14px",
             background: "linear-gradient(180deg, #f4f8ff 0%, #eaf2ff 100%)",
             border: "1px solid rgba(0,99,251,0.18)",
-            borderRadius: 12,
+            borderRadius: PLATFORM_RADII[platform].card,
             display: "flex", alignItems: "center", gap: 10,
             animation: "fadein 300ms var(--ease-modal)",
           }}>
@@ -3778,15 +3780,18 @@ function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
 // ACTIVITY screen — Drafts + Sent applications
 // ===========================================================
 function ActivityCard({ job, statusPill, statusColor, statusBg, time, onClick }) {
+  const platform = usePlatform();
+  const cardR = PLATFORM_RADII[platform].card;
   return (
     <button
       className="press"
       onClick={() => { haptic("tap"); onClick?.(); }}
       style={{
         display: "flex", alignItems: "center", gap: 14, width: "100%",
-        padding: "14px 14px 14px 12px", borderRadius: 14,
+        padding: "14px 14px 14px 12px", borderRadius: cardR,
         background: "#fff", border: "1px solid #ededed",
         cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+        boxShadow: platform === "android" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
         transition: "background 120ms var(--ease-out), border-color 120ms var(--ease-out)",
       }}>
       <CompanyLogo size={44} radius={10} initials={job.initials} color={job.brandColor} logo={job.logo} />
@@ -3837,6 +3842,8 @@ function ActivityEmpty({ title, hint }) {
 
 function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts", onOpenDraft }) {
   const t = useT();
+  const platform = usePlatform();
+  const cardR = PLATFORM_RADII[platform].card;
   const { statusBarH } = useMetrics();
   const [tab, setTab] = useState(initialTab);
 
@@ -3936,6 +3943,8 @@ function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts",
 // ===========================================================
 function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
   const t = useT();
+  const platform = usePlatform();
+  const cardR = PLATFORM_RADII[platform].card;
   const { statusBarH, homeArea } = useMetrics();
   useEffect(() => { haptic("ok"); }, []);
   return (
@@ -3975,11 +3984,12 @@ function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
         )}
 
         <div style={{
-          width: "100%", padding: 14, borderRadius: 14,
+          width: "100%", padding: 14, borderRadius: cardR,
           background: "#f7f7f9",
           display: "flex", alignItems: "center", gap: 12, marginTop: 4,
+          boxShadow: platform === "android" ? "0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06)" : "none",
         }}>
-          <CompanyLogo size={44} radius={10} initials={job.initials} color={job.brandColor} logo={job.logo} />
+          <CompanyLogo size={44} radius={Math.min(cardR - 4, 12)} initials={job.initials} color={job.brandColor} logo={job.logo} />
           <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
             <p style={{
               fontSize: 15, fontWeight: 600, color: "#1d1d1d", margin: 0, lineHeight: 1.3,
