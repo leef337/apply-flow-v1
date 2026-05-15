@@ -950,6 +950,136 @@
   .smap-legend .swatch.edge { background: #fff3e0; border-color: #c97614; }
   .smap-legend .swatch.magic { background: #f1ebff; border-color: #6f3bd0; }
 
+  /* ─── Platform virtual keyboards ─── */
+  .kbd {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    z-index: 200; /* above every sheet */
+    pointer-events: none; /* presentational only */
+    transform: translateY(100%);
+    transition: transform 320ms var(--ease-modal);
+  }
+  .kbd.open { transform: translateY(0); }
+  .kbd-ios {
+    background: #d1d3da;
+    padding: 0 3px 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  }
+  .kbd-ios .kbd-suggest {
+    height: 42px;
+    display: flex; align-items: center;
+    padding: 0 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    gap: 6px;
+    background: #d1d3da;
+  }
+  .kbd-ios .kbd-suggest .sg {
+    flex: 1; text-align: center;
+    font-size: 14px; font-weight: 500; color: #1d1d1d;
+    padding: 6px 8px;
+    border-radius: 6px;
+  }
+  .kbd-ios .kbd-suggest .sg.q { color: #1d1d1d; }
+  .kbd-ios .kbd-suggest .sg + .sg { border-left: 1px solid rgba(0,0,0,0.1); border-radius: 0; padding: 6px 0; }
+  .kbd-ios .kbd-row {
+    display: grid; gap: 6px;
+    padding: 6px 0;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+  .kbd-ios .kbd-row.row2 { padding-left: 5%; padding-right: 5%; }
+  .kbd-ios .kbd-row.row3 { grid-template-columns: 1.4fr repeat(7, 1fr) 1.4fr; }
+  .kbd-ios .kbd-key {
+    height: 42px; border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.20);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 400; color: #1d1d1d;
+    letter-spacing: -0.2px;
+  }
+  .kbd-ios .kbd-key.dark {
+    background: #adb1bd; color: #1d1d1d;
+    font-size: 16px; font-weight: 500;
+  }
+  .kbd-ios .kbd-row.bottom {
+    grid-template-columns: 1fr 1fr 4fr 2fr;
+  }
+  .kbd-ios .kbd-key.space { font-size: 14px; font-weight: 400; }
+  .kbd-ios .kbd-key.return {
+    background: #0063fb; color: #fff;
+    font-size: 14px; font-weight: 600;
+  }
+  .kbd-ios .kbd-home {
+    height: 22px;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 6px;
+  }
+  .kbd-ios .kbd-home::after {
+    content: ""; display: block;
+    width: 134px; height: 5px; border-radius: 100px;
+    background: rgba(0,0,0,0.40);
+  }
+
+  /* Gboard / Material */
+  .kbd-android {
+    background: #ecebec;
+    padding: 6px 4px 10px;
+    font-family: 'Roboto Flex', Roboto, 'Google Sans', system-ui, sans-serif;
+  }
+  .kbd-android .kbd-suggest {
+    height: 40px;
+    display: flex; align-items: center;
+    padding: 0 6px;
+    gap: 4px;
+    background: #ecebec;
+  }
+  .kbd-android .kbd-suggest .gicon {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #4285f4;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .kbd-android .kbd-suggest .sg {
+    flex: 1; text-align: center;
+    font-size: 14px; color: #202124;
+    padding: 6px 4px;
+  }
+  .kbd-android .kbd-row {
+    display: grid; gap: 4px;
+    padding: 3px 0;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+  .kbd-android .kbd-row.row2 { padding-left: 4%; padding-right: 4%; }
+  .kbd-android .kbd-row.row3 { grid-template-columns: 1.4fr repeat(7, 1fr) 1.4fr; }
+  .kbd-android .kbd-key {
+    height: 44px; border-radius: 6px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 500; color: #202124;
+  }
+  .kbd-android .kbd-key.dark {
+    background: #d6d8db; color: #202124;
+    font-size: 14px; font-weight: 500;
+  }
+  .kbd-android .kbd-row.bottom { grid-template-columns: 1fr 1fr 1fr 5fr 1fr 1fr; }
+  .kbd-android .kbd-key.space { font-size: 13px; font-weight: 500; }
+  .kbd-android .kbd-key.action {
+    background: #4285f4; color: #fff;
+    font-size: 14px; font-weight: 600;
+  }
+  .kbd-android .kbd-nav {
+    height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2px 0 6px;
+    background: #ecebec;
+  }
+  .kbd-android .kbd-nav::after {
+    content: ""; display: block;
+    width: 108px; height: 3px; border-radius: 3px;
+    background: rgba(0,0,0,0.55);
+  }
+
   /* ─── Inspect mode overlay ─── */
   .inspect-active * { cursor: crosshair !important; }
   .inspect-hilite {
@@ -1446,15 +1576,132 @@ function WebFrame({ children }) {
 }
 
 // ===========================================================
-// Universal device — picks frame from platform context
-// ===========================================================
+// Universal device — picks frame from platform context.
+// Listens for input focus inside the frame and surfaces a platform-appropriate
+// virtual keyboard. Suppressed on real mobile (the OS keyboard takes over).
 function Device({ platform, children }) {
+  const isMobile = useIsMobile();
+  const [kbdOpen, setKbdOpen] = useState(false);
+  const wrapRef = useRef(null);
+
+  // We attach native focusin/focusout to the wrapper since React's synthetic
+  // onFocus bubbles inconsistently across reparented portals (none here, but
+  // belt + braces) and we want this to work for every input/textarea added later.
+  useEffect(() => {
+    if (isMobile || platform === "web") return;
+    const node = wrapRef.current;
+    if (!node) return;
+    const handleIn = (e) => {
+      const tag = e.target && e.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target && e.target.isContentEditable)) {
+        setKbdOpen(true);
+      }
+    };
+    const handleOut = (e) => {
+      const tag = e.target && e.target.tagName;
+      if (tag !== "INPUT" && tag !== "TEXTAREA") return;
+      // Defer so re-focus to another input within the same tick doesn't flicker.
+      setTimeout(() => {
+        const a = document.activeElement;
+        if (!a || (a.tagName !== "INPUT" && a.tagName !== "TEXTAREA")) {
+          setKbdOpen(false);
+        }
+      }, 0);
+    };
+    node.addEventListener("focusin", handleIn);
+    node.addEventListener("focusout", handleOut);
+    return () => {
+      node.removeEventListener("focusin", handleIn);
+      node.removeEventListener("focusout", handleOut);
+    };
+  }, [isMobile, platform]);
+
   const inner = (
-    <PlatformCtx.Provider value={platform}>{children}</PlatformCtx.Provider>
+    <PlatformCtx.Provider value={platform}>
+      <div ref={wrapRef} style={{ position: "absolute", inset: 0 }}>
+        {children}
+        <MobileKeyboard platform={platform} open={kbdOpen} />
+      </div>
+    </PlatformCtx.Provider>
   );
   if (platform === "android") return <AndroidDevice>{inner}</AndroidDevice>;
   if (platform === "web")     return <WebFrame>{inner}</WebFrame>;
   return <IOSDevice>{inner}</IOSDevice>;
+}
+
+function MobileKeyboard({ platform, open }) {
+  if (platform === "web") return null;
+  if (platform === "android") return <AndroidKeyboard open={open} />;
+  return <IOSKeyboard open={open} />;
+}
+
+function IOSKeyboard({ open }) {
+  const row1 = "qwertyuiop".split("");
+  const row2 = "asdfghjkl".split("");
+  const row3 = "zxcvbnm".split("");
+  return (
+    <div className={"kbd kbd-ios" + (open ? " open" : "")} aria-hidden="true">
+      <div className="kbd-suggest">
+        <span className="sg q">"</span>
+        <span className="sg">FINN</span>
+        <span className="sg">finn</span>
+      </div>
+      <div className="kbd-row row1">
+        {row1.map(k => <span key={k} className="kbd-key">{k}</span>)}
+      </div>
+      <div className="kbd-row row2">
+        {row2.map(k => <span key={k} className="kbd-key">{k}</span>)}
+      </div>
+      <div className="kbd-row row3">
+        <span className="kbd-key dark">⇧</span>
+        {row3.map(k => <span key={k} className="kbd-key">{k}</span>)}
+        <span className="kbd-key dark">⌫</span>
+      </div>
+      <div className="kbd-row bottom">
+        <span className="kbd-key dark">123</span>
+        <span className="kbd-key dark">🙂</span>
+        <span className="kbd-key space">space</span>
+        <span className="kbd-key return">return</span>
+      </div>
+      <div className="kbd-home" />
+    </div>
+  );
+}
+
+function AndroidKeyboard({ open }) {
+  const row1 = "qwertyuiop".split("");
+  const row2 = "asdfghjkl".split("");
+  const row3 = "zxcvbnm".split("");
+  return (
+    <div className={"kbd kbd-android" + (open ? " open" : "")} aria-hidden="true">
+      <div className="kbd-suggest">
+        <span className="gicon">G</span>
+        <span className="sg">FINN</span>
+        <span className="sg" style={{ fontWeight: 600 }}>finn</span>
+        <span className="sg">finne</span>
+      </div>
+      <div className="kbd-row row1">
+        {row1.map(k => <span key={k} className="kbd-key">{k}</span>)}
+      </div>
+      <div className="kbd-row row2">
+        {row2.map(k => <span key={k} className="kbd-key">{k}</span>)}
+      </div>
+      <div className="kbd-row row3">
+        <span className="kbd-key dark">⇧</span>
+        {row3.map(k => <span key={k} className="kbd-key">{k}</span>)}
+        <span className="kbd-key dark">⌫</span>
+      </div>
+      <div className="kbd-row bottom">
+        <span className="kbd-key dark">?123</span>
+        <span className="kbd-key dark">,</span>
+        <span className="kbd-key dark">🙂</span>
+        <span className="kbd-key space">English (US)</span>
+        <span className="kbd-key dark">.</span>
+        <span className="kbd-key action">↵</span>
+      </div>
+      <div className="kbd-nav" />
+    </div>
+  );
 }
 
 // Per-platform device metrics — fixes top-chrome overflow and bottom
