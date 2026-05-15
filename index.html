@@ -93,6 +93,17 @@
   }
   .dev-panel .legend strong { color: #ededed; }
   .dev-panel .legend p { margin: 0 0 8px; }
+  .dev-group {
+    margin: 18px 0 10px;
+    padding-top: 16px;
+    border-top: 1px solid #2e2e2e;
+  }
+  .dev-group:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
+  .dev-group-title {
+    font-size: 10px; font-weight: 700;
+    color: #9a9a9a; text-transform: uppercase; letter-spacing: 0.10em;
+    margin: 0 0 12px;
+  }
 
   /* FINN/WARP-styled segmented controls */
   .controls-group { margin-bottom: 16px; }
@@ -614,6 +625,64 @@
     40% { transform: translateX(5px); }
     60% { transform: translateX(-3px); }
     80% { transform: translateX(2px); }
+  }
+  /* First-use discovery hint on the inactive in-sheet tab. Runs once. */
+  @keyframes tabHint {
+    0%   { transform: translateY(0); color: #6b6b6b; }
+    30%  { transform: translateY(-2px); color: #0063fb; }
+    60%  { transform: translateY(0); color: #6b6b6b; }
+    100% { transform: translateY(0); color: #6b6b6b; }
+  }
+  .tab-hint {
+    animation: tabHint 1800ms var(--ease-modal) 1000ms 1;
+  }
+
+  /* ─── Confetti burst ─── */
+  @keyframes confetti-pop {
+    0%   { transform: translate3d(-50%, -50%, 0) rotate(0deg); opacity: 1; }
+    70%  { opacity: 1; }
+    100% {
+      transform: translate3d(calc(var(--dx) - 50%), calc(var(--dy) - 50%), 0) rotate(var(--rot));
+      opacity: 0;
+    }
+  }
+  .confetti {
+    position: absolute;
+    pointer-events: none;
+    z-index: 60;
+  }
+  .confetti .cf {
+    position: absolute;
+    left: 0; top: 0;
+    opacity: 0;
+    animation-name: confetti-pop;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+    animation-fill-mode: forwards;
+    will-change: transform, opacity;
+  }
+
+  /* ─── Konami egg toast ─── */
+  .egg-toast {
+    position: fixed; left: 50%; top: 32px; transform: translate(-50%, -40px);
+    z-index: 1000;
+    background: linear-gradient(135deg, #0063fb 0%, #6f3bd0 100%);
+    color: #fff; padding: 10px 18px;
+    border-radius: 9999px;
+    font-family: var(--sys-text); font-size: 13px; font-weight: 600;
+    letter-spacing: -0.1px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.10) inset;
+    opacity: 0;
+    animation: eggToast 2800ms var(--ease-modal) forwards;
+  }
+  @keyframes eggToast {
+    0%   { transform: translate(-50%, -40px); opacity: 0; }
+    15%  { transform: translate(-50%, 0); opacity: 1; }
+    80%  { transform: translate(-50%, 0); opacity: 1; }
+    100% { transform: translate(-50%, -40px); opacity: 0; }
+  }
+  .egg-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    pointer-events: none;
   }
   .pwgate-card button {
     appearance: none; border: 0;
@@ -1330,6 +1399,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@rive-app/canvas@2.21.5"></script>
 
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
@@ -1381,6 +1451,120 @@ function Icon({ name, size = 24, color = "currentColor", stroke = 1.8, fill = "n
       stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"
       style={{ display: "block", flexShrink: 0 }}>
       {d.split("M").filter(Boolean).map((seg, i) => (<path key={i} d={"M" + seg} />))}
+    </svg>
+  );
+}
+
+// ===========================================================
+// FINN AI logo — used at agentic touchpoints (letter draft, Tailor, Magic).
+// The mark is four blue quadrants curving inward; the negative-space cross is
+// the 'AI' tile. Keep a tinted background behind it so the cross reads.
+// ===========================================================
+function AILogo({ size = 28, radius }) {
+  // Wrap the SVG in an HTML element with overflow:hidden + border-radius. This
+  // gives us iOS-app-icon-style rounded corners that visually rhyme with the
+  // other circular status badges, without SVG-internal clipPath ID conflicts.
+  const r = radius != null ? radius : Math.round(size * 0.22);
+  return (
+    <span style={{
+      display: "inline-flex",
+      width: size, height: size,
+      borderRadius: r, overflow: "hidden",
+      flexShrink: 0,
+    }}>
+      <svg width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
+        <rect width="56" height="56" fill="#ffffff" />
+        <path fillRule="evenodd" clipRule="evenodd"
+          d="M9.19869 28L0 28L0 56H28V46.8013C28 36.4342 19.5658 28 9.19869 28Z" fill="#0063FB" />
+        <path fillRule="evenodd" clipRule="evenodd"
+          d="M9.19869 28L0 28L0 0H28V9.19869C28 19.5658 19.5658 28 9.19869 28Z" fill="#0063FB" />
+        <path fillRule="evenodd" clipRule="evenodd"
+          d="M46.8013 28L56 28L56 56H28V46.8013C28 36.4342 36.4342 28 46.8013 28Z" fill="#0063FB" />
+        <path fillRule="evenodd" clipRule="evenodd"
+          d="M46.8013 28L56 28L56 0H28V9.19869C28 19.5658 36.4342 28 46.8013 28Z" fill="#0063FB" />
+      </svg>
+    </span>
+  );
+}
+
+// ===========================================================
+// Rive spinner — loads the FINN AI spinner .riv file via the Rive web runtime
+// and renders it on a canvas. Falls back to a CSS spinner if the runtime or
+// asset fails to load (so the prototype still works offline / on slow nets).
+// ===========================================================
+function RiveSpinner({ size = 28, src }) {
+  const canvasRef = useRef(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    if (typeof window === "undefined" || !window.rive) {
+      setFailed(true);
+      return;
+    }
+    let r;
+    try {
+      r = new window.rive.Rive({
+        src,
+        canvas: canvasRef.current,
+        autoplay: true,
+        fit: window.rive.Fit ? window.rive.Fit.Contain : "contain",
+        alignment: window.rive.Alignment ? window.rive.Alignment.Center : "center",
+        onLoadError: () => setFailed(true),
+      });
+    } catch (e) {
+      setFailed(true);
+    }
+    return () => {
+      try { if (r && r.cleanup) r.cleanup(); } catch (_) {}
+    };
+  }, [src]);
+
+  if (failed) {
+    return (
+      <span style={{
+        width: size, height: size, borderRadius: 9999,
+        border: "2px solid rgba(0,99,251,0.20)",
+        borderTopColor: "#0063fb",
+        animation: "spin 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite",
+        display: "inline-block",
+      }} />
+    );
+  }
+  return (
+    <canvas
+      ref={canvasRef}
+      width={size * 2} height={size * 2}
+      style={{ width: size, height: size, display: "block" }}
+    />
+  );
+}
+
+// ===========================================================
+// Success illustration — used on the Confirmation screen.
+// Hand-drawn FINN-branded artwork; replaces the generic green check.
+// ===========================================================
+function SuccessIllustration({ size = 180 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 224 224" fill="none" aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg">
+      <g clipPath="url(#suc_clip)">
+        <path d="M164.14 183.104C174.825 172.113 178.791 158.638 172.999 153.007C167.207 147.377 153.85 151.723 143.165 162.714C132.48 173.706 128.514 187.18 134.306 192.811C140.098 198.441 153.455 194.095 164.14 183.104Z" fill="black" />
+        <path fillRule="evenodd" clipRule="evenodd" d="M174.319 165.919C175.904 160.533 175.405 155.97 172.687 153.329C169.969 150.687 165.395 150.317 160.056 152.054C154.739 153.783 148.789 157.572 143.486 163.027C138.184 168.481 134.565 174.536 132.986 179.899C131.401 185.285 131.9 189.848 134.618 192.49C137.335 195.131 141.91 195.502 147.249 193.765C152.566 192.035 158.516 188.246 163.818 182.792C169.121 177.338 172.74 171.282 174.319 165.919ZM172.999 153.007C178.791 158.638 174.825 172.113 164.14 183.104C153.455 194.095 140.098 198.441 134.306 192.811C128.514 187.18 132.48 173.706 143.165 162.714C153.85 151.723 167.207 147.377 172.999 153.007Z" fill="black" />
+        <path d="M164.138 183.113C174.804 172.142 178.778 158.699 173.03 153.05C175.042 154.927 181.479 161.36 183.719 164.106C190.044 171.865 189.878 184.345 179.19 195.338C168.502 206.331 154.583 209.287 146.65 202.953C146.511 202.841 137.122 194.89 135.742 193.949C142.108 197.748 154.265 193.273 164.138 183.113Z" fill="#C7D5F9" />
+        <path d="M192.549 71.2253C188.876 70.6072 182.354 73.9131 179.491 76.3142C175.528 79.6198 171.752 83.1432 168.18 86.8681C166.836 73.4293 180.024 44.1013 175.088 24.064C173.833 18.9797 171.406 14.397 167.79 13.9714C162.572 13.3577 158.728 20.4534 156.296 23.9162L156.13 19.8845C155.915 14.7151 155.516 9.63071 153.442 4.90024C149.24 -4.60549 139.811 0.917867 135.17 10.8671C132.746 16.0545 133.575 28.2345 133.548 28.1091C131.559 19.4858 130.565 15.9514 124.262 17.9404C119.697 19.3828 117.704 24.6598 117.045 29.3858C116.387 34.1118 115.742 42.3453 115.643 42.2557C113.928 40.7102 111.303 40.2623 108.14 41.9645C104.108 44.1371 102.487 49.2663 102.585 53.8445C103.275 86.904 100.345 100.128 101.689 114.678C102.585 124.434 105.224 138.231 110.586 145.806C122.404 162.51 135.221 178.484 148.967 193.64C153.94 191.695 159.306 188.094 164.131 183.13C168.668 178.467 171.988 173.351 173.869 168.581C164.113 158.376 153.384 149.197 157.9 136.932C165.121 117.303 181.588 108.196 190.574 94.8239C193.105 91.0611 196.765 85.7124 197.186 81.197C197.607 76.6815 197.024 71.9779 192.549 71.2253Z" fill="black" />
+        <path fillRule="evenodd" clipRule="evenodd" d="M192.475 71.6671C190.774 71.3808 188.328 72.0053 185.893 73.0493C183.477 74.085 181.17 75.4903 179.779 76.6574L179.778 76.6582C175.828 79.9531 172.064 83.4652 168.504 87.1782L167.831 87.8794L167.734 86.9127C167.391 83.4817 167.976 79.0721 168.947 74.1171C169.55 71.0376 170.309 67.7189 171.097 64.2705C171.578 62.1686 172.069 60.0185 172.544 57.845C175.057 46.3198 177.093 34.0756 174.653 24.1712C174.033 21.6576 173.128 19.2945 171.951 17.5181C170.771 15.7368 169.36 14.6072 167.738 14.4163C165.358 14.1365 163.228 15.6077 161.331 17.7148C159.95 19.2494 158.762 21.0389 157.737 22.5827C157.357 23.1554 156.999 23.6942 156.662 24.1737L155.903 25.2554L155.682 19.9032C155.468 14.735 155.069 9.72658 153.032 5.08051C152.012 2.77337 150.703 1.44068 149.291 0.834932C147.881 0.230367 146.292 0.317696 144.642 1.00183C141.321 2.37942 137.87 6.13842 135.576 11.0564C134.998 12.2936 134.603 13.9763 134.342 15.8297C134.081 17.6766 133.958 19.6634 133.908 21.4925C133.859 23.3205 133.884 24.9844 133.92 26.184C133.938 26.7836 133.959 27.2668 133.974 27.5963C133.981 27.7615 133.988 27.8869 133.992 27.9717C133.993 27.9987 133.994 28.0224 133.995 28.0419C133.996 28.0523 133.996 28.0614 133.996 28.0692C133.996 28.0756 133.997 28.0848 133.997 28.0946C133.997 28.0991 133.997 28.1036 133.997 28.1081C133.997 28.1121 133.997 28.1197 133.996 28.1291C133.996 28.1297 133.995 28.1625 133.987 28.2017C133.979 28.2333 133.93 28.3451 133.875 28.4165C133.664 28.543 133.283 28.471 133.179 28.3631C133.154 28.3225 133.127 28.2601 133.12 28.24C133.117 28.2314 133.114 28.2186 133.112 28.2098C132.614 26.051 132.182 24.2299 131.717 22.7359C131.25 21.2379 130.761 20.1085 130.165 19.314C129.58 18.5353 128.897 18.0814 128.011 17.918C127.104 17.7507 125.941 17.8802 124.397 18.3676C122.257 19.0439 120.696 20.6242 119.581 22.6479C118.465 24.6746 117.814 27.1175 117.489 29.4476C117.161 31.7999 116.836 35.0305 116.58 37.6698C116.54 38.0878 116.501 38.4911 116.464 38.8735C116.385 39.6963 116.315 40.4228 116.257 40.9924C116.215 41.4092 116.178 41.7466 116.149 41.9781C116.135 42.0922 116.121 42.1887 116.109 42.2581C116.103 42.2889 116.095 42.3332 116.081 42.3748L116.081 42.3761C116.077 42.3899 116.058 42.4483 116.017 42.508C116 42.5326 115.934 42.6272 115.802 42.6763C115.725 42.7047 115.634 42.7146 115.54 42.6919C115.451 42.6705 115.386 42.6265 115.344 42.5885C113.793 41.1919 111.38 40.7297 108.353 42.3589M124.262 17.9404C129.979 16.1364 131.328 18.8761 133.014 25.8352C133.16 26.4378 133.309 27.0721 133.463 27.7378C133.491 27.8605 133.520 27.9843 133.548 28.1091C133.549 28.1104 133.549 28.1104 133.549 28.1090C133.550 28.0996 133.546 28.0303 133.540 27.9078C133.538 27.8591 133.535 27.8019 133.532 27.7368C133.513 27.3435 133.483 26.6589 133.461 25.7761C133.366 22.0039 133.420 14.6126 135.17 10.8671C139.811 0.917867 149.240 -4.60549 153.442 4.90024C155.516 9.63071 155.915 14.7151 156.130 19.8845L156.296 23.9162C156.432 23.7218 156.573 23.5159 156.719 23.3006C156.919 23.0038 157.128 22.6891 157.346 22.3616C159.779 18.6958 163.269 13.4397 167.790 13.9714C171.406 14.397 173.833 18.9797 175.088 24.064C178.024 35.9826 174.548 51.1882 171.532 64.3819C169.55 73.0474 167.768 80.845 168.131 86.2732C168.144 86.4748 168.161 86.6732 168.180 86.8681C168.317 86.7253 168.454 86.5828 168.592 86.4405C172.042 82.8733 175.680 79.493 179.491 76.3142C182.354 73.9131 188.876 70.6072 192.549 71.2253C197.024 71.9779 197.607 76.6815 197.186 81.197C196.774 85.6108 193.268 90.8208 190.746 94.5676C190.688 94.6538 190.631 94.7393 190.574 94.8239C187.224 99.808 182.836 104.2 178.274 108.764C170.597 116.446 162.429 124.619 157.900 136.932C153.824 148.001 162.165 156.557 171.002 165.621C171.957 166.600 172.918 167.586 173.869 168.581C171.988 173.351 168.668 178.467 164.131 183.130C159.306 188.094 153.940 191.695 148.967 193.640C135.221 178.484 122.404 162.510 110.586 145.806C105.224 138.231 102.585 124.434 101.689 114.678C101.040 107.649 101.388 100.930 101.844 92.1357C102.331 82.7238 102.942 70.9346 102.585 53.8445C102.487 49.2663 104.108 44.1371 108.140 41.9645C111.071 40.3870 113.540 40.6561 115.252 41.9341C115.268 41.9464 115.285 41.9587 115.301 41.9712C115.419 42.0613 115.533 42.1562 115.643 42.2557C115.646 42.2580 115.649 42.2547 115.652 42.2461C115.667 42.2065 115.689 42.0561 115.718 41.8145C115.721 41.7897 115.724 41.7639 115.727 41.7372C115.795 41.1506 115.895 40.1090 116.018 38.8326C116.287 36.0405 116.664 32.1243 117.045 29.3858C117.704 24.6598 119.697 19.3828 124.262 17.9404Z" fill="black" />
+        <path d="M88.6359 210.569C94.4279 204.939 90.4613 191.464 79.7764 180.472C69.0915 169.481 55.7343 165.135 49.9423 170.766C44.1504 176.396 48.1169 189.871 58.8019 200.862C69.4868 211.854 82.844 216.199 88.6359 210.569Z" fill="black" />
+        <path fillRule="evenodd" clipRule="evenodd" d="M89.9553 197.658C88.3764 192.294 84.7574 186.239 79.4552 180.785C74.153 175.330 68.2027 171.542 62.8859 169.812C57.547 168.075 52.9722 168.445 50.2546 171.087C47.537 173.729 47.0376 178.291 48.623 183.677C50.2019 189.041 53.8209 195.096 59.1231 200.550C64.4252 206.004 70.3756 209.793 75.6924 211.523C81.0312 213.260 85.6061 212.890 88.3237 210.248C91.0413 207.606 91.5407 203.043 89.9553 197.658ZM79.7764 180.472C90.4613 191.464 94.4279 204.939 88.6359 210.569C82.844 216.199 69.4868 211.854 58.8019 200.862C48.1169 189.871 44.1504 176.396 49.9423 170.766C55.7343 165.135 69.0915 169.481 79.7764 180.472Z" fill="black" />
+        <path d="M49.0586 189.004C49.0855 188.825 49.1168 188.645 49.1572 188.471C49.1348 188.592 49.0989 188.748 49.0586 189.004Z" fill="#FF716B" />
+        <path d="M58.8052 200.857C48.1393 189.887 44.1703 176.439 49.9132 170.790C47.9019 172.667 41.4647 179.100 39.2248 181.850C32.9041 189.604 33.0654 202.089 43.7537 213.078C54.4421 224.066 68.3602 227.027 76.2936 220.693C76.4325 220.581 85.8262 212.630 87.2060 211.693C80.8359 215.492 68.6828 211.017 58.8052 200.857Z" fill="#FF716B" />
+        <path d="M123.545 71.6066C123.581 64.8200 121.426 57.4868 117.390 55.3187C114.232 53.6165 112.086 55.9951 108.682 60.9227C108.606 61.0302 108.297 52.7877 107.638 48.0438C106.980 43.2999 104.502 32.6071 100.076 30.8018C95.6506 28.9965 90.3961 35.9758 88.8192 40.4957C90.2258 34.9410 87.7665 24.6782 84.2187 20.1583C80.6708 15.6383 76.7780 14.1825 72.2850 17.7303C68.2220 20.9332 66.4615 30.4076 66.2599 35.5771L66.0897 39.6087C66.0897 39.6087 63.8006 32.3697 58.5774 32.9879C54.9668 33.4089 52.1939 39.7073 51.5041 41.6066C44.3949 60.9809 56.1002 91.1646 54.7563 104.617C51.1860 100.896 47.4129 97.3760 43.4542 94.0718C40.5918 91.6842 37.3216 89.7490 33.5991 89.3638C27.8428 88.7635 26.1585 92.9743 26.7946 100.298C27.1843 104.818 29.8183 108.810 32.3493 112.555C41.3354 125.922 57.8024 135.029 65.0504 154.663C69.5614 166.928 58.8372 176.102 49.0761 186.307C50.9576 191.078 54.2770 196.193 58.8148 200.861C63.6125 205.820 68.9880 209.422 73.9649 211.366C87.6808 196.181 100.498 180.208 112.351 163.528C115.652 159.049 123.505 142.156 124.414 132.404C125.767 117.868 123.366 104.630 123.545 71.6066Z" fill="#4267D8" />
+        <path d="M69.8222 100.123C69.6293 100.123 69.4443 100.047 69.3075 99.9108C69.1707 99.7748 69.0932 99.5902 69.092 99.3974C69.092 94.5325 68.5231 75.0372 68.4022 72.6675C68.2006 68.6359 67.56 64.1876 66.9373 59.8738C65.9742 53.2081 65.0693 46.9053 65.5934 41.8657C65.6034 41.7707 65.6321 41.6786 65.6777 41.5947C65.7233 41.5107 65.7849 41.4366 65.8592 41.3765C65.9334 41.3164 66.0188 41.2715 66.1104 41.2443C66.202 41.2172 66.298 41.2084 66.3931 41.2184C66.4881 41.2284 66.5802 41.257 66.6641 41.3026C66.7481 41.3482 66.8222 41.4099 66.8823 41.4842C66.9424 41.5584 66.9873 41.6438 67.0144 41.7354C67.0415 41.827 67.0504 41.923 67.0404 42.018C66.5207 46.8784 67.4166 53.0916 68.3842 59.6677C69.0069 64.0129 69.6564 68.5015 69.8625 72.5958C69.9835 74.97 70.5524 94.5191 70.5524 99.3929C70.5524 99.5858 70.4761 99.7708 70.3401 99.9076C70.2041 100.044 70.0196 100.122 69.8267 100.123H69.8222ZM89.3219 100.033C89.5148 100.032 89.6994 99.9548 89.8354 99.818C89.9713 99.6812 90.0476 99.4962 90.0476 99.3033C90.0476 89.9409 90.0163 73.886 89.8998 71.5655C89.7654 68.8778 89.519 66.0063 89.2861 63.2469C88.641 55.6719 87.9736 47.837 89.3667 41.8299C89.3964 41.6469 89.3553 41.4595 89.2519 41.3057C89.1485 41.1519 88.9904 41.0431 88.8098 41.0015C88.6292 40.9599 88.4395 40.9886 88.2792 41.0817C88.1189 41.1748 88.0001 41.3254 87.9467 41.5029C86.5043 47.7295 87.1807 55.6808 87.8347 63.3679C88.0677 66.1183 88.3095 68.9584 88.4439 71.6372C88.5649 74.0114 88.5873 91.7955 88.5918 99.3078C88.5929 99.4999 88.6698 99.6838 88.8056 99.8196C88.9415 99.9554 89.1254 100.032 89.3175 100.033H89.3219ZM108.553 105.633C108.745 105.632 108.929 105.555 109.065 105.419C109.201 105.283 109.277 105.099 109.279 104.907C109.279 100.190 109.189 95.4419 109.059 92.8123C108.943 90.5143 108.723 87.8848 108.490 85.1074C107.729 76.0317 106.783 64.7341 109.305 59.9633C109.350 59.8789 109.378 59.7865 109.387 59.6914C109.396 59.5963 109.386 59.5004 109.358 59.4091C109.330 59.3178 109.284 59.2329 109.223 59.1593C109.162 59.0857 109.088 59.0248 109.003 58.9801C108.919 58.9354 108.826 58.9077 108.731 58.8987C108.636 58.8897 108.540 58.8995 108.449 58.9276C108.358 58.9557 108.273 59.0015 108.199 59.0624C108.125 59.1232 108.065 59.198 108.020 59.2824C105.296 64.4295 106.228 75.4807 107.039 85.2283C107.272 87.9967 107.487 90.6039 107.603 92.8840C107.733 95.4911 107.818 100.208 107.823 104.903C107.823 104.998 107.842 105.093 107.878 105.182C107.915 105.270 107.969 105.350 108.037 105.418C108.105 105.485 108.185 105.538 108.274 105.575C108.362 105.611 108.457 105.629 108.553 105.628V105.633Z" fill="black" />
+      </g>
+      <defs>
+        <clipPath id="suc_clip">
+          <rect width="224" height="224" fill="white" />
+        </clipPath>
+      </defs>
     </svg>
   );
 }
@@ -2149,6 +2333,21 @@ function ApplicationPreviewSheet({
   const letterLoading = loadingPhase === "loading-cv" || loadingPhase === "loading-letter";
   const allReady = loadingPhase === "ready";
   const [sheetTab, setSheetTab] = useState("application"); // "application" | "ad"
+  // First-time hint: pulse the inactive 'Job ad' tab once so users discover
+  // they can re-read the ad without losing the draft. We use sessionStorage
+  // so it stops nagging after the user has seen it.
+  const [hintTab, setHintTab] = useState(() => {
+    try { return sessionStorage.getItem("vend-tab-hint-seen") !== "1"; }
+    catch (_) { return true; }
+  });
+  useEffect(() => {
+    if (!hintTab) return;
+    const t = setTimeout(() => {
+      setHintTab(false);
+      try { sessionStorage.setItem("vend-tab-hint-seen", "1"); } catch (_) {}
+    }, 3200);
+    return () => clearTimeout(t);
+  }, [hintTab]);
 
   const missPers = state === "missing-personalia";
   const missCv = state === "missing-cv";
@@ -2176,17 +2375,22 @@ function ApplicationPreviewSheet({
           : t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
       source: null,
       status: cvLoading ? "loading" : missCv ? "missing" : "done",
-      preview: !cvLoading && !missCv,
+      // No eye affordance — Endre is the single entry to the CV picker.
+      preview: false,
     },
     {
       id: "letter",
       title: t({ en: "Cover letter", no: "Søknadsbrev" }),
+      // Small FINN AI mark inline next to the title text, same height as text.
+      titleSuffix: letterLoading ? null : <AILogo size={16} />,
       sub: letterLoading
         ? t({ en: "Drafting for this role…", no: "Skriver utkast for denne jobben …" })
-        : null,
-      source: letterLoading ? null : t({ en: "AI draft · editable", no: "AI-utkast · kan endres" }),
+        : t({ en: "AI draft · editable", no: "AI-utkast · kan endres" }),
+      // Source pill removed — the inline AI mark + plain-grey sub line carry it.
+      source: null,
       status: letterLoading ? "loading" : "ai",
-      preview: !letterLoading,
+      // Endre is the single entry — opens the cover letter sheet directly.
+      preview: false,
     },
     {
       id: "questions",
@@ -2346,8 +2550,8 @@ function ApplicationPreviewSheet({
             <button
               role="tab"
               aria-selected={sheetTab === "ad"}
-              onClick={() => { haptic("tap"); setSheetTab("ad"); }}
-              className="press"
+              onClick={() => { haptic("tap"); setSheetTab("ad"); setHintTab(false); }}
+              className={"press" + (hintTab && sheetTab !== "ad" ? " tab-hint" : "")}
               style={{
                 position: "relative", zIndex: 1,
                 background: "transparent", border: 0,
@@ -2394,14 +2598,14 @@ function ApplicationPreviewSheet({
             animation: "fadein 300ms var(--ease-modal)",
           }}>
             <div style={{
-              width: 28, height: 28, borderRadius: 9999,
-              background: "#0063fb",
+              width: 32, height: 32, borderRadius: 9,
+              background: "#fff", padding: 2,
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0,
               boxShadow: "0 4px 10px rgba(0,99,251,0.30)",
               animation: "pulse 2.2s ease-in-out infinite",
             }}>
-              <Icon name="sparkle" size={14} color="#fff" stroke={0} fill="#fff" />
+              <AILogo size={28} />
             </div>
             <div style={{ minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0a3a8a", letterSpacing: -0.1 }}>
@@ -2428,13 +2632,10 @@ function ApplicationPreviewSheet({
                     if (r.id === "letter") onOpenLetter?.();
                     else onOpenEdit(r.id);
                   }}
-                  onPreview={
-                    // CV preview is now reached *through* the picker, so the eye
-                    // routes there too. Letter keeps a direct viewer.
-                    r.id === "letter" ? onOpenLetter :
-                    r.id === "cv"     ? () => onOpenEdit("cv") :
-                    null
-                  }
+                  onPreview={null}
+                  // No eye anywhere. Endre is the single entry for every row;
+                  // letter row opens the cover letter sheet, CV row opens the
+                  // picker, others open their respective editors.
                 />
               ))}
 
@@ -2527,6 +2728,19 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
 
   const StatusIcon = () => {
     if (isLoading) {
+      // Cover letter is the AI moment — use the FINN AI spinner Rive animation.
+      // Other rows (CV fetch, etc.) keep the lightweight CSS spinner.
+      if (row.id === "letter") {
+        return (
+          <div style={{
+            width: 32, height: 32,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}>
+            <RiveSpinner size={32} src="assets/finn_ai_spinner_allstates.riv" />
+          </div>
+        );
+      }
       return (
         <div style={{
           width: 32, height: 32, borderRadius: 9999,
@@ -2544,7 +2758,10 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
         </div>
       );
     }
-    if (row.status === "done") {
+    // "ai" rows render the same check-circle as "done"; the AI provenance is
+    // carried by the inline AI mark next to the title (see titleSuffix below)
+    // and the source pill (e.g. 'AI draft · editable').
+    if (row.status === "done" || row.status === "ai") {
       return (
         <div style={{
           width: 32, height: 32,
@@ -2563,18 +2780,6 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0, opacity: 0.85,
         }} />
-      );
-    }
-    if (row.status === "ai") {
-      return (
-        <div style={{
-          width: 32, height: 32, borderRadius: 9999,
-          background: "#eaf2ff",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0, animation: "popin 520ms var(--ease-spring)",
-        }}>
-          <Icon name="sparkle" size={18} color="#0063fb" stroke={0} fill="#0063fb" />
-        </div>
       );
     }
     return (
@@ -2610,7 +2815,11 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
             <p style={{
               fontSize: 16, fontWeight: 600, color: "#1d1d1d",
               margin: 0, lineHeight: 1.25, letterSpacing: -0.2,
-            }}>{row.title}</p>
+              display: "inline-flex", alignItems: "center", gap: 6,
+            }}>
+              {row.title}
+              {row.titleSuffix}
+            </p>
             {row.source && (
               <span style={{
                 fontSize: 11, fontWeight: 500,
@@ -2788,7 +2997,11 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
             lineHeight: 1,
             height: 36,
             display: "flex", alignItems: "center", justifyContent: "center",
-          }}>{t({ en: "AI Writing Assistant", no: "AI-skriveassistent" })}</h2>
+            gap: 8,
+          }}>
+            {t({ en: "Writing Assistant", no: "Skriveassistent" })}
+            <AILogo size={18} />
+          </h2>
           {/* Invisible spacer keeps the title optically centred */}
           <div style={{ width: 36, height: 36, flexShrink: 0 }} aria-hidden="true" />
         </div>
@@ -3645,12 +3858,12 @@ function TailorSheet({ onDone, onClose }) {
 
         <div style={{ padding: "8px 8px 8px 16px", display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 9999,
-            background: "#0063fb",
+            width: 38, height: 38, borderRadius: 10,
+            background: "#fff", padding: 2,
             display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: "0 4px 12px rgba(0,99,251,0.25)",
           }}>
-            <Icon name="wand" size={18} color="#fff" stroke={2.2} />
+            <AILogo size={34} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: "#1d1d1d", margin: 0, letterSpacing: -0.1 }}>
@@ -3933,7 +4146,7 @@ function QuestionsEditor() {
   );
 }
 
-function CVOption({ icon, title, sub, selected, onClick, showChevron }) {
+function CVOption({ icon, customIcon, title, titleSuffix, sub, selected, onClick, showChevron }) {
   return (
     <button
       className="press"
@@ -3946,15 +4159,31 @@ function CVOption({ icon, title, sub, selected, onClick, showChevron }) {
         cursor: "pointer", textAlign: "left", fontFamily: "inherit",
         transition: "background 120ms var(--ease-out), border-color 120ms var(--ease-out)",
       }}>
-      <div style={{
-        width: 36, height: 36, borderRadius: 9999,
-        background: selected ? "#0063fb" : "#f0f0f3",
-        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-      }}>
-        <Icon name={icon} size={18} color={selected ? "#fff" : "#404040"} stroke={2} />
-      </div>
+      {customIcon ? (
+        <div style={{
+          width: 36, height: 36,
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          {customIcon}
+        </div>
+      ) : (
+        <div style={{
+          width: 36, height: 36, borderRadius: 9999,
+          background: selected ? "#0063fb" : "#f0f0f3",
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          <Icon name={icon} size={18} color={selected ? "#fff" : "#404040"} stroke={2} />
+        </div>
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 15, fontWeight: 600, color: "#1d1d1d", margin: 0, letterSpacing: -0.1 }}>{title}</p>
+        <p style={{
+          fontSize: 15, fontWeight: 600, color: "#1d1d1d",
+          margin: 0, letterSpacing: -0.1,
+          display: "inline-flex", alignItems: "center", gap: 6,
+        }}>
+          {title}
+          {titleSuffix}
+        </p>
         <p style={{ fontSize: 13, color: "#6b6b6b", margin: "2px 0 0" }}>{sub}</p>
       </div>
       {selected ? (
@@ -4009,7 +4238,8 @@ function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
       sub: t({ en: "Choose which CV to send · tap to preview", no: "Velg hvilken CV du vil sende · trykk for å forhåndsvise" }),
       body: (
         <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <CVOption icon="sparkle"
+          <CVOption icon="user"
+            titleSuffix={<AILogo size={16} />}
             title={t({ en: "CV from your profile", no: "CV fra profilen din" })}
             sub={t({ en: "Recommended — everything we know about you", no: "Anbefalt – alt vi vet om deg" })}
             showChevron
@@ -4283,12 +4513,11 @@ function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
         textAlign: "center", gap: 16,
       }}>
         <div style={{
-          width: 88, height: 88, borderRadius: 9999,
-          background: "#d4f4dd", display: "flex", alignItems: "center", justifyContent: "center",
+          display: "flex", alignItems: "center", justifyContent: "center",
           marginBottom: 4, position: "relative",
-          animation: "popin 620ms var(--ease-spring), successflash 1100ms ease-out",
+          animation: "popin 620ms var(--ease-spring)",
         }}>
-          <Icon name="check" size={44} color="#1f8a3b" stroke={3} />
+          <SuccessIllustration size={180} />
         </div>
         <h1 style={{
           fontSize: 26, fontWeight: 700, margin: 0, color: "#1d1d1d", letterSpacing: -0.4,
@@ -5733,6 +5962,48 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset }) {
   );
 }
 
+// ─── Confetti burst — small particle celebration ───────────────────────────
+// Used on the Confirmation screen (Peak-End amplifier) and by the Konami egg.
+function ConfettiBurst({ count = 32, spread = 180, gravity = 220, palette }) {
+  const colors = palette || ["#0063fb", "#62E3FF", "#1f8a3b", "#ffce2e", "#6f3bd0", "#ff6fb3"];
+  const particles = React.useMemo(() => {
+    const arr = [];
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI + Math.random() * Math.PI; // upward fan
+      const speed = 0.5 + Math.random() * 0.7;
+      const dx = Math.cos(angle) * spread * speed + (Math.random() - 0.5) * 30;
+      const dy = Math.sin(angle) * spread * speed + gravity * (0.4 + Math.random() * 0.8);
+      arr.push({
+        dx, dy,
+        rot: (Math.random() - 0.5) * 720,
+        color: colors[i % colors.length],
+        w: 5 + Math.random() * 5,
+        h: (Math.random() < 0.4 ? 0.4 : 1) * (5 + Math.random() * 5),
+        round: Math.random() < 0.18,
+        delay: Math.random() * 90,
+        dur: 1100 + Math.random() * 1300,
+      });
+    }
+    return arr;
+  }, [count, spread, gravity, colors.join(",")]);
+  return (
+    <div className="confetti" aria-hidden="true">
+      {particles.map((p, i) => (
+        <span key={i} className="cf" style={{
+          background: p.color,
+          width: p.w, height: p.h,
+          borderRadius: p.round ? 9999 : 1.5,
+          "--dx": p.dx + "px",
+          "--dy": p.dy + "px",
+          "--rot": p.rot + "deg",
+          animationDelay: p.delay + "ms",
+          animationDuration: p.dur + "ms",
+        }} />
+      ))}
+    </div>
+  );
+}
+
 // ─── Password gate ─────────────────────────────────────────────────────────
 // Client-side only — anyone with web-dev know-how can view source and read
 // the password. Fine for casual share-with-team gating, not for real secrets.
@@ -5939,6 +6210,32 @@ function AppShell() {
   }
   useEffect(() => () => cancelMagic(), []);
 
+  // Konami code easter egg → confetti shower + toast.
+  // ↑ ↑ ↓ ↓ ← → ← → B A (the original sequence).
+  const [eggFiring, setEggFiring] = useState(false);
+  const eggBufferRef = useRef([]);
+  useEffect(() => {
+    const SEQUENCE = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown",
+                      "ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+    function onKey(e) {
+      // Ignore when typing into inputs so we don't hijack real typing.
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      eggBufferRef.current.push(e.key.length === 1 ? e.key.toLowerCase() : e.key);
+      if (eggBufferRef.current.length > SEQUENCE.length) {
+        eggBufferRef.current = eggBufferRef.current.slice(-SEQUENCE.length);
+      }
+      if (eggBufferRef.current.join(",") === SEQUENCE.join(",")) {
+        eggBufferRef.current = [];
+        haptic("ok");
+        setEggFiring(true);
+        setTimeout(() => setEggFiring(false), 3200);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   function openCV(params = {}) {
     setCvParams({
       initialSource: params.source || "profile",
@@ -6076,6 +6373,16 @@ function AppShell() {
           {inspectInfo.cls && <div style={{ marginTop: 6, color: "#9eb3ff" }}>{inspectInfo.cls}</div>}
         </div>
       )}
+      {eggFiring && (
+        <>
+          <div className="egg-overlay">
+            <div style={{ position: "absolute", left: "50%", top: "50%", width: 0, height: 0 }}>
+              <ConfettiBurst count={80} spread={420} gravity={520} />
+            </div>
+          </div>
+          <div className="egg-toast">🎉 You found the easter egg!</div>
+        </>
+      )}
       {view === "prototype" && (
     <div className="layout">
       <LangCtx.Provider value={lang}>
@@ -6204,132 +6511,139 @@ function AppShell() {
           </>
         )}
         <h3>Easy + Agentic apply</h3>
-        <Segmented
-          label="Language"
-          valueLabel={lang === "en" ? "English" : "Norsk Bokmål"}
-          value={lang}
-          onChange={setLang}
-          options={[
-            { id: "en", label: "EN" },
-            { id: "no", label: "NO" },
-          ]} />
 
-        <Segmented
-          label="Platform"
-          badge="Beta"
-          valueLabel={platform === "ios" ? "iOS HIG" : platform === "android" ? "Material 3" : "Web"}
-          value={platform}
-          onChange={setPlatform}
-          options={[
-            { id: "ios",     label: "iOS",     icon: <AppleGlyph /> },
-            { id: "android", label: "Android", icon: <AndroidGlyph /> },
-            { id: "web",     label: "Web",     icon: <GlobeGlyph /> },
-          ]} />
-
-        <div className="controls-group">
-          <div
-            className={"dev-toggle" + (inspect ? " on" : "")}
-            role="switch"
-            aria-checked={inspect}
-            tabIndex={0}
-            onClick={() => { setInspect(v => !v); setInspectInfo(null); }}
-            onKeyDown={(e) => {
-              if (e.key === " " || e.key === "Enter") {
-                e.preventDefault();
-                setInspect(v => !v); setInspectInfo(null);
-              }
-            }}>
-            <span className="label">Inspect mode</span>
-            <span className="switch" aria-hidden="true" />
-          </div>
-          <p className="hint" style={{ marginTop: 6 }}>
-            {inspect
-              ? "Click any element on the iPhone to inspect specs."
-              : "Tap to enable inline spec inspection."}
-          </p>
+        <div className="dev-group">
+          <p className="dev-group-title">Project setup</p>
+          <Segmented
+            label="Language"
+            valueLabel={lang === "en" ? "English" : "Norsk Bokmål"}
+            value={lang}
+            onChange={setLang}
+            options={[
+              { id: "en", label: "EN" },
+              { id: "no", label: "NO" },
+            ]} />
+          <Segmented
+            label="Platform"
+            badge="Beta"
+            valueLabel={platform === "ios" ? "iOS HIG" : platform === "android" ? "Material 3" : "Web"}
+            value={platform}
+            onChange={setPlatform}
+            options={[
+              { id: "ios",     label: "iOS",     icon: <AppleGlyph /> },
+              { id: "android", label: "Android", icon: <AndroidGlyph /> },
+              { id: "web",     label: "Web",     icon: <GlobeGlyph /> },
+            ]} />
         </div>
 
-        <Dropdown
-          label="User state"
-          value={userState}
-          lang={lang}
-          onChange={(id) => {
-            setUserState(id);
-            setOverlay(null);
-            if (id === "already-applied") setScreen("jobad");
-          }}
-          options={USER_STATES}
-        />
-        <Dropdown
-          label="Version"
-          value={version}
-          lang={lang}
-          onChange={setVersion}
-          options={[
-            { id: "mvp", label: "MVP — shipping now" },
-            { id: "v1",  label: "1.0 — next release" },
-            { id: "v2",  label: "2.0 — beyond" },
-          ]}
-        />
-        <div className="group">
-          <div style={{ fontSize: 11, color: "#9a9a9a", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Screens</div>
-          <NavBtn active={screen === "jobad"} onClick={() => { reset(); }}>1 · Job ad</NavBtn>
+        <div className="dev-group">
+          <p className="dev-group-title">Demo state</p>
+          <Dropdown
+            label="User state"
+            value={userState}
+            lang={lang}
+            onChange={(id) => {
+              setUserState(id);
+              setOverlay(null);
+              if (id === "already-applied") setScreen("jobad");
+            }}
+            options={USER_STATES}
+          />
+          <Dropdown
+            label="Version"
+            value={version}
+            lang={lang}
+            onChange={setVersion}
+            options={[
+              { id: "mvp", label: "MVP — shipping now" },
+              { id: "v1",  label: "1.0 — next release" },
+              { id: "v2",  label: "2.0 — beyond" },
+            ]}
+          />
+          <div className="controls-group">
+            <div
+              className={"dev-toggle" + (inspect ? " on" : "")}
+              role="switch"
+              aria-checked={inspect}
+              tabIndex={0}
+              onClick={() => { setInspect(v => !v); setInspectInfo(null); }}
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") {
+                  e.preventDefault();
+                  setInspect(v => !v); setInspectInfo(null);
+                }
+              }}>
+              <span className="label">Inspect mode</span>
+              <span className="switch" aria-hidden="true" />
+            </div>
+            <p className="hint" style={{ marginTop: 6 }}>
+              {inspect
+                ? "Click any element on the iPhone to inspect specs."
+                : "Tap to enable inline spec inspection."}
+            </p>
+          </div>
+        </div>
+
+        <div className="dev-group">
+          <p className="dev-group-title">Screens</p>
+          <NavBtn active={screen === "jobad"} onClick={() => { reset(); }}>Job ad</NavBtn>
           <NavBtn active={screen === "preview" && loadingPhase !== "ready" && !overlay}
             onClick={() => { setOverlay(null); setUserState("ready"); setScreen("preview"); startProgressiveLoad(); }}>
-            2 · Preview (loading)
+            Preview — loading
           </NavBtn>
           <NavBtn active={screen === "preview" && !overlay && userState === "ready" && loadingPhase === "ready"}
             onClick={() => { setOverlay(null); setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); }}>
-            3 · Preview (ready)
-          </NavBtn>
-          <NavBtn active={overlay === "letter"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("letter"); }}>
-            3a · Cover letter
-          </NavBtn>
-          <NavBtn active={overlay === "select-letter"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("select-letter"); }}>
-            3a-2 · Select / upload letter
-          </NavBtn>
-          <NavBtn active={overlay === "cv-preview"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("cv-preview"); }}>
-            3a · CV preview
-          </NavBtn>
-          <NavBtn active={overlay === "edit:cv"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:cv"); }}>
-            3c · Edit CV
-          </NavBtn>
-          <NavBtn active={overlay === "edit:personalia"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:personalia"); }}>
-            3d · Edit personal details
-          </NavBtn>
-          <NavBtn active={overlay === "edit:letter"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:letter"); }}>
-            3e · Edit cover letter
-          </NavBtn>
-          <NavBtn active={overlay === "edit:questions"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:questions"); }}>
-            3f · Employer questions
+            Preview — ready
           </NavBtn>
           <NavBtn active={screen === "preview" && userState === "missing-questions" && !overlay}
             onClick={() => { setOverlay(null); setUserState("missing-questions"); setLoadingPhase("ready"); setScreen("preview"); }}>
-            3g · Missing info
+            Missing info
+          </NavBtn>
+          <NavBtn active={overlay === "edit:cv"}
+            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setCvPickerActive(true); setOverlay("edit:cv"); }}>
+            CV picker
+          </NavBtn>
+          <NavBtn active={overlay === "cv-preview"}
+            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("cv-preview"); }}>
+            CV preview
+          </NavBtn>
+          <NavBtn active={overlay === "letter"}
+            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("letter"); }}>
+            Cover letter
+          </NavBtn>
+          <NavBtn active={overlay === "select-letter"}
+            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("select-letter"); }}>
+            Select / upload letter
+          </NavBtn>
+          <NavBtn active={overlay === "edit:letter"}
+            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:letter"); }}>
+            Edit cover letter
+          </NavBtn>
+          <NavBtn active={overlay === "edit:personalia"}
+            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:personalia"); }}>
+            Personal details
+          </NavBtn>
+          <NavBtn active={overlay === "edit:questions"}
+            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:questions"); }}>
+            Employer questions
           </NavBtn>
           <NavBtn active={screen === "confirmation"}
             onClick={() => { setOverlay(null); setScreen("confirmation"); }}>
-            4 · Confirmation
+            Confirmation
           </NavBtn>
           <NavBtn active={screen === "activity" && activityTab === "drafts"}
             onClick={() => { setApplicationStatus("draft"); openActivity("drafts"); }}>
-            5 · Activity — Drafts
+            Activity — Drafts
           </NavBtn>
           <NavBtn active={screen === "activity" && activityTab === "sent"}
             onClick={() => { setApplicationStatus("sent"); openActivity("sent"); }}>
-            5 · Activity — Sent
+            Activity — Sent
           </NavBtn>
         </div>
+
         <p className="hint">Tap through the iPhone, or jump using the list. Haptic feedback runs on supported devices.</p>
         <p className="hint" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #2e2e2e" }}>
-          For engineers: open <code style={{ color: "#62E3FF", fontSize: 11 }}>HANDOFF.md</code> in this folder for site map, specs, tokens, motion timings, and a11y checklist.
+          For engineers: open the <strong>Handoff</strong> tab for site map, tokens, motion timings, and platform mapping.
         </p>
       </div>
     </div>
