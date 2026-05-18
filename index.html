@@ -1127,6 +1127,10 @@
     background: #3a1414; border-color: rgba(255,140,140,0.20);
   }
   .fb-toast-helper .msg { flex: 1; min-width: 0; color: #e4e4e4; }
+  .fb-toast-helper .msg .tip {
+    margin-top: 6px; color: #9a9a9a;
+    font-size: 11.5px; line-height: 1.45;
+  }
   .fb-toast-helper .msg kbd {
     display: inline-block; padding: 1px 6px; margin: 0 1px;
     background: #2c2c2d; border: 1px solid #404042; border-radius: 4px;
@@ -1159,6 +1163,30 @@
   }
   @media (max-width: 640px) {
     .fb-toast-helper { left: 12px; right: 12px; bottom: 60px; max-width: none; }
+  }
+
+  /* ─── Cloud sync status pill (on matrix + storymap views) ─── */
+  .cloud-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin: 0 0 14px;
+    padding: 6px 12px 6px 10px;
+    border-radius: 9999px;
+    font: 600 11.5px/1 var(--sys-text); letter-spacing: -0.1px;
+    border: 1px solid transparent;
+  }
+  .cloud-pill .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+  }
+  .cloud-pill-off     { background: #2a2a2b; color: #b6b6b6; border-color: #3a3a3b; }
+  .cloud-pill-loading { background: #1e2e4a; color: #9cc0ff; border-color: #2c4a78; }
+  .cloud-pill-saving  { background: #1e2e4a; color: #9cc0ff; border-color: #2c4a78; }
+  .cloud-pill-saving .dot { animation: cloudPulse 1100ms ease-in-out infinite; }
+  .cloud-pill-loading .dot { animation: cloudPulse 1100ms ease-in-out infinite; }
+  .cloud-pill-synced  { background: #16341d; color: #7ad693; border-color: #205a2d; }
+  .cloud-pill-error   { background: #3a1414; color: #ff9b9b; border-color: #5a2424; }
+  @keyframes cloudPulse {
+    0%,100% { opacity: 0.4; transform: scale(0.9); }
+    50%     { opacity: 1;   transform: scale(1.1); }
   }
 
   /* ─── Handoff view ─── */
@@ -1683,6 +1711,7 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@rive-app/canvas@2.21.5"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
@@ -6076,8 +6105,97 @@ function TopNav({ view, onChange }) {
   );
 }
 
-const MIRO_BOARD_URL  = "https://miro.com/app/board/uXjVJFnE_0E=/?share_link_id=880153893718";
+// ─── Shared state via Supabase ────────────────────────────────────────
+// Paste your project's URL + anon key here to turn on team-shared
+// storymap and matrix state. Leave empty to keep everything local.
+// Setup guide is in README.md under "Supabase setup".
+const SUPABASE_URL      = "https://mnotuwlstknjuxbgailm.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_h-o9kPkz9m-6FiWyKYAHMw_huVQuI-O";
+const SUPABASE_TABLE    = "prototype_state";
+
+// Build a tiny helper. If keys are missing or the CDN failed to load,
+// every method becomes a no-op and the rest of the app falls back to
+// localStorage transparently. No errors thrown either way.
+const cloudStore = (() => {
+  const enabled =
+    typeof window !== "undefined" &&
+    !!window.supabase &&
+    !!SUPABASE_URL &&
+    !!SUPABASE_ANON_KEY;
+  if (!enabled) {
+    return { enabled: false, get: async () => null, set: async () => false };
+  }
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false },
+  });
+  return {
+    enabled: true,
+    client,
+    async get(key) {
+      try {
+        const { data, error } = await client
+          .from(SUPABASE_TABLE)
+          .select("data, updated_at")
+          .eq("key", key)
+          .maybeSingle();
+        if (error) { console.warn("[cloud] get", key, error.message); return null; }
+        return data ? { data: data.data, updatedAt: data.updated_at } : null;
+      } catch (e) { console.warn("[cloud] get exception", e); return null; }
+    },
+    async set(key, data) {
+      try {
+        const { error } = await client
+          .from(SUPABASE_TABLE)
+          .upsert({ key, data, updated_at: new Date().toISOString() }, { onConflict: "key" });
+        if (error) { console.warn("[cloud] set", key, error.message); return false; }
+        return true;
+      } catch (e) { console.warn("[cloud] set exception", e); return false; }
+    },
+  };
+})();
+
+// Tiny debouncer for save-on-edit so dragging doesn't hammer the API.
+function debounce(fn, ms) {
+  let t = null;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
+// Board URL used when the user clicks "Open Miro" from the screenshot
+// helper. Plain board URL (no share_link_id) — that share-link query
+// triggers Miro's "How would you like to view this board?" welcome modal,
+// which then steals focus and swallows ⌘V. Without it the canvas is
+// active immediately and pasting works cleanly.
+const MIRO_BOARD_URL  = "https://miro.com/app/board/uXjVJFnE_0E=/";
+// The live-embed URL still keeps share_link_id — embed mode needs it
+// to authorize the iframe view, and it doesn't show the welcome modal.
 const MIRO_EMBED_URL  = "https://miro.com/app/live-embed/uXjVJFnE_0E=/?share_link_id=880153893718&embedMode=view_only_without_ui&moveToViewport=&autoplay=true";
+
+function CloudStatusPill({ status, lastSyncedAt }) {
+  // status: 'off' | 'loading' | 'synced' | 'saving' | 'error'
+  if (status === "off") {
+    return (
+      <div className="cloud-pill cloud-pill-off" title="No Supabase keys configured — changes are local to your browser only">
+        <span className="dot" /> Local only — your edits don't sync to teammates
+      </div>
+    );
+  }
+  const label =
+    status === "loading" ? "Loading shared state…" :
+    status === "saving"  ? "Saving…" :
+    status === "error"   ? "Save failed — will retry on next edit" :
+                           "Synced with the team";
+  const when = lastSyncedAt
+    ? " · " + lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : "";
+  return (
+    <div className={"cloud-pill cloud-pill-" + status}>
+      <span className="dot" /> {label}{status === "synced" ? when : ""}
+    </div>
+  );
+}
 
 function OpportunityTreeView() {
   const { business, outcome, problems } = TREE_DATA;
@@ -6598,7 +6716,10 @@ function AppShell() {
   const [lang, setLang] = useState("en"); // en (default) | no
 
   // Editable copies of the strategy data — drag-drop in the Storymap and
-  // Impact-Effort views update these and persist to localStorage.
+  // Impact-Effort views update these. Persistence is two-tier:
+  //   1. localStorage  — always written, instant fallback / offline cache
+  //   2. Supabase      — written debounced, shared with the whole team
+  //                      (only active when SUPABASE_URL + key are set)
   // Bump SCHEMA when the shape changes (jira fields added, etc.) so stale
   // localStorage from older builds is discarded automatically.
   const SCHEMA = 3;
@@ -6610,12 +6731,6 @@ function AppShell() {
     } catch (_) {}
     return deepCloneJSON(STORYMAP.stories);
   });
-  useEffect(() => {
-    try {
-      localStorage.setItem("vend-storymap", JSON.stringify(stories));
-      localStorage.setItem("vend-storymap-v", String(SCHEMA));
-    } catch (_) {}
-  }, [stories]);
   const [solutions, setSolutions] = useState(() => {
     try {
       const v = parseInt(localStorage.getItem("vend-solutions-v") || "0", 10);
@@ -6624,12 +6739,84 @@ function AppShell() {
     } catch (_) {}
     return SOLUTIONS.map(s => ({ ...s }));
   });
+
+  // Cloud sync status — shown in the dev panel + on the matrix/storymap.
+  // 'off'      → no Supabase keys configured, local-only
+  // 'loading'  → fetching shared state on mount
+  // 'synced'   → cloud and local in sync
+  // 'saving'   → write in flight
+  // 'error'    → last write failed (we don't crash; local copy is still safe)
+  const [cloudStatus, setCloudStatus] = useState(cloudStore.enabled ? "loading" : "off");
+  const [cloudLastSyncedAt, setCloudLastSyncedAt] = useState(null);
+
+  // Track whether the initial fetch has run; only after that do we start
+  // writing to the cloud. Prevents a freshly-mounted page from immediately
+  // overwriting shared state with its localStorage copy.
+  const cloudReadyRef = useRef(false);
+
+  // Load shared state from cloud on mount. If cloud has data, prefer it
+  // over local. If cloud is empty, seed it with whatever local has (or
+  // defaults), so the very first user effectively initializes the row.
+  useEffect(() => {
+    if (!cloudStore.enabled) return;
+    let cancelled = false;
+    (async () => {
+      const [cloudStories, cloudSolutions] = await Promise.all([
+        cloudStore.get("storymap"),
+        cloudStore.get("matrix"),
+      ]);
+      if (cancelled) return;
+      if (cloudStories && cloudStories.data) setStories(cloudStories.data);
+      if (cloudSolutions && cloudSolutions.data) setSolutions(cloudSolutions.data);
+      // If cloud was empty, seed it from whatever we have locally (defaults included).
+      if (!cloudStories) await cloudStore.set("storymap", stories);
+      if (!cloudSolutions) await cloudStore.set("matrix", solutions);
+      cloudReadyRef.current = true;
+      setCloudStatus("synced");
+      setCloudLastSyncedAt(new Date());
+    })();
+    return () => { cancelled = true; };
+    // Empty deps: this runs exactly once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced cloud writers — bundle drag bursts into one save.
+  const saveStoriesToCloud = useRef(
+    debounce(async (next) => {
+      if (!cloudStore.enabled || !cloudReadyRef.current) return;
+      setCloudStatus("saving");
+      const ok = await cloudStore.set("storymap", next);
+      setCloudStatus(ok ? "synced" : "error");
+      if (ok) setCloudLastSyncedAt(new Date());
+    }, 600)
+  ).current;
+  const saveSolutionsToCloud = useRef(
+    debounce(async (next) => {
+      if (!cloudStore.enabled || !cloudReadyRef.current) return;
+      setCloudStatus("saving");
+      const ok = await cloudStore.set("matrix", next);
+      setCloudStatus(ok ? "synced" : "error");
+      if (ok) setCloudLastSyncedAt(new Date());
+    }, 600)
+  ).current;
+
+  // Persist storymap on change — local immediate, cloud debounced.
+  useEffect(() => {
+    try {
+      localStorage.setItem("vend-storymap", JSON.stringify(stories));
+      localStorage.setItem("vend-storymap-v", String(SCHEMA));
+    } catch (_) {}
+    saveStoriesToCloud(stories);
+  }, [stories, saveStoriesToCloud]);
+
+  // Persist matrix on change — local immediate, cloud debounced.
   useEffect(() => {
     try {
       localStorage.setItem("vend-solutions", JSON.stringify(solutions));
       localStorage.setItem("vend-solutions-v", String(SCHEMA));
     } catch (_) {}
-  }, [solutions]);
+    saveSolutionsToCloud(solutions);
+  }, [solutions, saveSolutionsToCloud]);
 
   // Derived feature flags (live across renders).
   const features = featuresInVersion(stories, version);
@@ -6655,12 +6842,17 @@ function AppShell() {
     setSolutions(prev => prev.map(s => s.n === n ? { ...s, impact, effort } : s));
   }
   function resetStorymap() {
-    setStories(deepCloneJSON(STORYMAP.stories));
+    const fresh = deepCloneJSON(STORYMAP.stories);
+    setStories(fresh);
     try { localStorage.removeItem("vend-storymap"); } catch (_) {}
+    // Also reset the shared/cloud copy so the team sees the rollback.
+    if (cloudStore.enabled) cloudStore.set("storymap", fresh);
   }
   function resetMatrix() {
-    setSolutions(SOLUTIONS.map(s => ({ ...s })));
+    const fresh = SOLUTIONS.map(s => ({ ...s }));
+    setSolutions(fresh);
     try { localStorage.removeItem("vend-solutions"); } catch (_) {}
+    if (cloudStore.enabled) cloudStore.set("matrix", fresh);
   }
 
   // Inspect mode — click any element on the iPhone to see its computed specs.
@@ -6863,6 +7055,7 @@ function AppShell() {
       )}
       {view === "matrix" && (
         <div key="matrix-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
+          <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
           <ImpactEffortView
             solutions={solutions}
             onMoveSolution={moveSolution}
@@ -6872,6 +7065,7 @@ function AppShell() {
       )}
       {view === "storymap" && (
         <div key="storymap-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
+          <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
           <StorymapView
             version={storyVersion}
             onVersionChange={setStoryVersion}
@@ -7202,8 +7396,9 @@ function AppShell() {
           <div className="msg">
             {screenshotState === "sent" ? (
               <>
-                <strong>Screenshot copied.</strong> Open Miro and press <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>V</kbd> to paste it,
-                then drop a <strong>post-it next to it with your comment</strong>.
+                <strong>Screenshot copied.</strong> Open Miro, click an empty area of the canvas, then press{" "}
+                <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>V</kbd> to paste. Add a <strong>post-it next to it with your comment</strong>.
+                <div className="tip">Tip: if Miro shows a welcome modal, close it first — otherwise it eats the paste.</div>
               </>
             ) : (
               <>
