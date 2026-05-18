@@ -878,6 +878,160 @@
     outline: 2px dashed rgba(0,99,251,0.45);
     outline-offset: -4px;
   }
+  /* Jira linkage chips */
+  .jira-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--w-font-family-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+    background: #2c5cdd; color: #fff;
+    padding: 2px 6px; border-radius: 4px;
+    text-decoration: none;
+    transition: background 160ms var(--ease-modal);
+  }
+  .jira-chip:hover { background: #1d4ec0; }
+  .jira-chip.done { background: #1f8a3b; }
+  .jira-chip.done:hover { background: #186e30; }
+  .jira-chip.dev { background: #b15600; }
+  .jira-chip.dev:hover { background: #8a4400; }
+  .jira-missing {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: #fff3e0; color: #b15600;
+    padding: 2px 7px; border-radius: 4px;
+    border: 1px dashed #e89c33;
+  }
+  .jira-missing::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%; background: #e89c33;
+    display: inline-block;
+  }
+
+  /* ─── Feedback FAB + modal ─── */
+  .fb-fab {
+    position: fixed; right: 22px; bottom: 22px; z-index: 800;
+    height: 44px; padding: 0 18px 0 14px;
+    background: #1d1d1d; color: #fff;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 9999px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 600 13px/1 var(--sys-text); letter-spacing: -0.1px;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.30), 0 2px 6px rgba(0,0,0,0.20);
+    transition: transform 120ms var(--ease-tap), background 200ms var(--ease-modal);
+  }
+  .fb-fab:hover { background: #0063fb; border-color: #0063fb; }
+  .fb-fab:active { transform: scale(0.97); }
+  .fb-fab .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #62E3FF;
+  }
+  .fb-backdrop {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(0,0,0,0.45);
+    animation: fadein 280ms var(--ease-modal);
+  }
+  .fb-modal {
+    position: fixed; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 92vw; max-width: 460px;
+    background: #1f1f20; color: #ededed;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 22px 22px 18px;
+    z-index: 901;
+    animation: popin 340ms var(--ease-spring);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+  }
+  .fb-modal h2 {
+    margin: 0 0 4px;
+    font-size: 17px; font-weight: 700;
+    color: #fff; letter-spacing: -0.2px;
+  }
+  .fb-modal .lead {
+    margin: 0 0 14px; font-size: 12px; color: #9a9a9a;
+    line-height: 1.5;
+  }
+  .fb-context {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin: 0 0 14px;
+  }
+  .fb-context .ctx {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: #2a2a2b; color: #cfcfcf;
+    border-radius: 4px; padding: 3px 7px;
+  }
+  .fb-context .ctx .k {
+    color: #6b6b6b; text-transform: none; letter-spacing: 0;
+    font-weight: 500;
+  }
+  .fb-modal textarea {
+    width: 100%; box-sizing: border-box;
+    background: #131313; color: #fff;
+    border: 1px solid #2f2f2f; border-radius: 10px;
+    padding: 12px 14px; min-height: 110px;
+    font: 500 14px/1.5 var(--sys-text); letter-spacing: -0.1px;
+    resize: vertical;
+    transition: border-color 160ms var(--ease-modal), box-shadow 160ms var(--ease-modal);
+  }
+  .fb-modal textarea:focus {
+    outline: none; border-color: #0063fb;
+    box-shadow: 0 0 0 3px rgba(0,99,251,0.25);
+  }
+  .fb-actions {
+    display: flex; gap: 8px; margin-top: 14px;
+    justify-content: flex-end;
+  }
+  .fb-actions button {
+    appearance: none; border: 0; padding: 10px 16px;
+    border-radius: 9999px;
+    font: 600 13px/1 var(--sys-text); letter-spacing: -0.1px;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), transform 100ms var(--ease-tap);
+  }
+  .fb-actions button.secondary {
+    background: transparent; color: #cfcfcf;
+    border: 1px solid #383838;
+  }
+  .fb-actions button.secondary:hover { background: #2a2a2b; }
+  .fb-actions button.primary {
+    background: #0063fb; color: #fff;
+  }
+  .fb-actions button.primary:hover { background: #0058e0; }
+  .fb-actions button.primary:disabled {
+    background: #2f2f2f; color: #6b6b6b; cursor: not-allowed;
+  }
+  .fb-actions button:active { transform: scale(0.97); }
+  .fb-modal .ticket-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #2c5cdd; color: #fff;
+    padding: 3px 8px; border-radius: 4px;
+    font-family: var(--w-font-family-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .fb-modal .footnote {
+    margin-top: 12px; padding-top: 10px;
+    font-size: 11px; color: #6b6b6b;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    line-height: 1.5;
+  }
+  /* "Copied" toast */
+  .fb-toast {
+    position: fixed; left: 50%; top: 32px;
+    transform: translate(-50%, -40px);
+    z-index: 950;
+    background: linear-gradient(135deg, #1f8a3b 0%, #178a3b 100%);
+    color: #fff; padding: 10px 18px;
+    border-radius: 9999px;
+    font: 600 13px/1 var(--sys-text); letter-spacing: -0.1px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.30);
+    opacity: 0;
+    animation: eggToast 3200ms var(--ease-modal) forwards;
+  }
+  @media (max-width: 640px) {
+    .fb-fab { right: 16px; bottom: 86px; }
+  }
 
   /* ─── Handoff view ─── */
   .ho-grid {
@@ -4710,26 +4864,30 @@ const TREE_DATA = {
 };
 
 // Flat solutions list for the Impact–Effort view. Scores are first-pass guesses — tune freely.
+// `jira` field links each solution to a JEA ticket. `null` = no ticket yet (flag for the team).
 const SOLUTIONS = [
-  { n: 1,  key: "pa", problem: "Latency · 1.3",          title: "No blocking loader — progressive hydration",          impact: 9, effort: 5 },
-  { n: 2,  key: "pa", problem: "Latency · 1.3",          title: "Per-row spinner + status copy on Send",               impact: 6, effort: 2 },
-  { n: 3,  key: "pa", problem: "Latency · 1.1",          title: "Pre-fetch form at ad-insertion (infra)",              impact: 8, effort: 8 },
-  { n: 13, key: "pa", problem: "Latency · 1.3",          title: "Skeleton shimmer while rows hydrate",                 impact: 4, effort: 1 },
+  { n: 1,  key: "pa", problem: "Latency · 1.3",          title: "No blocking loader — progressive hydration",          impact: 9, effort: 5, jira: "JEA-1179" },
+  { n: 2,  key: "pa", problem: "Latency · 1.3",          title: "Per-row spinner + status copy on Send",               impact: 6, effort: 2, jira: "JEA-1179" },
+  { n: 3,  key: "pa", problem: "Latency · 1.1",          title: "Pre-fetch form at ad-insertion (infra)",              impact: 8, effort: 8, jira: "JEA-1074" },
+  { n: 13, key: "pa", problem: "Latency · 1.3",          title: "Skeleton shimmer while rows hydrate",                 impact: 4, effort: 1, jira: "JEA-1179" },
 
-  { n: 4,  key: "pb", problem: "Trust/Control · 2.1",    title: "Source pills on every row",                            impact: 7, effort: 2 },
-  { n: 5,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Rediger' at visual parity with Send",                 impact: 5, effort: 1 },
-  { n: 6,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Skriv selv' parity with AI-generated letter",         impact: 6, effort: 2 },
-  { n: 7,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Tilpass' is opt-in, not default (Hick's law)",        impact: 7, effort: 1 },
-  { n: 8,  key: "pb", problem: "Trust/Control · 2.2",    title: "Persistent role + company header",                     impact: 4, effort: 1 },
-  { n: 14, key: "pb", problem: "Trust/Control · 2.2",    title: "In-sheet tabs — re-read the ad without losing draft",  impact: 6, effort: 2 },
-  { n: 15, key: "pb", problem: "Trust/Control · 2.3",    title: "Employer questions never AI-prefilled",                impact: 5, effort: 1 },
+  { n: 4,  key: "pb", problem: "Trust/Control · 2.1",    title: "Source pills on every row",                            impact: 7, effort: 2, jira: "JEA-1179" },
+  { n: 5,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Rediger' at visual parity with Send",                 impact: 5, effort: 1, jira: "JEA-1179" },
+  { n: 6,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Skriv selv' parity with AI-generated letter",         impact: 6, effort: 2, jira: "JEA-1146" },
+  { n: 7,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Tilpass' is opt-in, not default (Hick's law)",        impact: 7, effort: 1, jira: "JEA-1179" },
+  { n: 8,  key: "pb", problem: "Trust/Control · 2.2",    title: "Persistent role + company header",                     impact: 4, effort: 1, jira: "JEA-1179" },
+  { n: 14, key: "pb", problem: "Trust/Control · 2.2",    title: "In-sheet tabs — re-read the ad without losing draft",  impact: 6, effort: 2, jira: null       },
+  { n: 15, key: "pb", problem: "Trust/Control · 2.3",    title: "Employer questions never AI-prefilled",                impact: 5, effort: 1, jira: "JEA-1179" },
 
-  { n: 9,  key: "pc", problem: "Tech Bugs · 3.2",        title: "'Lagret som kladd' chip in preview sheet",             impact: 6, effort: 2 },
-  { n: 10, key: "pc", problem: "Tech Bugs · 3.2",        title: "Footer 'lagres som kladd' reassurance copy",           impact: 3, effort: 1 },
-  { n: 16, key: "pc", problem: "Tech Bugs · 3.2",        title: "Activity → Drafts entry point to resume",              impact: 6, effort: 3 },
-  { n: 12, key: "pc", problem: "Tech Bugs · 3.3",        title: "Friendly missing-info recovery state",                 impact: 7, effort: 4 },
-  { n: 11, key: "pc", problem: "Tech Bugs · 3.4",        title: "CV edit — four explicit fallbacks",                    impact: 8, effort: 5 },
+  { n: 9,  key: "pc", problem: "Tech Bugs · 3.2",        title: "'Lagret som kladd' chip in preview sheet",             impact: 6, effort: 2, jira: "JEA-1134" },
+  { n: 10, key: "pc", problem: "Tech Bugs · 3.2",        title: "Footer 'lagres som kladd' reassurance copy",           impact: 3, effort: 1, jira: "JEA-1134" },
+  { n: 16, key: "pc", problem: "Tech Bugs · 3.2",        title: "Activity → Drafts entry point to resume",              impact: 6, effort: 3, jira: "JEA-1081" },
+  { n: 12, key: "pc", problem: "Tech Bugs · 3.3",        title: "Friendly missing-info recovery state",                 impact: 7, effort: 4, jira: "JEA-1179" },
+  { n: 11, key: "pc", problem: "Tech Bugs · 3.4",        title: "CV edit — four explicit fallbacks",                    impact: 8, effort: 5, jira: "JEA-1179" },
 ];
+
+// ─── Jira linkage ─────────────────────────────────────────────────────────
+const JIRA_BASE = "https://nmp-jira.atlassian.net/browse/";
 
 // ─── Storymap data (Jeff Patton shape) ───────────────────────────────────
 // Top row: activities — high-level user goals. They span the backbone tasks
@@ -4757,60 +4915,62 @@ const STORYMAP = {
     { id: "resume",      title: "Resume drafts & track" },
   ],
   // Per-task, per-release stories. Empty arrays = no story this release.
+  // `jira` field links each story to a JEA ticket. `jira: null` is intentional —
+  // means there's no matching ticket and the team should consider creating one.
   stories: {
-    "open-ad":     { mvp: [{ story: "Browse jobs and open one I like.", hyp: null, n: null }],
-                     v1:  [{ story: "See a Job Match score on the ad.", hyp: "2.1", n: null, feature: "job-match" }],
-                     v2:  [{ story: "Save jobs to compare side-by-side later.", hyp: null, n: null }] },
-    "decide":      { mvp: [{ story: "Skim role facts in one screen so I can decide fast.", hyp: null, n: null }],
-                     v1:  [{ story: "Read 'What is Job Match?' to understand the score.", hyp: "2.1", n: null, feature: "job-match" }],
+    "open-ad":     { mvp: [{ story: "Browse jobs and open one I like.", hyp: null, n: null, jira: null }],
+                     v1:  [{ story: "See a Job Match score on the ad.", hyp: "2.1", n: null, feature: "job-match", jira: null }],
+                     v2:  [{ story: "Save jobs to compare side-by-side later.", hyp: null, n: null, jira: null }] },
+    "decide":      { mvp: [{ story: "Skim role facts in one screen so I can decide fast.", hyp: null, n: null, jira: null }],
+                     v1:  [{ story: "Read 'What is Job Match?' to understand the score.", hyp: "2.1", n: null, feature: "job-match", jira: null }],
                      v2:  [] },
-    "tap-apply":   { mvp: [{ story: "Tap Apply once — no extra steps to start.", hyp: "1.3", n: null }],
-                     v1:  [{ story: "Form is pre-fetched so the sheet opens immediately.", hyp: "1.1", n: 3, key: "pa" }],
-                     v2:  [{ story: "Magic Apply — tap once, FINN tailors and sends for you.", hyp: "2.2", n: null, feature: "magic-apply" }] },
+    "tap-apply":   { mvp: [{ story: "Tap Apply once — no extra steps to start.", hyp: "1.3", n: null, jira: "JEA-1179" }],
+                     v1:  [{ story: "Form is pre-fetched so the sheet opens immediately.", hyp: "1.1", n: 3, key: "pa", jira: "JEA-1074" }],
+                     v2:  [{ story: "Magic Apply — tap once, FINN tailors and sends for you.", hyp: "2.2", n: null, feature: "magic-apply", jira: null }] },
     "open-sheet":  { mvp: [
-                       { story: "Sheet appears instantly — no blocking loader.", hyp: "1.3", n: 1, key: "pa" },
-                       { story: "Per-row status icons show what's being prepared.", hyp: "1.3", n: 2, key: "pa" },
-                       { story: "'Lagret som kladd' tells me my progress is safe.", hyp: "3.2", n: 9, key: "pc" },
+                       { story: "Sheet appears instantly — no blocking loader.", hyp: "1.3", n: 1, key: "pa", jira: "JEA-1179" },
+                       { story: "Per-row status icons show what's being prepared.", hyp: "1.3", n: 2, key: "pa", jira: "JEA-1179" },
+                       { story: "'Lagret som kladd' tells me my progress is safe.", hyp: "3.2", n: 9, key: "pc", jira: "JEA-1134" },
                      ],
-                     v1:  [{ story: "Faster model means letter is ready in under 2s.", hyp: "1.2", n: null }],
+                     v1:  [{ story: "Faster model means letter is ready in under 2s.", hyp: "1.2", n: null, jira: "JEA-1113" }],
                      v2:  [] },
     "review":      { mvp: [
-                       { story: "Source pills tell me where each value came from.", hyp: "2.1", n: 4, key: "pb" },
-                       { story: "Header keeps role + company so I never lose context.", hyp: "2.2", n: 8, key: "pb" },
-                       { story: "Flip between Application and Job ad inside the sheet.", hyp: "2.2", n: 14, key: "pb" },
+                       { story: "Source pills tell me where each value came from.", hyp: "2.1", n: 4, key: "pb", jira: "JEA-1179" },
+                       { story: "Header keeps role + company so I never lose context.", hyp: "2.2", n: 8, key: "pb", jira: "JEA-1179" },
+                       { story: "Flip between Application and Job ad inside the sheet.", hyp: "2.2", n: 14, key: "pb", jira: null },
                      ],
-                     v1:  [{ story: "Confidence cue on AI-filled fields.", hyp: "2.1", n: null }],
-                     v2:  [{ story: "Compare this draft with my last application.", hyp: null, n: null }] },
+                     v1:  [{ story: "Confidence cue on AI-filled fields.", hyp: "2.1", n: null, jira: null }],
+                     v2:  [{ story: "Compare this draft with my last application.", hyp: null, n: null, jira: null }] },
     "pick-cv":     { mvp: [
-                       { story: "Pick which CV to send from a clear picker.", hyp: "3.4", n: 11, key: "pc" },
-                       { story: "Fall back to profile CV if upload fails.", hyp: "3.4", n: 11, key: "pc" },
+                       { story: "Pick which CV to send from a clear picker.", hyp: "3.4", n: 11, key: "pc", jira: "JEA-1179" },
+                       { story: "Fall back to profile CV if upload fails.", hyp: "3.4", n: 11, key: "pc", jira: "JEA-1179" },
                      ],
-                     v1:  [{ story: "Tailored CV highlights what matches the listing.", hyp: "2.1", n: null, feature: "tailored-cv" }],
-                     v2:  [{ story: "Batch-tailor for multiple roles at once.", hyp: null, n: null }] },
+                     v1:  [{ story: "Tailored CV highlights what matches the listing.", hyp: "2.1", n: null, feature: "tailored-cv", jira: null }],
+                     v2:  [{ story: "Batch-tailor for multiple roles at once.", hyp: null, n: null, jira: null }] },
     "edit-letter": { mvp: [
-                       { story: "Tap Tilpass for agentic Q&A — opt-in, not forced.", hyp: "2.2", n: 7, key: "pb" },
-                       { story: "Choose 'Skriv selv' if I prefer to write it myself.", hyp: "2.2", n: 6, key: "pb" },
+                       { story: "Tap Tilpass for agentic Q&A — opt-in, not forced.", hyp: "2.2", n: 7, key: "pb", jira: "JEA-1179" },
+                       { story: "Choose 'Skriv selv' if I prefer to write it myself.", hyp: "2.2", n: 6, key: "pb", jira: "JEA-1146" },
                      ],
-                     v1:  [{ story: "Letter learns voice from past applications.", hyp: "2.1", n: null }],
-                     v2:  [{ story: "Generate variants and pick the one I like.", hyp: null, n: null }] },
-    "answer-qs":   { mvp: [{ story: "Questions stay user-answered, never AI-prefilled.", hyp: "2.3", n: 15, key: "pb" }],
-                     v1:  [{ story: "Clearer copy for video questions to avoid drop-off.", hyp: "3.1", n: null }],
+                     v1:  [{ story: "Letter learns voice from past applications.", hyp: "2.1", n: null, jira: null }],
+                     v2:  [{ story: "Generate variants and pick the one I like.", hyp: null, n: null, jira: null }] },
+    "answer-qs":   { mvp: [{ story: "Questions stay user-answered, never AI-prefilled.", hyp: "2.3", n: 15, key: "pb", jira: "JEA-1179" }],
+                     v1:  [{ story: "Clearer copy for video questions to avoid drop-off.", hyp: "3.1", n: null, jira: null }],
                      v2:  [] },
     "send":        { mvp: [
-                       { story: "Send is disabled with clear status while drafting.", hyp: "1.3", n: 2, key: "pa" },
-                       { story: "Friendly missing-info recovery if a field is blank.", hyp: "3.3", n: 12, key: "pc" },
+                       { story: "Send is disabled with clear status while drafting.", hyp: "1.3", n: 2, key: "pa", jira: "JEA-1179" },
+                       { story: "Friendly missing-info recovery if a field is blank.", hyp: "3.3", n: 12, key: "pc", jira: "JEA-1179" },
                      ],
-                     v1:  [{ story: "Schedule send for a chosen time / weekday.", hyp: null, n: null }],
-                     v2:  [{ story: "Auto follow-up nudge after N days of silence.", hyp: null, n: null }] },
-    "confirm":     { mvp: [{ story: "Land on a confirmation with a reminder card.", hyp: null, n: null }],
-                     v1:  [{ story: "See status updates — 'viewed', 'shortlisted'.", hyp: null, n: null }],
-                     v2:  [{ story: "Schedule interviews directly from the card.", hyp: null, n: null }] },
+                     v1:  [{ story: "Schedule send for a chosen time / weekday.", hyp: null, n: null, jira: null }],
+                     v2:  [{ story: "Auto follow-up nudge after N days of silence.", hyp: null, n: null, jira: null }] },
+    "confirm":     { mvp: [{ story: "Land on a confirmation with a reminder card.", hyp: null, n: null, jira: "JEA-1179" }],
+                     v1:  [{ story: "See status updates — 'viewed', 'shortlisted'.", hyp: null, n: null, jira: null }],
+                     v2:  [{ story: "Schedule interviews directly from the card.", hyp: null, n: null, jira: null }] },
     "resume":      { mvp: [
-                       { story: "Drafts live under Activity so I can resume anytime.", hyp: "3.2", n: 16, key: "pc" },
-                       { story: "Sent list shows each application with the company brand.", hyp: null, n: null },
+                       { story: "Drafts live under Activity so I can resume anytime.", hyp: "3.2", n: 16, key: "pc", jira: "JEA-1081" },
+                       { story: "Sent list shows each application with the company brand.", hyp: null, n: null, jira: "JEA-1081" },
                      ],
-                     v1:  [{ story: "Resume from any device seamlessly.", hyp: "3.2", n: null }],
-                     v2:  [{ story: "Interview reminders sync with my calendar.", hyp: null, n: null }] },
+                     v1:  [{ story: "Resume from any device seamlessly.", hyp: "3.2", n: null, jira: null }],
+                     v2:  [{ story: "Interview reminders sync with my calendar.", hyp: null, n: null, jira: null }] },
   },
 };
 
@@ -4997,7 +5157,10 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
       <p className="sub">
         Activities across the top, backbone tasks underneath, MVP / 1.0 / 2.0 release rows slicing horizontally.
         <strong> Drag a story card between rows in the same column</strong> — feature stories
-        (<em>Job Match, Tailored CV, Magic Apply</em>) rewire the prototype live. Edits persist on this device.
+        (<em>Job Match, Tailored CV, Magic Apply</em>) rewire the prototype live. Each card carries a
+        Jira chip linking to <a href={JIRA_BASE + "JEA-1092"} target="_blank" rel="noopener noreferrer"
+        style={{ color: "var(--finn-blue)", fontWeight: 600 }}>JEA Agentic Apply</a> tickets — amber "No Jira" badges
+        flag stories the team should consider ticketing. Edits persist on this device.
       </p>
 
       <div className="sm-version-toggle" role="tablist" aria-label="Release filter">
@@ -5680,20 +5843,53 @@ v2.0 'Magic Apply' branch:
   );
 }
 
+// Map known JEA ticket statuses to chip styling. Static mapping reflects
+// Jira state at sync time (last fetched from nmp-jira on 2026-05-18).
+const JIRA_STATUS = {
+  "JEA-500":  { label: "Done",     style: "done" },
+  "JEA-597":  { label: "Done",     style: "done" },
+  "JEA-1081": { label: "Done",     style: "done" },
+  "JEA-575":  { label: "Backlog",  style: "" },
+  "JEA-839":  { label: "Backlog",  style: "" },
+  "JEA-898":  { label: "Backlog",  style: "" },
+  "JEA-1023": { label: "Backlog",  style: "" },
+  "JEA-1074": { label: "Backlog",  style: "" },
+  "JEA-1092": { label: "Backlog",  style: "" },
+  "JEA-1093": { label: "Backlog",  style: "" },
+  "JEA-1113": { label: "Backlog",  style: "" },
+  "JEA-1134": { label: "Backlog",  style: "" },
+  "JEA-1146": { label: "Backlog",  style: "" },
+  "JEA-1179": { label: "Selected", style: "dev" },
+  "JEA-1183": { label: "Backlog",  style: "" },
+};
+
+function JiraChip({ jira }) {
+  if (!jira) {
+    return <span className="jira-missing" title="No matching Jira ticket — flag for the team">No Jira</span>;
+  }
+  const meta = JIRA_STATUS[jira] || {};
+  return (
+    <a className={"jira-chip " + (meta.style || "")} href={JIRA_BASE + jira}
+       target="_blank" rel="noopener noreferrer"
+       title={"Open " + jira + " in Jira" + (meta.label ? " · " + meta.label : "")}>
+      {jira}
+    </a>
+  );
+}
+
 function SmCard({ story, release, now, draggable, onDragStart }) {
   return (
     <div className={"sm-card " + release + (story.feature ? " sm-card-feature" : "")}
       draggable={draggable}
       onDragStart={onDragStart}>
       <p className="story">{story.story}</p>
-      {(story.n || story.hyp || story.feature || now) && (
-        <div className="meta">
-          {now && <span className="sm-now-badge">In prototype</span>}
-          {story.feature && <span className="sm-feature-pill">live feature</span>}
-          {story.n != null && <span className={"ref-num " + (story.key || "pa")}>{story.n}</span>}
-          {story.hyp && <span className="hyp">H {story.hyp}</span>}
-        </div>
-      )}
+      <div className="meta">
+        <JiraChip jira={story.jira} />
+        {now && <span className="sm-now-badge">In prototype</span>}
+        {story.feature && <span className="sm-feature-pill">live feature</span>}
+        {story.n != null && <span className={"ref-num " + (story.key || "pa")}>{story.n}</span>}
+        {story.hyp && <span className="hyp">H {story.hyp}</span>}
+      </div>
     </div>
   );
 }
@@ -5930,6 +6126,9 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset }) {
                   <span>Impact <b>{selected.impact}/10</b></span>
                   <span>Effort <b>{selected.effort}/10</b></span>
                 </div>
+                <div style={{ marginTop: 8 }}>
+                  <JiraChip jira={selected.jira} />
+                </div>
               </>
             ) : (
               <div className="empty">Hover or tap a dot to see the solution it represents.</div>
@@ -5944,6 +6143,7 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset }) {
             <th></th>
             <th>Solution</th>
             <th>Source</th>
+            <th>Jira</th>
             <th className="num">Impact</th>
             <th className="num">Effort</th>
           </tr>
@@ -5956,6 +6156,7 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset }) {
               <td><span className={"ref " + s.key}>{s.n}</span></td>
               <td>{s.title}</td>
               <td>{s.problem}</td>
+              <td><JiraChip jira={s.jira} /></td>
               <td className="num">{s.impact}</td>
               <td className="num">{s.effort}</td>
             </tr>
@@ -6075,9 +6276,77 @@ function featuresInVersion(stories, version) {
 }
 function deepCloneJSON(o) { return JSON.parse(JSON.stringify(o)); }
 
+// ─── Feedback bridge — copies a Jira-formatted note + opens JEA-1179 ──────
+function FeedbackBridge({ context, onClose }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const ctxLine =
+    "Prototype URL: " + (typeof window !== "undefined" ? window.location.href : "") +
+    "\nView: " + (context.view || "—") +
+    (context.screen   ? "\nScreen: "   + context.screen   : "") +
+    (context.platform ? "\nPlatform: " + context.platform : "") +
+    (context.version  ? "\nVersion: "  + context.version  : "");
+
+  async function submit() {
+    if (!text.trim()) return;
+    setBusy(true);
+    const payload =
+      "Prototype feedback\n\n" + ctxLine + "\n\n— —\n" + text.trim();
+    try {
+      await navigator.clipboard.writeText(payload);
+      setShowToast(true);
+      setTimeout(() => {
+        window.open("https://nmp-jira.atlassian.net/browse/JEA-1179?focusedCommentId=&focusedAddCommentDialog=true", "_blank", "noopener");
+      }, 250);
+      setTimeout(() => { onClose(); }, 1200);
+    } catch (e) {
+      // Fallback: open Jira with the comment in the URL hash for manual paste.
+      window.open("https://nmp-jira.atlassian.net/browse/JEA-1179", "_blank", "noopener");
+      onClose();
+    }
+  }
+
+  return (
+    <>
+      {showToast && <div className="fb-toast">Copied to clipboard · Paste into the Jira comment box</div>}
+      <div className="fb-backdrop" onClick={onClose} />
+      <div className="fb-modal" role="dialog" aria-label="Leave feedback">
+        <h2>Leave feedback</h2>
+        <p className="lead">
+          We'll copy your note to your clipboard and open <span className="ticket-pill">JEA-1179</span> in Jira.
+          Paste into the comment box there to post — Jira will tag you as the author automatically.
+        </p>
+        <div className="fb-context">
+          {context.view     && <span className="ctx"><span className="k">view:</span> {context.view}</span>}
+          {context.screen   && <span className="ctx"><span className="k">screen:</span> {context.screen}</span>}
+          {context.platform && <span className="ctx"><span className="k">platform:</span> {context.platform}</span>}
+          {context.version  && <span className="ctx"><span className="k">version:</span> {context.version}</span>}
+        </div>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          autoFocus
+          placeholder="What's working? What's confusing? Anything you'd ship differently?"
+        />
+        <div className="fb-actions">
+          <button className="secondary" onClick={onClose} type="button">Cancel</button>
+          <button className="primary" onClick={submit} disabled={!text.trim() || busy}>
+            Copy & open in Jira
+          </button>
+        </div>
+        <p className="footnote">
+          Feedback lands on JEA-1179 in <strong>nmp-jira</strong>. You must be logged in to Jira to post.
+        </p>
+      </div>
+    </>
+  );
+}
+
 function AppShell() {
   const isMobile = useIsMobile();
   const [mobSheet, setMobSheet] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [view, setView] = useState("prototype"); // prototype | tree | matrix | storymap
   const [storyVersion, setStoryVersion] = useState("all"); // all | mvp | v1 | v2
   const [version, setVersion] = useState("mvp"); // dev panel toggle: mvp | v1 | v2
@@ -6086,25 +6355,36 @@ function AppShell() {
 
   // Editable copies of the strategy data — drag-drop in the Storymap and
   // Impact-Effort views update these and persist to localStorage.
+  // Bump SCHEMA when the shape changes (jira fields added, etc.) so stale
+  // localStorage from older builds is discarded automatically.
+  const SCHEMA = 3;
   const [stories, setStories] = useState(() => {
     try {
+      const v = parseInt(localStorage.getItem("vend-storymap-v") || "0", 10);
       const saved = localStorage.getItem("vend-storymap");
-      if (saved) return JSON.parse(saved);
+      if (saved && v === SCHEMA) return JSON.parse(saved);
     } catch (_) {}
     return deepCloneJSON(STORYMAP.stories);
   });
   useEffect(() => {
-    try { localStorage.setItem("vend-storymap", JSON.stringify(stories)); } catch (_) {}
+    try {
+      localStorage.setItem("vend-storymap", JSON.stringify(stories));
+      localStorage.setItem("vend-storymap-v", String(SCHEMA));
+    } catch (_) {}
   }, [stories]);
   const [solutions, setSolutions] = useState(() => {
     try {
+      const v = parseInt(localStorage.getItem("vend-solutions-v") || "0", 10);
       const saved = localStorage.getItem("vend-solutions");
-      if (saved) return JSON.parse(saved);
+      if (saved && v === SCHEMA) return JSON.parse(saved);
     } catch (_) {}
     return SOLUTIONS.map(s => ({ ...s }));
   });
   useEffect(() => {
-    try { localStorage.setItem("vend-solutions", JSON.stringify(solutions)); } catch (_) {}
+    try {
+      localStorage.setItem("vend-solutions", JSON.stringify(solutions));
+      localStorage.setItem("vend-solutions-v", String(SCHEMA));
+    } catch (_) {}
   }, [solutions]);
 
   // Derived feature flags (live across renders).
@@ -6651,6 +6931,41 @@ function AppShell() {
         </p>
       </div>
     </div>
+      )}
+
+      {/* Floating feedback FAB — visible on every top-nav view. Clipboard-bridge
+          to JEA-1179 means no backend, identity captured by Jira's own auth. */}
+      <button className="fb-fab" onClick={() => setFeedbackOpen(true)} aria-label="Leave feedback">
+        <span className="dot" aria-hidden="true" />
+        Leave feedback
+      </button>
+      {feedbackOpen && (
+        <FeedbackBridge
+          onClose={() => setFeedbackOpen(false)}
+          context={{
+            view:
+              view === "prototype" ? "Prototype" :
+              view === "tree"      ? "Opportunity tree" :
+              view === "matrix"    ? "Impact–Effort" :
+              view === "storymap"  ? "Storymap" :
+              view === "handoff"   ? "Handoff" : view,
+            screen:
+              view === "prototype"
+                ? (overlay
+                    ? "Overlay: " + overlay
+                    : screen === "preview" && magicMode ? "Preview · Magic Apply"
+                    : screen === "preview" && loadingPhase !== "ready" ? "Preview · loading"
+                    : screen === "preview" ? "Preview · ready"
+                    : screen)
+                : null,
+            platform: view === "prototype"
+              ? (platform === "ios" ? "iOS" : platform === "android" ? "Android" : "Web")
+              : null,
+            version: view === "prototype"
+              ? (version === "mvp" ? "MVP" : version === "v1" ? "1.0" : "2.0")
+              : null,
+          }}
+        />
       )}
     </>
   );
