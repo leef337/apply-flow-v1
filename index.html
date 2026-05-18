@@ -242,11 +242,15 @@
     100% { box-shadow: 0 0 0 24px rgba(31, 138, 59, 0); }
   }
 
-  /* ─── Site header (brand + top tabs row) ─── */
+  /* ─── Site header (brand + top tabs + team tools row) ─── */
   .site-header {
     display: flex; align-items: center; justify-content: space-between;
     max-width: 1080px; margin: 0 auto 28px;
-    gap: 24px; flex-wrap: wrap;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .site-header > .topnav { flex: 1; }
+  @media (max-width: 720px) {
+    .site-header { gap: 10px; }
   }
   .site-brand {
     display: inline-flex; align-items: center; gap: 12px;
@@ -1165,6 +1169,275 @@
     .fb-toast-helper { left: 12px; right: 12px; bottom: 60px; max-width: none; }
   }
 
+  /* ─── Site header toolbar (Activity + QR) — inline with TopNav ─── */
+  .site-tools {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-left: 8px;
+  }
+  .hdr-tool-wrap { position: relative; }
+  .hdr-tool {
+    appearance: none;
+    height: 34px; padding: 0 12px;
+    background: transparent; color: #d4d4d4;
+    border: 1px solid #2c2c2e;
+    border-radius: 9999px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font: 600 12px/1 var(--sys-text); letter-spacing: -0.05px;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), color 160ms var(--ease-modal), border-color 160ms var(--ease-modal), transform 100ms var(--ease-tap);
+  }
+  .hdr-tool:hover {
+    background: #2a2a2b; color: #fff; border-color: #3a3a3b;
+  }
+  .hdr-tool:active { transform: scale(0.97); }
+  .hdr-tool .icon { font-size: 13px; line-height: 1; }
+  @media (max-width: 640px) {
+    .site-tools { margin-left: 0; gap: 6px; }
+    .hdr-tool { height: 32px; padding: 0 10px; font-size: 11.5px; }
+    .hdr-tool .lbl { display: none; }
+  }
+
+  /* ─── QR modal ─── */
+  .qr-backdrop {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(0,0,0,0.55);
+    animation: fadein 240ms var(--ease-modal);
+  }
+  .qr-modal {
+    position: fixed; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 92vw; max-width: 360px;
+    background: #1f1f20; color: #ededed;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 22px 22px 18px;
+    z-index: 901;
+    animation: popin-centered 320ms var(--ease-spring);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+    text-align: center;
+  }
+  .qr-modal h3 {
+    margin: 0 0 4px;
+    font-size: 17px; font-weight: 700;
+    color: #fff; letter-spacing: -0.2px;
+  }
+  .qr-modal .lead {
+    margin: 0 0 16px; font-size: 12.5px; line-height: 1.5;
+    color: #9a9a9a;
+  }
+  .qr-canvas-wrap {
+    display: flex; justify-content: center;
+    margin: 0 auto 12px;
+    background: #fff; padding: 12px; border-radius: 12px;
+    width: fit-content;
+  }
+  .qr-canvas-wrap canvas { display: block; }
+  .qr-url {
+    font: 500 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
+    color: #9a9a9a;
+    background: #131313;
+    border: 1px solid #2a2a2b; border-radius: 8px;
+    padding: 8px 10px;
+    margin: 0 0 12px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .qr-actions { display: flex; justify-content: center; }
+  .qr-copy {
+    appearance: none; border: 0;
+    background: #0063fb; color: #fff;
+    padding: 10px 18px; border-radius: 9999px;
+    font: 600 13px/1 var(--sys-text); letter-spacing: -0.1px;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), transform 100ms var(--ease-tap);
+  }
+  .qr-copy:hover { background: #0058e0; }
+  .qr-copy:active { transform: scale(0.97); }
+  .qr-tip {
+    margin: 14px 0 0; font-size: 11px; color: #6b6b6b; line-height: 1.5;
+    text-align: left;
+  }
+  .qr-close {
+    position: absolute; top: 8px; right: 10px;
+    appearance: none; border: 0; background: transparent;
+    color: #9a9a9a; font-size: 22px; line-height: 1; padding: 4px 8px;
+    border-radius: 6px; cursor: pointer;
+  }
+  .qr-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+
+  /* ─── Acceptance criteria sheet ─── */
+  .sm-ac-badge {
+    display: inline-flex; align-items: center;
+    font: 700 9.5px/1 var(--sys-text); letter-spacing: 0.04em;
+    background: #e6f5ec; color: #1f8a3b;
+    padding: 3px 6px; border-radius: 4px;
+  }
+  .sm-card[role="button"] { cursor: pointer; }
+  .sm-card[role="button"]:hover { box-shadow: 0 2px 8px rgba(0,99,251,0.10); }
+  .ac-backdrop {
+    position: fixed; inset: 0; z-index: 950;
+    background: rgba(0,0,0,0.45);
+    animation: fadein 240ms var(--ease-modal);
+  }
+  .ac-sheet {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 460px; max-width: 92vw;
+    background: #1f1f20; color: #ededed;
+    border-left: 1px solid rgba(255,255,255,0.08);
+    box-shadow: -30px 0 80px rgba(0,0,0,0.55);
+    padding: 24px 26px 20px;
+    z-index: 951;
+    overflow-y: auto;
+    animation: ac-slidein 360ms var(--ease-modal);
+  }
+  @keyframes ac-slidein {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+  }
+  .ac-sheet h3 {
+    margin: 0 0 6px;
+    font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.2px;
+  }
+  .ac-sheet .ac-story {
+    margin: 0 0 12px;
+    font: 500 13px/1.55 var(--sys-text); color: #b6b6b6;
+  }
+  .ac-meta {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    margin: 0 0 18px; padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .ac-edited { font-size: 11px; color: #9a9a9a; }
+  .ac-edited strong { color: #d4d4d4; font-weight: 600; }
+  .ac-label {
+    display: block;
+    margin: 0 0 6px;
+    font: 700 11px/1 var(--sys-text); letter-spacing: 0.04em;
+    color: #9a9a9a; text-transform: uppercase;
+  }
+  .ac-input {
+    width: 100%; box-sizing: border-box;
+    background: #131313; color: #fff;
+    border: 1px solid #2f2f2f; border-radius: 10px;
+    padding: 10px 12px; margin: 0 0 16px;
+    font: 500 13.5px/1.55 var(--sys-text); letter-spacing: -0.05px;
+    resize: vertical;
+    transition: border-color 160ms var(--ease-modal), box-shadow 160ms var(--ease-modal);
+  }
+  .ac-input:focus {
+    outline: none; border-color: #0063fb;
+    box-shadow: 0 0 0 3px rgba(0,99,251,0.25);
+  }
+  .ac-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 8px;
+  }
+  .ac-actions button {
+    appearance: none; border: 0; padding: 10px 16px;
+    border-radius: 9999px;
+    font: 600 13px/1 var(--sys-text); letter-spacing: -0.1px;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), transform 100ms var(--ease-tap);
+  }
+  .ac-secondary { background: transparent; color: #cfcfcf; border: 1px solid #383838 !important; }
+  .ac-secondary:hover { background: #2a2a2b; }
+  .ac-jira { background: #2c2c2e; color: #fff; }
+  .ac-jira:hover { background: #3a3a3b; }
+  .ac-jira:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ac-primary { background: #0063fb; color: #fff; }
+  .ac-primary:hover { background: #0058e0; }
+  .ac-primary:disabled { background: #2f2f2f; color: #6b6b6b; cursor: not-allowed; }
+  .ac-actions button:active { transform: scale(0.97); }
+  .ac-close {
+    position: absolute; top: 12px; right: 14px;
+    appearance: none; border: 0; background: transparent;
+    color: #9a9a9a; font-size: 22px; line-height: 1; padding: 4px 8px;
+    border-radius: 6px; cursor: pointer;
+  }
+  .ac-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .ac-warn {
+    margin: 14px 0 0; padding: 10px 12px;
+    background: #3a2814; border: 1px solid #5a3e22; border-radius: 8px;
+    font-size: 11.5px; color: #f0c97c; line-height: 1.5;
+  }
+  .ac-warn code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; }
+  @media (max-width: 640px) {
+    .ac-sheet { width: 100%; max-width: 100%; }
+  }
+
+  /* ─── View-level toolbar (CloudStatus + Activity) ─── */
+  .view-toolbar {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin: 0 0 14px;
+  }
+  .view-toolbar .cloud-pill { margin: 0; }
+  .view-toolbar .hdr-tool-wrap { display: inline-flex; }
+  /* Dark-bg styled to match cloud-pill — sits on the page background,
+     NOT inside a white surface. Text colour passes WCAG AA (>= 4.5:1)
+     against #0d0d0d. */
+  .view-toolbar .hdr-tool {
+    height: 26px; padding: 0 12px 0 10px;
+    background: rgba(255,255,255,0.06);
+    color: #e4e4e4;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 9999px;
+    font: 600 11.5px/1 var(--sys-text); letter-spacing: -0.05px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .view-toolbar .hdr-tool .icon { font-size: 12px; }
+  .view-toolbar .hdr-tool:hover {
+    background: rgba(255,255,255,0.12);
+    color: #ffffff;
+    border-color: rgba(255,255,255,0.28);
+  }
+  .view-toolbar .hdr-tool:focus-visible {
+    outline: 2px solid #62E3FF;
+    outline-offset: 2px;
+  }
+  .activity-backdrop {
+    position: fixed; inset: 0; z-index: 900;
+    background: transparent;
+  }
+  .activity-popover {
+    position: absolute; left: 0; top: calc(100% + 8px);
+    width: 360px; max-width: 92vw;
+    background: #1f1f20; color: #ededed;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 12px 6px 8px;
+    z-index: 901;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.50);
+    animation: fadeup 220ms var(--ease-modal);
+    max-height: 70vh; overflow: hidden auto;
+  }
+  @media (max-width: 640px) {
+    .activity-popover { position: fixed; top: auto; left: 12px; right: 12px; width: auto; }
+  }
+  .ap-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .ap-head h4 { margin: 0; font-size: 14px; font-weight: 700; color: #fff; }
+  .ap-head .ap-you { font-size: 11px; color: #9a9a9a; }
+  .ap-head .ap-you strong { color: #fff; font-weight: 600; }
+  .ap-empty { padding: 14px; font-size: 12.5px; color: #9a9a9a; line-height: 1.5; margin: 0; }
+  .ap-list { list-style: none; padding: 4px 6px; margin: 0; }
+  .ap-item {
+    display: grid; grid-template-columns: auto 1fr auto; column-gap: 8px;
+    align-items: baseline;
+    padding: 8px 10px; border-radius: 8px;
+    font-size: 12.5px; line-height: 1.45;
+  }
+  .ap-item:hover { background: rgba(255,255,255,0.04); }
+  .ap-item .who { font-weight: 600; color: #fff; }
+  .ap-item .what { color: #d4d4d4; }
+  .ap-item .when { color: #6b6b6b; font-size: 11px; white-space: nowrap; }
+  .ap-footnote {
+    margin: 6px 0 0; padding: 8px 14px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 11px; color: #6b6b6b; line-height: 1.5;
+  }
+
   /* ─── Cloud sync status pill (on matrix + storymap views) ─── */
   .cloud-pill {
     display: inline-flex; align-items: center; gap: 8px;
@@ -1270,6 +1543,80 @@
   .ho-pill.and   { background: #e6f5ec; color: #1f8a3b; }
   .ho-pill.web   { background: #f1ebff; color: #6f3bd0; }
   .ho-pill.gray  { background: #f0f0f3; color: #404040; }
+  /* Backend contracts */
+  .be-block .be-lead { font-size: 13px; color: var(--ink-mute); margin: 4px 0 14px; line-height: 1.5; }
+  .be-list { display: flex; flex-direction: column; gap: 14px; }
+  .be-card {
+    border: 1px solid var(--hair); border-radius: 12px;
+    background: #fff; padding: 14px 16px;
+  }
+  .be-card header { display: flex; align-items: baseline; justify-content: space-between; }
+  .be-card header h3 { margin: 0; font-size: 15px; color: var(--ink); }
+  .be-id { font: 600 10px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #9a9a9a; }
+  .be-sum { margin: 6px 0 12px; font-size: 13px; color: var(--ink-mute); line-height: 1.55; }
+  .be-call { padding: 10px 0 8px; border-top: 1px dashed #ececec; }
+  .be-callhead { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .be-verb {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font: 700 10px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.02em;
+  }
+  .be-verb-get   { background: #eaf2ff; color: #0063fb; }
+  .be-verb-post  { background: #e6f5ec; color: #1f8a3b; }
+  .be-verb-put   { background: #fff3e0; color: #b56600; }
+  .be-verb-patch { background: #fbe9ff; color: #8e2cb5; }
+  .be-verb-delete{ background: #ffe6e6; color: #b00020; }
+  .be-path { font: 600 12.5px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink); }
+  .be-purpose { margin: 4px 0 6px; font-size: 12.5px; color: var(--ink-mute); }
+  .be-call details { margin: 4px 0; }
+  .be-call summary {
+    font: 600 11px/1 var(--sys-text); color: #6b6b6b;
+    cursor: pointer; padding: 4px 0; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .be-call pre {
+    background: #0f1115; color: #cfe4ff;
+    padding: 10px 12px; border-radius: 8px;
+    font: 500 11.5px/1.55 ui-monospace, "SF Mono", Menlo, monospace;
+    overflow-x: auto; margin: 4px 0 0;
+  }
+  .be-events { padding: 10px 0; border-top: 1px dashed #ececec; }
+  .be-events strong { font-size: 11px; text-transform: uppercase; color: #6b6b6b; letter-spacing: 0.04em; }
+  .be-events ul { margin: 6px 0 0; padding-left: 16px; font-size: 12.5px; color: var(--ink-mute); }
+  .be-events code { background: #f2f2f4; padding: 2px 6px; border-radius: 4px; font-size: 11.5px; margin: 0 3px; }
+  .be-notes {
+    margin: 10px 0 0; font-size: 12px; color: var(--ink-mute);
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    padding: 8px 10px; line-height: 1.55;
+  }
+  .be-notes code { background: rgba(0,0,0,0.05); padding: 1px 6px; border-radius: 4px; font-size: 11.5px; }
+
+  /* Instrumentation table */
+  .instr-table-wrap { overflow-x: auto; }
+  .instr-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .instr-table th, .instr-table td {
+    text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid var(--hair);
+    vertical-align: top;
+  }
+  .instr-table th { font-weight: 700; color: var(--ink); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .instr-table td code {
+    background: #f2f2f4; padding: 2px 6px; border-radius: 4px;
+    font: 600 11.5px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink);
+    display: inline-block; margin: 1px 3px 1px 0;
+  }
+  .instr-props code { background: #eaf2ff; color: #0042a9; }
+  .instr-owner {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font: 700 10px/1.4 var(--sys-text); letter-spacing: 0.02em; text-transform: uppercase;
+  }
+  .instr-owner-frontend { background: #eaf2ff; color: #0063fb; }
+  .instr-owner-backend  { background: #e6f5ec; color: #1f8a3b; }
+  .instr-owner-design   { background: #fbe9ff; color: #8e2cb5; }
+  .instr-owner-pm       { background: #fff3e0; color: #b56600; }
+
   .ho-tabs {
     display: flex; gap: 6px; flex-wrap: wrap;
     margin: 0 0 18px;
@@ -5251,7 +5598,7 @@ function Dropdown({ label, value, onChange, options, lang }) {
   );
 }
 
-function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, onMoveStory, onReset }) {
+function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, onMoveStory, onReset, actorName, ensureActor, onActivity }) {
   const VERSIONS = [
     { id: "all", label: "All releases" },
     { id: "mvp", label: "MVP only" },
@@ -5261,6 +5608,26 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
   const showRow = (r) => version === "all" || version === r;
   const cols = STORYMAP.backbone.length;
   const [dragOver, setDragOver] = useState(null); // {taskId, release}
+  // Open acceptance criteria sheet for a specific story.
+  const [acTarget, setAcTarget] = useState(null); // { taskId, story, sid }
+  // Map of storyId → bool, "does this card have AC saved?" — lazy-loaded.
+  const [acMap, setAcMap] = useState({});
+  useEffect(() => {
+    if (!cloudStore.enabled) return;
+    let cancelled = false;
+    (async () => {
+      const map = await cloudStore.getAcceptanceMap();
+      if (!cancelled) {
+        const flags = {};
+        Object.keys(map).forEach(k => {
+          const r = map[k];
+          if (r && (r.given || r.when_ || r.then_)) flags[k] = true;
+        });
+        setAcMap(flags);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [acTarget]); // refetch when sheet closes (target turns null)
 
   function onDragStart(taskId, release, idx) {
     return (e) => {
@@ -5366,11 +5733,16 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
                     onDrop={onDrop(b.id, r.id)}>
                     {cellStories.length === 0 ? (
                       <div className="sm-empty" />
-                    ) : cellStories.map((s, si) => (
-                      <SmCard key={si} story={s} release={r.id} now={r.now}
-                        draggable
-                        onDragStart={onDragStart(b.id, r.id, si)} />
-                    ))}
+                    ) : cellStories.map((s, si) => {
+                      const sid = storyId(b.id, s);
+                      return (
+                        <SmCard key={si} story={s} release={r.id} now={r.now}
+                          draggable
+                          onDragStart={onDragStart(b.id, r.id, si)}
+                          hasAcceptance={!!acMap[sid]}
+                          onClick={() => setAcTarget({ taskId: b.id, story: s, sid })} />
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -5378,6 +5750,16 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
           ))}
         </div>
       </div>
+      <AcceptanceSheet
+        open={!!acTarget}
+        story={acTarget && acTarget.story}
+        taskId={acTarget && acTarget.taskId}
+        sid={acTarget && acTarget.sid}
+        actorName={actorName}
+        ensureActor={ensureActor || ((cb) => cb && cb("Anonymous"))}
+        onActivity={onActivity}
+        onClose={() => setAcTarget(null)}
+      />
     </section>
   );
 }
@@ -5550,7 +5932,7 @@ const HANDOFF = {
 };
 
 function HandoffView() {
-  const [section, setSection] = useState("sitemap"); // sitemap | tokens | components | platform | motion | a11y
+  const [section, setSection] = useState("sitemap");
   return (
     <section className="surface" aria-label="Developer handoff">
       <h1>Developer handoff</h1>
@@ -5561,12 +5943,14 @@ function HandoffView() {
 
       <div className="ho-tabs" role="tablist">
         {[
-          { id: "sitemap",    label: "Site map" },
-          { id: "tokens",     label: "Design tokens" },
-          { id: "components", label: "Components" },
-          { id: "platform",   label: "Platform map" },
-          { id: "motion",     label: "Motion" },
-          { id: "a11y",       label: "A11y" },
+          { id: "sitemap",        label: "Site map" },
+          { id: "tokens",         label: "Design tokens" },
+          { id: "components",     label: "Components" },
+          { id: "platform",       label: "Platform map" },
+          { id: "motion",         label: "Motion" },
+          { id: "a11y",           label: "A11y" },
+          { id: "backend",        label: "Backend contracts" },
+          { id: "instrumentation",label: "Instrumentation" },
         ].map(t => (
           <button key={t.id} role="tab" aria-selected={section === t.id}
             className={section === t.id ? "active" : ""}
@@ -5574,13 +5958,242 @@ function HandoffView() {
         ))}
       </div>
 
-      {section === "sitemap" && <HandoffSitemap />}
-      {section === "tokens" && <HandoffTokens />}
-      {section === "components" && <HandoffComponents />}
-      {section === "platform" && <HandoffPlatform />}
-      {section === "motion" && <HandoffMotion />}
-      {section === "a11y" && <HandoffA11y />}
+      {section === "sitemap"        && <HandoffSitemap />}
+      {section === "tokens"         && <HandoffTokens />}
+      {section === "components"     && <HandoffComponents />}
+      {section === "platform"       && <HandoffPlatform />}
+      {section === "motion"         && <HandoffMotion />}
+      {section === "a11y"           && <HandoffA11y />}
+      {section === "backend"        && <HandoffBackend />}
+      {section === "instrumentation"&& <HandoffInstrumentation />}
     </section>
+  );
+}
+
+// Speculative backend contracts. These are "what the prototype implies
+// the API should look like" — meant as a thinking aid for the BE dev
+// during early scoping, not a final spec.
+const BACKEND_CONTRACTS = [
+  {
+    id: "job-ad",
+    screen: "Job ad",
+    summary: "User lands on the ad. The page needs the ad payload + a draft check so the Apply CTA can show 'Continue' if a draft already exists.",
+    calls: [
+      { method: "GET", path: "/jobs/{adId}", purpose: "Fetch the ad",
+        response: `{
+  "id": "string",
+  "title": "string",
+  "company": { "name": "string", "logoUrl": "string" },
+  "location": "string",
+  "employmentType": "FULL_TIME | PART_TIME | …",
+  "deadline": "2026-08-31T00:00:00Z",
+  "applicationMode": "EASY | EXTERNAL",
+  "matchScore": 0.0–1.0 | null,
+  "matchReasons": [{ "key": "skills.match", "text": "string" }],
+  "description": "markdown"
+}` },
+      { method: "GET", path: "/applications/draft?adId={adId}", purpose: "Check for an existing draft",
+        response: `{ "exists": boolean, "draftId": "string | null", "updatedAt": "iso" | null }` },
+    ],
+  },
+  {
+    id: "apply-prefill",
+    screen: "Apply sheet (open)",
+    summary: "User taps Apply. Pre-fetch the profile data so the application is already populated — the perceived speed is the entire promise of Easy Apply.",
+    calls: [
+      { method: "POST", path: "/applications", purpose: "Create or resume a draft",
+        request: `{ "adId": "string" }`,
+        response: `{
+  "draftId": "string",
+  "createdAt": "iso",
+  "fields": {
+    "cv":   { "kind": "PROFILE | UPLOAD | NONE", "fileUrl": "string | null", "lastUsedAt": "iso | null" },
+    "letter": { "kind": "AI_DRAFT | WRITE | UPLOAD | NONE", "text": "string | null" },
+    "phone":  "string | null",
+    "email":  "string | null"
+  },
+  "matchScore": 0.0–1.0 | null
+}` },
+      { method: "GET", path: "/me/profile-snapshot", purpose: "Pre-fill CV + contact",
+        response: `{ "cvUrl": "string", "cvUpdatedAt": "iso", "phone": "string", "email": "string" }` },
+    ],
+  },
+  {
+    id: "ai-letter",
+    screen: "Cover letter (AI draft)",
+    summary: "AI generates a draft tailored to the ad. Must be cancellable, streamable (eventually), and editable.",
+    calls: [
+      { method: "POST", path: "/applications/{draftId}/letter:draft", purpose: "Generate AI draft",
+        request: `{ "tone": "casual | formal", "lang": "no | en" }`,
+        response: `{ "text": "markdown", "model": "string", "tokensIn": int, "tokensOut": int }` },
+      { method: "PATCH", path: "/applications/{draftId}", purpose: "Save edits",
+        request: `{ "letter": { "kind": "AI_DRAFT | WRITE", "text": "string" } }`,
+        response: `{ "ok": true, "updatedAt": "iso" }` },
+    ],
+    notes: "On v2 (Magic Apply) this is called server-side, results inlined into the draft response.",
+  },
+  {
+    id: "cv-picker",
+    screen: "CV picker",
+    summary: "User chooses CV source. New uploads need a signed URL; tailored-CV is its own AI flow.",
+    calls: [
+      { method: "POST", path: "/me/cv:uploadUrl", purpose: "Get a signed PUT URL for a new CV",
+        response: `{ "uploadUrl": "string", "fileId": "string", "expiresAt": "iso" }` },
+      { method: "POST", path: "/applications/{draftId}/cv:tailor", purpose: "AI-tailor CV to the ad (v1+)",
+        response: `{ "fileId": "string", "summary": "markdown" }` },
+      { method: "PATCH", path: "/applications/{draftId}", purpose: "Set chosen CV",
+        request: `{ "cv": { "kind": "PROFILE | UPLOAD | TAILORED", "fileId": "string" } }` },
+    ],
+  },
+  {
+    id: "submit",
+    screen: "Submit application",
+    summary: "User taps Send. Idempotent — retry-safe with the same draftId.",
+    calls: [
+      { method: "POST", path: "/applications/{draftId}:submit", purpose: "Send",
+        request: `{ "idempotencyKey": "uuid" }`,
+        response: `{
+  "applicationId": "string",
+  "sentAt": "iso",
+  "trackingUrl": "string"
+}` },
+    ],
+    events: [
+      { name: "application_submitted", props: ["adId", "draftId", "applicationId", "matchScore", "lettersKind", "cvKind", "durationMs", "platform"] },
+    ],
+  },
+  {
+    id: "recruiter-receipt",
+    screen: "Recruiter inbox (out of scope here)",
+    summary: "BE has to fan out — applications land in recruiter pipelines + trigger notifications.",
+    calls: [
+      { method: "GET", path: "/recruiter/applications?adId={adId}", purpose: "List incoming applications" },
+      { method: "POST", path: "/notifications:applicationReceived", purpose: "Trigger recruiter notification (push, email)" },
+    ],
+    notes: "Worth a parallel BE thread early — recruiter-side perf affects ad churn (must-win).",
+  },
+];
+
+function HandoffBackend() {
+  return (
+    <div className="ho-block be-block">
+      <h2>Backend contracts (speculative)</h2>
+      <p className="be-lead">
+        What the prototype <em>implies</em> the API should look like. These aren't approved specs — they're a
+        thinking aid for early BE scoping. Refine with the BE dev before each release.
+      </p>
+      <div className="be-list">
+        {BACKEND_CONTRACTS.map(c => (
+          <article key={c.id} className="be-card">
+            <header>
+              <h3>{c.screen}</h3>
+              <span className="be-id">{c.id}</span>
+            </header>
+            <p className="be-sum">{c.summary}</p>
+            {c.calls.map((call, i) => (
+              <div key={i} className="be-call">
+                <div className="be-callhead">
+                  <span className={"be-verb be-verb-" + call.method.toLowerCase()}>{call.method}</span>
+                  <code className="be-path">{call.path}</code>
+                </div>
+                <p className="be-purpose">{call.purpose}</p>
+                {call.request && (
+                  <details>
+                    <summary>Request</summary>
+                    <pre>{call.request}</pre>
+                  </details>
+                )}
+                {call.response && (
+                  <details>
+                    <summary>Response</summary>
+                    <pre>{call.response}</pre>
+                  </details>
+                )}
+              </div>
+            ))}
+            {c.events && (
+              <div className="be-events">
+                <strong>Events emitted</strong>
+                <ul>
+                  {c.events.map(e => (
+                    <li key={e.name}>
+                      <code>{e.name}</code> · props: {e.props.map(p => <code key={p}>{p}</code>)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {c.notes && <p className="be-notes">📌 {c.notes}</p>}
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// What the prototype should be telling Amplitude. One row per user
+// intent — name + properties + screen — so BE / FE / PM can argue about
+// the schema before code lands.
+const INSTRUMENTATION_EVENTS = [
+  { event: "job_ad_viewed",          screen: "Job ad",            props: ["adId", "company", "employmentType", "matchScore", "source", "platform"], owner: "Frontend" },
+  { event: "apply_started",          screen: "Job ad",            props: ["adId", "matchScore", "applyMode", "platform"], owner: "Frontend" },
+  { event: "apply_resumed_from_draft",screen: "Job ad",           props: ["adId", "draftId", "draftAgeMs"], owner: "Frontend" },
+  { event: "draft_created",          screen: "Apply sheet",       props: ["adId", "draftId", "platform"], owner: "Backend" },
+  { event: "cv_picker_opened",       screen: "CV picker",         props: ["draftId", "sourcesShown"], owner: "Frontend" },
+  { event: "cv_source_chosen",       screen: "CV picker",         props: ["draftId", "kind"], owner: "Frontend" },
+  { event: "cv_uploaded",            screen: "CV picker",         props: ["draftId", "fileSizeKb", "mimeType"], owner: "Backend" },
+  { event: "cv_tailored_generated",  screen: "CV picker",         props: ["draftId", "model", "tokensOut", "durationMs"], owner: "Backend" },
+  { event: "letter_picker_opened",   screen: "Letter picker",     props: ["draftId", "sourcesShown"], owner: "Frontend" },
+  { event: "letter_ai_draft_started",screen: "Writing assistant", props: ["draftId", "lang", "tone"], owner: "Frontend" },
+  { event: "letter_ai_draft_done",   screen: "Writing assistant", props: ["draftId", "model", "tokensOut", "durationMs"], owner: "Backend" },
+  { event: "letter_edited",          screen: "Writing assistant", props: ["draftId", "charDelta", "secondsSpent"], owner: "Frontend" },
+  { event: "application_reviewed",   screen: "Apply sheet",       props: ["draftId", "rowsTouched", "secondsSpent"], owner: "Frontend" },
+  { event: "application_submitted",  screen: "Apply sheet",       props: ["adId", "draftId", "applicationId", "matchScore", "letterKind", "cvKind", "durationMs", "platform"], owner: "Backend" },
+  { event: "application_submitted_magic",screen: "Magic Apply",   props: ["adId", "draftId", "applicationId", "stagesShownMs"], owner: "Backend" },
+  { event: "what_is_match_opened",   screen: "Apply sheet",       props: ["adId", "matchScore"], owner: "Frontend" },
+  { event: "saved_as_draft",         screen: "Activity",          props: ["draftId", "exitedFrom"], owner: "Frontend" },
+  { event: "recruiter_app_received", screen: "Recruiter inbox",   props: ["adId", "applicationId", "channelLatencyMs"], owner: "Backend" },
+];
+
+function HandoffInstrumentation() {
+  return (
+    <div className="ho-block instr-block">
+      <h2>Instrumentation plan</h2>
+      <p className="be-lead">
+        Every user action in the Easy/Agentic apply flow → the Amplitude event it should fire → the properties to attach.
+        Aligned to the <strong>increase stickiness</strong> + <strong>reduce ad churn</strong> must-wins.
+      </p>
+      <div className="instr-table-wrap">
+        <table className="instr-table">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Screen</th>
+              <th>Properties</th>
+              <th>Owner</th>
+            </tr>
+          </thead>
+          <tbody>
+            {INSTRUMENTATION_EVENTS.map(e => (
+              <tr key={e.event}>
+                <td><code>{e.event}</code></td>
+                <td>{e.screen}</td>
+                <td className="instr-props">
+                  {e.props.map(p => <code key={p}>{p}</code>)}
+                </td>
+                <td>
+                  <span className={"instr-owner instr-owner-" + e.owner.toLowerCase()}>{e.owner}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="be-notes">
+        📌 Common props on every event: <code>userId</code>, <code>sessionId</code>, <code>appVersion</code>, <code>buildNumber</code>, <code>locale</code>, <code>deviceModel</code>, <code>osVersion</code>.
+        Don't repeat these per-event — set them as global context once per session.
+      </p>
+    </div>
   );
 }
 
@@ -6035,20 +6648,171 @@ function JiraChip({ jira }) {
   );
 }
 
-function SmCard({ story, release, now, draggable, onDragStart }) {
+// Stable id for a story so acceptance criteria persist across drag-moves
+// (the underlying story text doesn't change when you drag between releases).
+function storyId(taskId, story) {
+  if (story.jira) return "jira:" + story.jira;
+  if (story.id) return "id:" + story.id;
+  // Fallback: hash a stable subset of the story.
+  const seed = (taskId || "") + ":" + (story.story || "") + ":" + (story.n || "");
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) { h = (h * 31 + seed.charCodeAt(i)) | 0; }
+  return "h:" + Math.abs(h).toString(36);
+}
+
+function SmCard({ story, release, now, draggable, onDragStart, onClick, hasAcceptance }) {
   return (
     <div className={"sm-card " + release + (story.feature ? " sm-card-feature" : "")}
       draggable={draggable}
-      onDragStart={onDragStart}>
+      onDragStart={onDragStart}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(e); } } : undefined}
+      title={onClick ? "Click to view acceptance criteria" : undefined}>
       <p className="story">{story.story}</p>
       <div className="meta">
         <JiraChip jira={story.jira} />
         {now && <span className="sm-now-badge">In prototype</span>}
         {story.feature && <span className="sm-feature-pill">live feature</span>}
+        {hasAcceptance && <span className="sm-ac-badge" title="Has acceptance criteria">AC ✓</span>}
         {story.n != null && <span className={"ref-num " + (story.key || "pa")}>{story.n}</span>}
         {story.hyp && <span className="hyp">H {story.hyp}</span>}
       </div>
     </div>
+  );
+}
+
+// Side sheet for writing Given/When/Then acceptance criteria on a story.
+function AcceptanceSheet({ open, story, taskId, sid, onClose, actorName, ensureActor, onActivity }) {
+  const [given, setGiven] = useState("");
+  const [whenStr, setWhenStr] = useState("");
+  const [thenStr, setThenStr] = useState("");
+  const [loadedFor, setLoadedFor] = useState(null);
+  const [meta, setMeta] = useState(null);  // {updated_by, updated_at}
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Load AC for this story when opened.
+  useEffect(() => {
+    if (!open || !sid || loadedFor === sid) return;
+    let cancelled = false;
+    (async () => {
+      const row = await cloudStore.getAcceptance(sid);
+      if (cancelled) return;
+      if (row) {
+        setGiven(row.given || "");
+        setWhenStr(row.when_ || "");
+        setThenStr(row.then_ || "");
+        setMeta({ updated_by: row.updated_by, updated_at: row.updated_at });
+      } else {
+        setGiven(""); setWhenStr(""); setThenStr(""); setMeta(null);
+      }
+      setLoadedFor(sid);
+      setSaved(false);
+    })();
+    return () => { cancelled = true; };
+  }, [open, sid, loadedFor]);
+
+  // Reset loadedFor when the sheet closes so reopening forces a re-fetch
+  // (catches the case where someone else has edited it in the meantime).
+  useEffect(() => { if (!open) setLoadedFor(null); }, [open]);
+
+  if (!open || !story) return null;
+
+  async function save() {
+    ensureActor(async (who) => {
+      setSaving(true);
+      const ok = await cloudStore.setAcceptance(sid, {
+        given, when_: whenStr, then_: thenStr, updated_by: who,
+      });
+      setSaving(false);
+      if (ok) {
+        setSaved(true);
+        setMeta({ updated_by: who, updated_at: new Date().toISOString() });
+        if (cloudStore.enabled) cloudStore.logEvent({
+          action: "set-acceptance", actor: who, detail: { story: story.story, jira: story.jira },
+        });
+        onActivity && onActivity();
+        setTimeout(() => setSaved(false), 2400);
+      }
+    });
+  }
+
+  function copyForJira() {
+    const text = [
+      story.jira ? "Acceptance criteria for " + story.jira : "Acceptance criteria — " + (story.story || ""),
+      "",
+      story.story ? "Story: " + story.story : "",
+      "",
+      "Given " + (given || "—"),
+      "When " + (whenStr || "—"),
+      "Then " + (thenStr || "—"),
+      "",
+      meta && meta.updated_by ? "Last edited by " + meta.updated_by : "",
+    ].filter(Boolean).join("\n");
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+      if (story.jira) {
+        window.open("https://nmp-jira.atlassian.net/browse/" + story.jira, "_blank", "noopener");
+      }
+    }).catch(() => {});
+  }
+
+  const hasAnything = !!(given || whenStr || thenStr);
+
+  return (
+    <>
+      <div className="ac-backdrop" onClick={onClose} />
+      <aside className="ac-sheet" role="dialog" aria-label="Acceptance criteria">
+        <button className="ac-close" onClick={onClose} aria-label="Close">×</button>
+        <h3>Acceptance criteria</h3>
+        <p className="ac-story">"{story.story}"</p>
+        <div className="ac-meta">
+          {story.jira && <JiraChip jira={story.jira} />}
+          {story.feature && <span className="sm-feature-pill">live feature</span>}
+          {meta && meta.updated_by && (
+            <span className="ac-edited">
+              Last edited by <strong>{meta.updated_by}</strong>
+              {meta.updated_at ? " · " + relativeTime(meta.updated_at) : ""}
+            </span>
+          )}
+        </div>
+
+        <label className="ac-label">Given</label>
+        <textarea className="ac-input" rows="2" value={given}
+          onChange={(e) => setGiven(e.target.value)}
+          placeholder="the user has a CV uploaded to their profile, and they're on a Politiet job ad…" />
+
+        <label className="ac-label">When</label>
+        <textarea className="ac-input" rows="2" value={whenStr}
+          onChange={(e) => setWhenStr(e.target.value)}
+          placeholder="they tap Apply Now…" />
+
+        <label className="ac-label">Then</label>
+        <textarea className="ac-input" rows="2" value={thenStr}
+          onChange={(e) => setThenStr(e.target.value)}
+          placeholder="the apply sheet opens with their profile CV pre-selected, and the Send button is enabled…" />
+
+        <div className="ac-actions">
+          <button className="ac-secondary" onClick={onClose}>Close</button>
+          <button className="ac-jira" onClick={copyForJira} disabled={!hasAnything}>
+            {copied ? "✓ Copied" : "Copy for Jira"}
+          </button>
+          <button className="ac-primary" onClick={save} disabled={saving || !cloudStore.enabled}>
+            {saved ? "✓ Saved" : saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+        {!cloudStore.enabled && (
+          <p className="ac-warn">
+            Cloud isn't configured — paste in your Supabase keys in <code>index.html</code> to share these with the team.
+          </p>
+        )}
+      </aside>
+    </>
   );
 }
 
@@ -6112,6 +6876,17 @@ function TopNav({ view, onChange }) {
 const SUPABASE_URL      = "https://mnotuwlstknjuxbgailm.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_h-o9kPkz9m-6FiWyKYAHMw_huVQuI-O";
 const SUPABASE_TABLE    = "prototype_state";
+const SUPABASE_EVENTS   = "prototype_events";
+const SUPABASE_AC       = "prototype_acceptance"; // acceptance criteria, one row per storyId
+
+// Magic-header gate. Sent on every Supabase request as x-team-token;
+// the RLS policies on the server require this exact value to allow
+// inserts/updates. Reads are also gated so abuse can't enumerate the
+// tables either. Anyone who reads the JS can extract this string —
+// that's expected. It locks out drive-by bots and casual abuse, which
+// is the realistic threat for a static team prototype.
+// Rotate this string + run the matching SQL update if the URL leaks.
+const TEAM_TOKEN = "vend-user-connect-2026-bm7q4n";
 
 // Build a tiny helper. If keys are missing or the CDN failed to load,
 // every method becomes a no-op and the rest of the app falls back to
@@ -6123,11 +6898,40 @@ const cloudStore = (() => {
     !!SUPABASE_URL &&
     !!SUPABASE_ANON_KEY;
   if (!enabled) {
-    return { enabled: false, get: async () => null, set: async () => false };
+    return {
+      enabled: false,
+      get: async () => null,
+      set: async () => false,
+      logEvent: async () => false,
+      getEvents: async () => [],
+      getAcceptance: async () => null,
+      setAcceptance: async () => false,
+      getAcceptanceMap: async () => ({}),
+    };
   }
-  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false },
-  });
+  let client;
+  try {
+    client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+      global: {
+        // RLS policies require this header on every read/write — keeps
+        // out drive-by abuse even though the anon key is public.
+        headers: { "x-team-token": TEAM_TOKEN },
+      },
+    });
+  } catch (e) {
+    console.warn("[cloud] createClient failed:", e);
+    return {
+      enabled: false,
+      get: async () => null,
+      set: async () => false,
+      logEvent: async () => false,
+      getEvents: async () => [],
+      getAcceptance: async () => null,
+      setAcceptance: async () => false,
+      getAcceptanceMap: async () => ({}),
+    };
+  }
   return {
     enabled: true,
     client,
@@ -6151,6 +6955,65 @@ const cloudStore = (() => {
         return true;
       } catch (e) { console.warn("[cloud] set exception", e); return false; }
     },
+    async logEvent({ action, detail, actor }) {
+      try {
+        const { error } = await client
+          .from(SUPABASE_EVENTS)
+          .insert({ action, detail: detail || null, actor: actor || null });
+        if (error) { console.warn("[cloud] logEvent", error.message); return false; }
+        return true;
+      } catch (e) { console.warn("[cloud] logEvent exception", e); return false; }
+    },
+    async getEvents(limit = 12) {
+      try {
+        const { data, error } = await client
+          .from(SUPABASE_EVENTS)
+          .select("id, action, detail, actor, created_at")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (error) { console.warn("[cloud] getEvents", error.message); return []; }
+        return data || [];
+      } catch (e) { console.warn("[cloud] getEvents exception", e); return []; }
+    },
+    async getAcceptance(storyId) {
+      try {
+        const { data, error } = await client
+          .from(SUPABASE_AC)
+          .select("given, when_, then_, updated_at, updated_by")
+          .eq("story_id", storyId)
+          .maybeSingle();
+        if (error) { console.warn("[cloud] getAcceptance", error.message); return null; }
+        return data;
+      } catch (e) { console.warn("[cloud] getAcceptance exception", e); return null; }
+    },
+    async setAcceptance(storyId, { given, when_, then_, updated_by }) {
+      try {
+        const row = {
+          story_id: storyId,
+          given: given || "",
+          when_: when_ || "",
+          then_: then_ || "",
+          updated_by: updated_by || null,
+          updated_at: new Date().toISOString(),
+        };
+        const { error } = await client
+          .from(SUPABASE_AC)
+          .upsert(row, { onConflict: "story_id" });
+        if (error) { console.warn("[cloud] setAcceptance", error.message); return false; }
+        return true;
+      } catch (e) { console.warn("[cloud] setAcceptance exception", e); return false; }
+    },
+    async getAcceptanceMap() {
+      try {
+        const { data, error } = await client
+          .from(SUPABASE_AC)
+          .select("story_id, given, when_, then_, updated_by, updated_at");
+        if (error) { console.warn("[cloud] getAcceptanceMap", error.message); return {}; }
+        const map = {};
+        (data || []).forEach(r => { map[r.story_id] = r; });
+        return map;
+      } catch (e) { console.warn("[cloud] getAcceptanceMap exception", e); return {}; }
+    },
   };
 })();
 
@@ -6172,6 +7035,209 @@ const MIRO_BOARD_URL  = "https://miro.com/app/board/uXjVJFnE_0E=/";
 // The live-embed URL still keeps share_link_id — embed mode needs it
 // to authorize the iframe view, and it doesn't show the welcome modal.
 const MIRO_EMBED_URL  = "https://miro.com/app/live-embed/uXjVJFnE_0E=/?share_link_id=880153893718&embedMode=view_only_without_ui&moveToViewport=&autoplay=true";
+
+// Mobile-first cheat code: a header button that pops a modal with a QR for
+// the current URL. Anyone on a video call can scan it and instantly test
+// the prototype on a real device. Uses qrserver.com's public free QR API
+// (no JS lib, no race conditions) — falls back to a plain link if offline.
+function QrModal({ trigger }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const url = typeof window !== "undefined" ? window.location.href : "";
+  const qrSrc =
+    "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=1&qzone=1&data=" +
+    encodeURIComponent(url);
+
+  function copyLink() {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    }).catch(() => {});
+  }
+
+  return (
+    <>
+      {trigger ? trigger(() => setOpen(true)) : (
+        <button className="hdr-tool" onClick={() => setOpen(true)} aria-label="Open this prototype on a phone">
+          <span className="icon" aria-hidden="true">📱</span>
+          <span className="lbl">Open on phone</span>
+        </button>
+      )}
+      {open && (
+        <>
+          <div className="qr-backdrop" onClick={() => setOpen(false)} />
+          <div className="qr-modal" role="dialog" aria-label="Scan to open on phone">
+            <button className="qr-close" onClick={() => setOpen(false)} aria-label="Close">×</button>
+            <h3>Open on a phone</h3>
+            <p className="lead">Scan with your phone's camera to open this exact view on a real device.</p>
+            <div className="qr-canvas-wrap">
+              <img
+                src={qrSrc}
+                width={240}
+                height={240}
+                alt="QR code"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+              />
+            </div>
+            <div className="qr-url" title={url}>{url}</div>
+            <div className="qr-actions">
+              <button className="qr-copy" onClick={copyLink}>{copied ? "✓ Copied" : "Copy link"}</button>
+            </div>
+            <p className="qr-tip">
+              Tip: the page remembers which tab you're on, so the QR opens to your current view (Storymap, Matrix, Prototype, etc.).
+            </p>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+// Pseudonymous name prompt — one-time-per-browser. Shown the first
+// time someone tries to edit anything that goes into the activity log.
+function NamePrompt({ open, onSubmit, onClose }) {
+  const [name, setName] = useState("");
+  if (!open) return null;
+  return (
+    <>
+      <div className="fb-backdrop" onClick={onClose} />
+      <div className="fb-modal" role="dialog" aria-label="What's your name?">
+        <h2>What should the team call you?</h2>
+        <p className="lead">
+          We'll tag your moves in the activity feed so teammates can see who changed what.
+          Stored in your browser only. No account, no email.
+        </p>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoFocus
+          placeholder="e.g. Lee, Hege, Ola…"
+          maxLength={40}
+          onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) onSubmit(name); }}
+          style={{
+            width: "100%", boxSizing: "border-box",
+            background: "#131313", color: "#fff",
+            border: "1px solid #2f2f2f", borderRadius: 10,
+            padding: "12px 14px",
+            font: "500 14px/1.4 var(--sys-text)",
+          }}
+        />
+        <div className="fb-actions">
+          <button className="secondary" onClick={onClose} type="button">Cancel</button>
+          <button className="primary" onClick={() => onSubmit(name)} disabled={!name.trim()}>
+            Save name
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Activity feed — small pill in the header that opens a popover with the
+// last N events from the team. Backed by the prototype_events table.
+function ActivityFeed({ enabled, actorName }) {
+  const [open, setOpen] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Poll every 30s while the popover is open. Cheap, and avoids needing
+  // realtime subscriptions just for an activity feed.
+  useEffect(() => {
+    if (!open || !enabled) return;
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const data = await cloudStore.getEvents(15);
+      if (!cancelled) {
+        setEvents(data);
+        setLoading(false);
+      }
+    }
+    load();
+    const t = setInterval(load, 30000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [open, enabled]);
+
+  if (!enabled) return null;
+
+  return (
+    <div className="hdr-tool-wrap">
+      <button className="hdr-tool" onClick={() => setOpen(o => !o)}
+        aria-label="Recent team activity"
+        aria-expanded={open}>
+        <span className="icon" aria-hidden="true">📣</span>
+        <span className="lbl">Activity</span>
+      </button>
+      {open && (
+        <>
+          <div className="activity-backdrop" onClick={() => setOpen(false)} />
+          <div className="activity-popover" role="dialog" aria-label="Recent activity">
+            <div className="ap-head">
+              <h4>Recent activity</h4>
+              <span className="ap-you">You: <strong>{actorName || "Anonymous"}</strong></span>
+            </div>
+            {loading && events.length === 0 ? (
+              <p className="ap-empty">Loading…</p>
+            ) : events.length === 0 ? (
+              <p className="ap-empty">Nothing yet — drag a card on the Storymap or Matrix to get started.</p>
+            ) : (
+              <ul className="ap-list">
+                {events.map(e => (
+                  <li key={e.id} className={"ap-item ap-" + e.action}>
+                    <span className="who">{e.actor || "Someone"}</span>
+                    <span className="what">{describeEvent(e)}</span>
+                    <span className="when">{relativeTime(e.created_at)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="ap-footnote">Shows the last 15 changes. Refreshes every 30s while open.</p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function describeEvent(e) {
+  const d = e.detail || {};
+  switch (e.action) {
+    case "move-story":
+      return `moved “${truncate(d.story, 36)}” from ${releaseLabel(d.from)} → ${releaseLabel(d.to)}`;
+    case "move-solution":
+      return `repositioned “${truncate(d.solution, 30)}” on Impact–Effort`;
+    case "reset-storymap":
+      return "reset the storymap to defaults";
+    case "reset-matrix":
+      return "reset the Impact–Effort matrix to defaults";
+    case "set-acceptance":
+      return `updated acceptance criteria on “${truncate(d.story, 32)}”`;
+    default:
+      return e.action;
+  }
+}
+function releaseLabel(r) {
+  return r === "mvp" ? "MVP" : r === "v1" ? "1.0" : r === "v2" ? "2.0" : (r || "—");
+}
+function truncate(s, n) {
+  if (!s) return "(unnamed)";
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+function relativeTime(iso) {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  const diff = Math.max(0, Date.now() - then);
+  const m = Math.floor(diff / 60000);
+  if (m < 1)   return "just now";
+  if (m < 60)  return m + "m ago";
+  const h = Math.floor(m / 60);
+  if (h < 24)  return h + "h ago";
+  const d = Math.floor(h / 24);
+  if (d < 7)   return d + "d ago";
+  return new Date(iso).toLocaleDateString();
+}
 
 function CloudStatusPill({ status, lastSyncedAt }) {
   // status: 'off' | 'loading' | 'synced' | 'saving' | 'error'
@@ -6824,35 +7890,96 @@ function AppShell() {
   const showTailoredCV  = features.has("tailored-cv");
   const enableMagicApply = features.has("magic-apply");
 
-  // Drag-drop callbacks for the strategy views.
+  // Pseudonymous "who's editing" name — captured once on first edit and
+  // re-used for activity log attribution. No login, no PII; people just
+  // type their name. Stored in localStorage.
+  const [actorName, setActorName] = useState(() => {
+    try { return localStorage.getItem("vend-actor") || ""; } catch (_) { return ""; }
+  });
+  const [namePromptOpen, setNamePromptOpen] = useState(false);
+  function ensureActor(thenRun) {
+    if (actorName) { thenRun && thenRun(actorName); return; }
+    setNamePromptOpen(true);
+    // We re-run the action via a one-shot ref after they submit a name.
+    pendingActionRef.current = thenRun || null;
+  }
+  const pendingActionRef = useRef(null);
+  function submitActorName(name) {
+    const clean = (name || "").trim().slice(0, 40);
+    if (!clean) return;
+    setActorName(clean);
+    try { localStorage.setItem("vend-actor", clean); } catch (_) {}
+    setNamePromptOpen(false);
+    if (pendingActionRef.current) {
+      const run = pendingActionRef.current;
+      pendingActionRef.current = null;
+      run(clean);
+    }
+  }
+
+  // Drag-drop callbacks for the strategy views. Each move logs an event
+  // (asynchronously, non-blocking) so the team activity feed has history.
   function moveStory(taskId, fromRelease, idx, toRelease) {
     if (fromRelease === toRelease) return;
-    setStories(prev => {
-      const next = deepCloneJSON(prev);
-      const task = next[taskId] || (next[taskId] = { mvp: [], v1: [], v2: [] });
-      const src = task[fromRelease] || [];
-      const moved = src.splice(idx, 1)[0];
-      if (!moved) return prev;
-      task[toRelease] = task[toRelease] || [];
-      task[toRelease].push(moved);
-      return next;
+    ensureActor((who) => {
+      let movedStoryLabel = null;
+      setStories(prev => {
+        const next = deepCloneJSON(prev);
+        const task = next[taskId] || (next[taskId] = { mvp: [], v1: [], v2: [] });
+        const src = task[fromRelease] || [];
+        const moved = src.splice(idx, 1)[0];
+        if (!moved) return prev;
+        task[toRelease] = task[toRelease] || [];
+        task[toRelease].push(moved);
+        movedStoryLabel = moved.story || moved.jira || "story";
+        return next;
+      });
+      if (movedStoryLabel && cloudStore.enabled) {
+        cloudStore.logEvent({
+          action: "move-story",
+          actor: who,
+          detail: { story: movedStoryLabel, from: fromRelease, to: toRelease, taskId },
+        });
+      }
     });
   }
   function moveSolution(n, impact, effort) {
-    setSolutions(prev => prev.map(s => s.n === n ? { ...s, impact, effort } : s));
+    ensureActor((who) => {
+      let label = null;
+      setSolutions(prev => prev.map(s => {
+        if (s.n === n) { label = s.title || ("Solution " + n); return { ...s, impact, effort }; }
+        return s;
+      }));
+      if (label && cloudStore.enabled) {
+        cloudStore.logEvent({
+          action: "move-solution",
+          actor: who,
+          detail: { solution: label, n, impact, effort },
+        });
+      }
+    });
   }
   function resetStorymap() {
-    const fresh = deepCloneJSON(STORYMAP.stories);
-    setStories(fresh);
-    try { localStorage.removeItem("vend-storymap"); } catch (_) {}
-    // Also reset the shared/cloud copy so the team sees the rollback.
-    if (cloudStore.enabled) cloudStore.set("storymap", fresh);
+    ensureActor((who) => {
+      const fresh = deepCloneJSON(STORYMAP.stories);
+      setStories(fresh);
+      try { localStorage.removeItem("vend-storymap"); } catch (_) {}
+      if (cloudStore.enabled) {
+        cloudStore.set("storymap", fresh);
+        cloudStore.logEvent({ action: "reset-storymap", actor: who });
+      }
+    });
   }
   function resetMatrix() {
-    const fresh = SOLUTIONS.map(s => ({ ...s }));
-    setSolutions(fresh);
-    try { localStorage.removeItem("vend-solutions"); } catch (_) {}
-    if (cloudStore.enabled) cloudStore.set("matrix", fresh);
+    ensureActor((who) => {
+      const fresh = SOLUTIONS.map(s => ({ ...s }));
+      setSolutions(fresh);
+      try { localStorage.removeItem("vend-solutions"); } catch (_) {}
+      if (cloudStore.enabled) {
+        cloudStore.set("matrix", fresh);
+        cloudStore.logEvent({ action: "reset-matrix", actor: who });
+      }
+    });
   }
 
   // Inspect mode — click any element on the iPhone to see its computed specs.
@@ -7036,6 +8163,11 @@ function AppShell() {
 
   return (
     <>
+      <NamePrompt
+        open={namePromptOpen}
+        onSubmit={submitActorName}
+        onClose={() => { setNamePromptOpen(false); pendingActionRef.current = null; }}
+      />
       <div className="site-header">
         <div className="site-brand" aria-label="FINN User Connect">
           <img
@@ -7047,15 +8179,24 @@ function AppShell() {
           <span className="wordmark">User Connect</span>
         </div>
         <TopNav view={view} onChange={setView} />
+        <div className="site-tools" role="toolbar" aria-label="Team tools">
+          <QrModal />
+        </div>
       </div>
       {view === "tree" && (
         <div key="tree-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
+          <div className="view-toolbar">
+            <ActivityFeed enabled={cloudStore.enabled} actorName={actorName} />
+          </div>
           <OpportunityTreeView />
         </div>
       )}
       {view === "matrix" && (
         <div key="matrix-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
-          <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
+          <div className="view-toolbar">
+            <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
+            <ActivityFeed enabled={cloudStore.enabled} actorName={actorName} />
+          </div>
           <ImpactEffortView
             solutions={solutions}
             onMoveSolution={moveSolution}
@@ -7065,13 +8206,18 @@ function AppShell() {
       )}
       {view === "storymap" && (
         <div key="storymap-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
-          <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
+          <div className="view-toolbar">
+            <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
+            <ActivityFeed enabled={cloudStore.enabled} actorName={actorName} />
+          </div>
           <StorymapView
             version={storyVersion}
             onVersionChange={setStoryVersion}
             stories={stories}
             onMoveStory={moveStory}
             onReset={resetStorymap}
+            actorName={actorName}
+            ensureActor={ensureActor}
           />
         </div>
       )}
