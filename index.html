@@ -8,17 +8,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0063fb">
 <title>FINN Jobs — Easy + Agentic apply (iOS prototype v1)</title>
-
+<link rel="stylesheet" href="../../design_system/colors_and_type.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Flex:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-  /* FINN brand typeface — files live in /fonts next to index.html. */
-  @font-face { font-family: "FINNType"; src: url("fonts/FINNTypeWebStrippet-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; }
-  @font-face { font-family: "FINNType"; src: url("fonts/FINNTypeWebStrippet-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
-  @font-face { font-family: "FINNType"; src: url("fonts/FINNTypeWebStrippet-Medium.ttf") format("truetype"); font-weight: 500; font-style: normal; font-display: swap; }
-  @font-face { font-family: "FINNType"; src: url("fonts/FINNTypeWebStrippet-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
-</style>
 <style>
   :root {
     --finn-blue: #0063fb;
@@ -34,7 +27,7 @@
     --warn-soft: #fdedb0;
     --red: #cc1414;
     --red-soft: #fadddd;
-    --sys-text: "FINNType", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    --sys-text: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
     /* iOS-native motion curves.
        --ease-out:    standard exits, hover/colour transitions.
        --ease-modal:  iOS sheet present/dismiss curve — confident in, gentle out.
@@ -219,6 +212,13 @@
     55%  { transform: scale(1.06); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
   }
+  /* Centered modal popin: preserves the translate(-50%,-50%) centering
+     transform that .fb-modal relies on, so it doesn't jump from corner. */
+  @keyframes popin-centered {
+    0%   { transform: translate(-50%, -50%) scale(0.92); opacity: 0; }
+    55%  { transform: translate(-50%, -50%) scale(1.02); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1);    opacity: 1; }
+  }
   @keyframes pulse {
     0%, 100% { transform: scale(1);    opacity: 1; }
     50%      { transform: scale(1.06); opacity: 0.88; }
@@ -322,6 +322,58 @@
   .surface .sub {
     margin: 0 0 24px; font-size: 13px; color: var(--ink-soft); line-height: 1.55;
   }
+
+  /* ─── Miro embed for the opportunity tree ─── */
+  .miro-wrap {
+    position: relative;
+    border: 1px solid var(--hair);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #f7f7f9;
+    height: 640px;
+    margin: 0 0 18px;
+  }
+  .miro-wrap iframe {
+    width: 100%; height: 100%; border: 0; display: block;
+  }
+  .miro-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+    margin: 0 0 14px;
+  }
+  .miro-meta .source-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #f7e7c4; color: #6b4a00;
+    border: 1px solid #ecd58f;
+    border-radius: 9999px;
+    padding: 5px 12px 5px 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .miro-meta .source-pill::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    background: #f5b400;
+    display: inline-block;
+    box-shadow: 0 0 0 3px rgba(245,180,0,0.20);
+  }
+  .miro-actions {
+    display: inline-flex; gap: 8px;
+  }
+  .miro-actions a, .miro-actions button {
+    appearance: none; border: 1px solid var(--hair);
+    background: #fff; color: var(--ink);
+    padding: 7px 14px;
+    border-radius: 999px;
+    font: 600 12px/1 var(--sys-text); letter-spacing: -0.05px;
+    cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 160ms var(--ease-modal), border-color 160ms var(--ease-modal);
+  }
+  .miro-actions a:hover, .miro-actions button:hover { background: #fafafa; border-color: #c9c9c9; }
+  .miro-actions a.primary {
+    background: #050038; color: #fff; border-color: #050038;
+  }
+  .miro-actions a.primary:hover { background: #0a0850; }
 
   /* ─── Opportunity tree ─── */
   .otree-business {
@@ -906,17 +958,20 @@
     display: inline-block;
   }
 
-  /* ─── Feedback FAB + modal ─── */
+  /* ─── Feedback FAB tray (bottom-left, equal weight) ─── */
+  .fb-fab-tray {
+    position: fixed; left: 22px; bottom: 22px; z-index: 800;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
   .fb-fab {
-    position: fixed; right: 22px; bottom: 22px; z-index: 800;
-    height: 44px; padding: 0 18px 0 14px;
+    height: 42px; padding: 0 16px 0 14px;
     background: #1d1d1d; color: #fff;
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 9999px;
     display: inline-flex; align-items: center; gap: 8px;
     font: 600 13px/1 var(--sys-text); letter-spacing: -0.1px;
     cursor: pointer;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.30), 0 2px 6px rgba(0,0,0,0.20);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.15);
     transition: transform 120ms var(--ease-tap), background 200ms var(--ease-modal);
   }
   .fb-fab:hover { background: #0063fb; border-color: #0063fb; }
@@ -939,7 +994,7 @@
     border-radius: 20px;
     padding: 22px 22px 18px;
     z-index: 901;
-    animation: popin 340ms var(--ease-spring);
+    animation: popin-centered 340ms var(--ease-spring);
     box-shadow: 0 30px 80px rgba(0,0,0,0.55);
   }
   .fb-modal h2 {
@@ -1016,6 +1071,27 @@
     border-top: 1px solid rgba(255,255,255,0.06);
     line-height: 1.5;
   }
+  /* Screenshot FAB — same weight as primary, sits beside it in the tray */
+  .fb-fab-screenshot {
+    height: 42px; padding: 0 16px 0 14px;
+    background: #1d1d1d; color: #fff;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 9999px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 600 13px/1 var(--sys-text); letter-spacing: -0.1px;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.15);
+    transition: transform 120ms var(--ease-tap), background 200ms var(--ease-modal), color 200ms var(--ease-modal);
+  }
+  .fb-fab-screenshot:hover {
+    background: #0063fb; color: #fff; border-color: #0063fb;
+  }
+  .fb-fab-screenshot:active { transform: scale(0.97); }
+  .fb-fab-screenshot:disabled {
+    opacity: 0.7; cursor: wait;
+  }
+  .fb-fab-screenshot .icon { font-size: 14px; line-height: 1; }
+
   /* "Copied" toast */
   .fb-toast {
     position: fixed; left: 50%; top: 32px;
@@ -1030,7 +1106,59 @@
     animation: eggToast 3200ms var(--ease-modal) forwards;
   }
   @media (max-width: 640px) {
-    .fb-fab { right: 16px; bottom: 86px; }
+    .fb-fab-tray { left: 12px; bottom: 12px; gap: 8px; }
+    .fb-fab, .fb-fab-screenshot { height: 38px; padding: 0 12px; font-size: 12px; }
+  }
+
+  /* Sticky helper toast that explains the paste step after a successful copy */
+  .fb-toast-helper {
+    position: fixed; left: 22px; bottom: 78px; z-index: 810;
+    max-width: 420px;
+    background: #1d1d1d; color: #fff;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.20);
+    font: 500 12.5px/1.45 var(--sys-text); letter-spacing: -0.1px;
+    animation: fbToastIn 320ms var(--ease-modal);
+  }
+  .fb-toast-helper.fail {
+    background: #3a1414; border-color: rgba(255,140,140,0.20);
+  }
+  .fb-toast-helper .msg { flex: 1; min-width: 0; color: #e4e4e4; }
+  .fb-toast-helper .msg kbd {
+    display: inline-block; padding: 1px 6px; margin: 0 1px;
+    background: #2c2c2d; border: 1px solid #404042; border-radius: 4px;
+    font: 600 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
+    color: #fff;
+  }
+  .fb-toast-helper .msg code {
+    font: 500 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
+    background: #2c2c2d; padding: 1px 6px; border-radius: 4px; color: #fff;
+  }
+  .fb-toast-helper .open {
+    appearance: none; border: 0;
+    background: #0063fb; color: #fff;
+    padding: 8px 12px; border-radius: 8px;
+    font: 600 12px/1 var(--sys-text); letter-spacing: -0.1px;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), transform 100ms var(--ease-tap);
+  }
+  .fb-toast-helper .open:hover { background: #0058e0; }
+  .fb-toast-helper .open:active { transform: scale(0.97); }
+  .fb-toast-helper .close {
+    appearance: none; border: 0; background: transparent;
+    color: #9a9a9a; font-size: 18px; line-height: 1;
+    cursor: pointer; padding: 4px 6px; border-radius: 6px;
+  }
+  .fb-toast-helper .close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  @keyframes fbToastIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (max-width: 640px) {
+    .fb-toast-helper { left: 12px; right: 12px; bottom: 60px; max-width: none; }
   }
 
   /* ─── Handoff view ─── */
@@ -1554,6 +1682,7 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@rive-app/canvas@2.21.5"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
@@ -2893,7 +3022,7 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}>
-            <RiveSpinner size={32} src="assets/finn_ai_spinner_allstates.riv" />
+            <RiveSpinner size={32} src="../../design_system/assets/finn_ai_spinner_allstates.riv" />
           </div>
         );
       }
@@ -5947,56 +6076,90 @@ function TopNav({ view, onChange }) {
   );
 }
 
+const MIRO_BOARD_URL  = "https://miro.com/app/board/uXjVJFnE_0E=/?share_link_id=880153893718";
+const MIRO_EMBED_URL  = "https://miro.com/app/live-embed/uXjVJFnE_0E=/?share_link_id=880153893718&embedMode=view_only_without_ui&moveToViewport=&autoplay=true";
+
 function OpportunityTreeView() {
   const { business, outcome, problems } = TREE_DATA;
+  const [mode, setMode] = useState("snapshot"); // "snapshot" (default) | "miro"
   return (
     <section className="surface" aria-label="Opportunity tree">
       <h1>Opportunity tree</h1>
       <p className="sub">
-        Business outcome at the top → opportunities (problems) → hypotheses → solutions in the iOS prototype.
-        Pink cards are hypotheses that still need validation or open questions.
-        Each solution carries a number that matches its dot on the Impact–Effort view.
+        Curated snapshot below — fast to scan, links to the prototype's solution numbers.
+        The team's <strong>Miro board</strong> is the working source of truth and lives
+        behind the toggle on the right.
       </p>
 
-      <div className="otree-outcome">
-        <div className="label">Desired outcome</div>
-        <div className="text">{outcome.text}</div>
+      <div className="miro-meta">
+        <span className="source-pill" style={{
+          background: mode === "miro" ? "#f7e7c4" : "#eaf2ff",
+          color: mode === "miro" ? "#6b4a00" : "#0063fb",
+          borderColor: mode === "miro" ? "#ecd58f" : "#dceafe",
+        }}>
+          {mode === "miro" ? "Live source · Miro" : "Snapshot · curated"}
+        </span>
+        <div className="miro-actions">
+          <button onClick={() => setMode(mode === "snapshot" ? "miro" : "snapshot")}>
+            {mode === "snapshot" ? "Show live Miro board" : "Back to snapshot"}
+          </button>
+          <a className="primary" href={MIRO_BOARD_URL} target="_blank" rel="noopener noreferrer">
+            Open in Miro ↗
+          </a>
+        </div>
       </div>
-      <div className="otree-spine" aria-hidden="true" />
 
-      <div className="otree-cols">
-        {problems.map(p => (
-          <div key={p.id} className={"otree-col c" + p.key.slice(1)}>
-            <div className={"otree-problem " + p.key}>
-              <span className="badge">Opportunity #{p.id}</span>
-              <span className="title">{p.title}</span>
-              <span className="pct">{p.pct}</span>
-            </div>
-            {p.hypotheses.map(h => (
-              <div key={h.id} className={"otree-hyp" + (h.needs ? " needs" : "")}>
-                <div className="hyp-head">
-                  <span className="htag">Hypothesis {h.id}</span>
-                  {h.needs && <span className="hneeds" title="Needs validation / open questions">Needs validation</span>}
+      {mode === "miro" ? (
+        <div className="miro-wrap">
+          <iframe
+            src={MIRO_EMBED_URL}
+            title="Opportunity tree — Miro board"
+            allow="fullscreen; clipboard-read; clipboard-write"
+            allowFullScreen
+          />
+        </div>
+      ) : (
+        <>
+          <div className="otree-outcome">
+            <div className="label">Desired outcome</div>
+            <div className="text">{outcome.text}</div>
+          </div>
+          <div className="otree-spine" aria-hidden="true" />
+          <div className="otree-cols">
+            {problems.map(p => (
+              <div key={p.id} className={"otree-col c" + p.key.slice(1)}>
+                <div className={"otree-problem " + p.key}>
+                  <span className="badge">Opportunity #{p.id}</span>
+                  <span className="title">{p.title}</span>
+                  <span className="pct">{p.pct}</span>
                 </div>
-                <div className="htext">{h.text}</div>
-                {h.note && <div className="hnote">{h.note}</div>}
-                {h.solutions.length > 0 ? (
-                  <div className="otree-sols">
-                    {h.solutions.map(s => (
-                      <div key={s.n} className="otree-sol">
-                        <span className="num">{s.n}</span>
-                        <span>{s.text}</span>
+                {p.hypotheses.map(h => (
+                  <div key={h.id} className={"otree-hyp" + (h.needs ? " needs" : "")}>
+                    <div className="hyp-head">
+                      <span className="htag">Hypothesis {h.id}</span>
+                      {h.needs && <span className="hneeds" title="Needs validation / open questions">Needs validation</span>}
+                    </div>
+                    <div className="htext">{h.text}</div>
+                    {h.note && <div className="hnote">{h.note}</div>}
+                    {h.solutions.length > 0 ? (
+                      <div className="otree-sols">
+                        {h.solutions.map(s => (
+                          <div key={s.n} className="otree-sol">
+                            <span className="num">{s.n}</span>
+                            <span>{s.text}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <div className="otree-empty">No prototype solution yet.</div>
+                    )}
                   </div>
-                ) : (
-                  <div className="otree-empty">No prototype solution yet.</div>
-                )}
+                ))}
               </div>
             ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </section>
   );
 }
@@ -6347,6 +6510,87 @@ function AppShell() {
   const isMobile = useIsMobile();
   const [mobSheet, setMobSheet] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [screenshotState, setScreenshotState] = useState("idle"); // idle | working | sent | fail
+
+  function captureAndSendToMiro() {
+    if (typeof window === "undefined" || !window.html2canvas) {
+      setScreenshotState("fail");
+      setTimeout(() => setScreenshotState("idle"), 2400);
+      return;
+    }
+
+    setScreenshotState("working");
+
+    const target =
+      document.querySelector(".device-bezel") ||
+      document.querySelector(".surface") ||
+      document.body;
+
+    // Build a Promise that resolves to the screenshot PNG blob.
+    // html2canvas runs async, but we want to call clipboard.write
+    // *synchronously* inside the click handler so the browser preserves
+    // user-activation for the clipboard API. ClipboardItem accepts a
+    // Promise as its value — the browser will hold the write open until
+    // the blob resolves. This is the only reliable cross-browser pattern
+    // for image-to-clipboard from inside a click.
+    const blobPromise = window.html2canvas(target, {
+      backgroundColor: null,
+      scale: Math.min(window.devicePixelRatio || 1, 2),
+      logging: false,
+      useCORS: true,
+      // Skip embedded iframes (Miro/Rive) — they don't render through canvas anyway.
+      ignoreElements: (el) =>
+        el.tagName === "IFRAME" ||
+        el.classList.contains("kbd") ||
+        el.classList.contains("fb-fab-tray"),
+    }).then(canvas => new Promise(resolve => canvas.toBlob(resolve, "image/png")));
+
+    // Synchronous clipboard.write with a Promise blob — keeps user activation.
+    let clipboardSupported = false;
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        const item = new window.ClipboardItem({ "image/png": blobPromise });
+        clipboardSupported = true;
+        navigator.clipboard.write([item]).then(() => {
+          setScreenshotState("sent");
+          haptic("ok");
+          // Stay visible longer so the user can read the next-step toast.
+          setTimeout(() => setScreenshotState("idle"), 8000);
+        }).catch((err) => {
+          console.warn("[screenshot] clipboard.write rejected:", err);
+          downloadFallback();
+        });
+      } catch (e) {
+        console.warn("[screenshot] ClipboardItem unsupported:", e);
+      }
+    }
+    if (!clipboardSupported) downloadFallback();
+
+    async function downloadFallback() {
+      try {
+        const blob = await blobPromise;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "user-connect-feedback.png";
+        document.body.appendChild(a); a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        setScreenshotState("downloaded");
+        haptic("ok");
+        setTimeout(() => setScreenshotState("idle"), 8000);
+      } catch (e) {
+        setScreenshotState("fail");
+        setTimeout(() => setScreenshotState("idle"), 2400);
+      }
+    }
+  }
+
+  function openMiroBoard() {
+    // Separate handler so the click that opens Miro is its own fresh
+    // user-gesture (popup blockers are happy, and the user knows when
+    // the tab will open).
+    window.open(MIRO_BOARD_URL, "_blank", "noopener,noreferrer");
+  }
   const [view, setView] = useState("prototype"); // prototype | tree | matrix | storymap
   const [storyVersion, setStoryVersion] = useState("all"); // all | mvp | v1 | v2
   const [version, setVersion] = useState("mvp"); // dev panel toggle: mvp | v1 | v2
@@ -6604,7 +6848,7 @@ function AppShell() {
         <div className="site-brand" aria-label="FINN User Connect">
           <img
             className="mark"
-            src="assets/finn-logo.png"
+            src="../../design_system/assets/finn-logo.png"
             alt="FINN"
           />
           <span className="divider" aria-hidden="true" />
@@ -6933,12 +7177,51 @@ function AppShell() {
     </div>
       )}
 
-      {/* Floating feedback FAB — visible on every top-nav view. Clipboard-bridge
-          to JEA-1179 means no backend, identity captured by Jira's own auth. */}
-      <button className="fb-fab" onClick={() => setFeedbackOpen(true)} aria-label="Leave feedback">
-        <span className="dot" aria-hidden="true" />
-        Leave feedback
-      </button>
+      {/* Floating feedback tray — bottom-left, equal weight pills.
+          - Jira: clipboard-bridge to JEA-1179 (text feedback)
+          - Miro: screenshot → clipboard → user pastes on Miro board */}
+      <div className="fb-fab-tray">
+        <button className="fb-fab" onClick={() => setFeedbackOpen(true)} aria-label="Leave feedback in Jira">
+          <span className="dot" aria-hidden="true" />
+          Feedback to Jira
+        </button>
+        <button className="fb-fab-screenshot"
+          onClick={captureAndSendToMiro}
+          disabled={screenshotState === "working"}
+          aria-label="Capture screenshot for Miro">
+          <span className="icon" aria-hidden="true">📸</span>
+          {screenshotState === "working"    ? "Capturing…" :
+           screenshotState === "sent"       ? "✓ Copied — open Miro" :
+           screenshotState === "downloaded" ? "✓ Downloaded — drag to Miro" :
+           screenshotState === "fail"       ? "Capture failed" :
+           "Screenshot to Miro"}
+        </button>
+      </div>
+      {(screenshotState === "sent" || screenshotState === "downloaded") && (
+        <div className="fb-toast-helper" role="status">
+          <div className="msg">
+            {screenshotState === "sent" ? (
+              <>
+                <strong>Screenshot copied.</strong> Open Miro and press <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>V</kbd> to paste it,
+                then drop a <strong>post-it next to it with your comment</strong>.
+              </>
+            ) : (
+              <>
+                <strong>Screenshot saved</strong> as <code>user-connect-feedback.png</code>. Drag it onto the Miro board
+                and add a <strong>post-it next to it with your comment</strong>.
+              </>
+            )}
+          </div>
+          <button className="open" onClick={openMiroBoard}>Open Miro</button>
+          <button className="close" onClick={() => setScreenshotState("idle")} aria-label="Dismiss">×</button>
+        </div>
+      )}
+      {screenshotState === "fail" && (
+        <div className="fb-toast-helper fail" role="alert">
+          <div className="msg">Couldn't capture the screenshot. Try again, or use a normal screenshot + paste on Miro.</div>
+          <button className="close" onClick={() => setScreenshotState("idle")} aria-label="Dismiss">×</button>
+        </div>
+      )}
       {feedbackOpen && (
         <FeedbackBridge
           onClose={() => setFeedbackOpen(false)}
