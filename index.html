@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0063fb">
-<title>FINN Jobs — Easy + Agentic apply (iOS prototype v1)</title>
+<title>Vend · User Connect — Easy + Agentic apply prototype</title>
 <link rel="stylesheet" href="../../design_system/colors_and_type.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -241,6 +241,53 @@
     0% { box-shadow: 0 0 0 0 rgba(31, 138, 59, 0.45); }
     100% { box-shadow: 0 0 0 24px rgba(31, 138, 59, 0); }
   }
+
+  /* ─── Fullscreen mode (scanned via QR on a real device) ─── */
+  /* Strips all site chrome, dev panel, and feedback FABs. Renders the
+     iPhone surface edge-to-edge so it feels like a real app. */
+  body.fs-mode { background: #fff; padding: 0; }
+  body.fs-mode .site-header,
+  body.fs-mode .dev-panel,
+  body.fs-mode .mob-fab,
+  body.fs-mode .fb-fab-tray,
+  body.fs-mode .fb-toast-helper,
+  body.fs-mode .site-tools { display: none !important; }
+  body.fs-mode .stage {
+    width: 100vw; height: 100vh; height: 100dvh;
+    padding: 0; margin: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  body.fs-mode .device-bezel {
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  /* Hide the simulated iPhone chrome (status bar + dynamic island + home
+     indicator) since the real device already has its own at the top. */
+  body.fs-mode .device-chrome { display: none !important; }
+  /* Reclaim the space the simulated status bar was leaving below it. */
+  body.fs-mode .device-bezel > div:not(.device-chrome) { padding-top: 0 !important; }
+  /* The "×" badge that takes the user back to the dashboard view */
+  .fs-exit {
+    position: fixed; top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.55); color: #fff;
+    border-radius: 9999px;
+    font: 600 18px/1 var(--sys-text);
+    text-decoration: none;
+    z-index: 9999;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 160ms var(--ease-modal), transform 100ms var(--ease-tap);
+  }
+  .fs-exit:hover { background: rgba(0,0,0,0.72); }
+  .fs-exit:active { transform: scale(0.92); }
 
   /* ─── Site header (brand + top tabs + team tools row) ─── */
   .site-header {
@@ -1263,6 +1310,274 @@
     border-radius: 6px; cursor: pointer;
   }
   .qr-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+
+  /* ─── Pin-on-screen layer (Figma-style click-anywhere comments) ─── */
+  .pin-layer {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 250;
+  }
+  .pin-layer.pin-mode {
+    pointer-events: auto;
+    cursor: crosshair;
+    background: rgba(0,99,251,0.05);
+    box-shadow: inset 0 0 0 2px rgba(0,99,251,0.45);
+    border-radius: inherit;
+  }
+  .pin-dot {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    width: 28px; height: 28px;
+    background: #0063fb; color: #fff;
+    border: 2px solid #fff;
+    border-radius: 50% 50% 50% 6px;
+    font: 700 12px/1 var(--sys-text);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.1);
+    appearance: none;
+    transition: transform 120ms var(--ease-tap), background 160ms var(--ease-modal);
+  }
+  .pin-dot:hover { transform: translate(-50%, -100%) scale(1.12); background: #0058e0; }
+  .pin-dot.pin-pending {
+    background: #ff9c00; pointer-events: none;
+    animation: pinPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pinPulse {
+    0%,100% { box-shadow: 0 4px 12px rgba(255,156,0,0.45), 0 0 0 0 rgba(255,156,0,0.4); }
+    50%     { box-shadow: 0 4px 12px rgba(255,156,0,0.45), 0 0 0 10px rgba(255,156,0,0); }
+  }
+
+  /* Pin-mode FAB visual when active */
+  .fb-fab-pin.active {
+    background: #0063fb !important; color: #fff !important;
+    border-color: #0063fb !important;
+  }
+  .fb-fab-pin .icon { font-size: 13px; margin-right: 2px; }
+
+  /* Top-nav unread-feedback badge — clickable, opens the panel */
+  .tn-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    margin-left: 6px;
+    background: #ff453a; color: #fff;
+    border-radius: 9999px;
+    font: 700 10.5px/1 var(--sys-text); letter-spacing: 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.30);
+    cursor: pointer;
+    transition: transform 100ms var(--ease-tap), background 160ms var(--ease-modal);
+  }
+  .tn-badge:hover  { background: #d92e23; transform: scale(1.08); }
+  .tn-badge:active { transform: scale(0.95); }
+  .tn-badge:focus-visible {
+    outline: 2px solid #62E3FF; outline-offset: 2px;
+  }
+
+  /* Highlight when a pin click focuses a comment in the panel */
+  .fbp-focused {
+    animation: fbpFocus 1.8s var(--ease-modal);
+  }
+  @keyframes fbpFocus {
+    0%   { box-shadow: 0 0 0 0 rgba(0,99,251,0.0); }
+    20%  { box-shadow: 0 0 0 4px rgba(0,99,251,0.6); }
+    100% { box-shadow: 0 0 0 0 rgba(0,99,251,0.0); }
+  }
+
+  /* ─── Feedback panel (threaded comments) ─── */
+  .fbp-backdrop {
+    position: fixed; inset: 0; z-index: 950;
+    background: rgba(0,0,0,0.45);
+    animation: fadein 240ms var(--ease-modal);
+  }
+  .fbp-sheet {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 440px; max-width: 100vw;
+    background: #1a1a1b; color: #ededed;
+    border-left: 1px solid rgba(255,255,255,0.08);
+    box-shadow: -30px 0 80px rgba(0,0,0,0.55);
+    z-index: 951;
+    display: flex; flex-direction: column;
+    animation: ac-slidein 360ms var(--ease-modal);
+  }
+  @media (max-width: 640px) {
+    .fbp-sheet { width: 100%; }
+  }
+  .fbp-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .fbp-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -0.2px; }
+  .fbp-close {
+    appearance: none; border: 0; background: transparent;
+    color: #9a9a9a; font-size: 22px; line-height: 1; padding: 4px 8px;
+    border-radius: 6px; cursor: pointer;
+  }
+  .fbp-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+
+  .fbp-filter {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .fbp-filter button {
+    appearance: none;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #c4c4c4;
+    border-radius: 9999px;
+    padding: 5px 11px;
+    font: 600 11.5px/1 var(--sys-text); letter-spacing: -0.05px;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), color 160ms var(--ease-modal);
+  }
+  .fbp-filter button:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .fbp-filter button.active { background: #fff; color: #0d0d0d; border-color: #fff; }
+  .fbp-count {
+    margin-left: auto; font-size: 11px; color: #6b6b6b;
+  }
+
+  .fbp-list {
+    flex: 1; overflow-y: auto;
+    padding: 12px 16px;
+  }
+  .fbp-empty {
+    padding: 18px 4px; font-size: 13px; color: #8b8b8b; line-height: 1.55; text-align: center;
+  }
+  .fbp-empty code {
+    background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;
+    font-size: 11.5px;
+  }
+  .fbp-c {
+    background: #232324; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .fbp-c.resolved { opacity: 0.62; border-style: dashed; }
+  .fbp-c-meta {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-bottom: 4px;
+  }
+  .fbp-author { font-weight: 700; color: #fff; font-size: 13px; }
+  .fbp-time   { font-size: 11px; color: #6b6b6b; }
+  .fbp-ctx {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin: 2px 0 8px;
+  }
+  .fbp-ctx .ctx {
+    font: 600 10px/1.2 var(--sys-text); letter-spacing: 0.03em; text-transform: uppercase;
+    background: #2c2c2d; color: #cfcfcf;
+    border-radius: 4px; padding: 3px 6px;
+  }
+  .fbp-ctx .ctx .k { color: #6b6b6b; font-weight: 500; margin-right: 4px; }
+  .fbp-body {
+    margin: 0 0 8px;
+    font: 500 13.5px/1.55 var(--sys-text); letter-spacing: -0.05px;
+    color: #e4e4e4; white-space: pre-wrap; word-break: break-word;
+  }
+  .fbp-resolved-line {
+    margin: 6px 0; font-size: 11.5px; color: #8b8b8b; font-style: italic;
+  }
+  .fbp-actions {
+    display: flex; gap: 6px;
+  }
+  .fbp-actions button {
+    appearance: none; border: 1px solid rgba(255,255,255,0.12);
+    background: transparent; color: #cfcfcf;
+    padding: 6px 12px; border-radius: 9999px;
+    font: 600 11px/1 var(--sys-text); letter-spacing: -0.05px;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), color 160ms var(--ease-modal);
+  }
+  .fbp-actions button:hover { background: rgba(255,255,255,0.06); color: #fff; }
+
+  .fbp-reply {
+    margin: 10px 0 0;
+    border-left: 2px solid #0063fb;
+    padding-left: 12px;
+  }
+  .fbp-reply textarea {
+    width: 100%; box-sizing: border-box;
+    background: #131313; color: #fff;
+    border: 1px solid #2f2f2f; border-radius: 8px;
+    padding: 8px 10px; min-height: 56px;
+    font: 500 13px/1.5 var(--sys-text); letter-spacing: -0.05px;
+    resize: vertical;
+  }
+  .fbp-reply textarea:focus {
+    outline: none; border-color: #0063fb;
+    box-shadow: 0 0 0 3px rgba(0,99,251,0.25);
+  }
+  .fbp-reply-item {
+    margin-top: 10px; padding: 8px 10px;
+    border-left: 2px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.025);
+    border-radius: 0 8px 8px 0;
+  }
+  .fbp-reply-item .fbp-body { font-size: 12.5px; margin-bottom: 2px; }
+
+  .fbp-composer {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 12px 16px 14px;
+    background: #1a1a1b;
+  }
+  .fbp-ctx-preview {
+    font-size: 10.5px; color: #8b8b8b; letter-spacing: 0.02em;
+    margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .fbp-ctx-preview .ctx {
+    background: #2c2c2d; color: #cfcfcf;
+    border-radius: 3px; padding: 2px 6px;
+    text-transform: none; font-weight: 500;
+  }
+  .fbp-composer textarea {
+    width: 100%; box-sizing: border-box;
+    background: #131313; color: #fff;
+    border: 1px solid #2f2f2f; border-radius: 10px;
+    padding: 10px 12px; min-height: 70px;
+    font: 500 13px/1.5 var(--sys-text); letter-spacing: -0.05px;
+    resize: vertical;
+  }
+  .fbp-composer textarea:focus {
+    outline: none; border-color: #0063fb;
+    box-shadow: 0 0 0 3px rgba(0,99,251,0.25);
+  }
+  .fbp-composer textarea:disabled {
+    opacity: 0.5; cursor: not-allowed;
+  }
+  .fbp-composer-actions {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 8px;
+  }
+  .fbp-as { font-size: 11px; color: #8b8b8b; }
+  .fbp-as strong { color: #d4d4d4; font-weight: 600; }
+  .fbp-send {
+    appearance: none; border: 0;
+    background: #0063fb; color: #fff;
+    padding: 8px 16px; border-radius: 9999px;
+    font: 600 12.5px/1 var(--sys-text); letter-spacing: -0.05px;
+    cursor: pointer;
+    transition: background 160ms var(--ease-modal), transform 100ms var(--ease-tap);
+  }
+  .fbp-send:hover { background: #0058e0; }
+  .fbp-send:active { transform: scale(0.97); }
+  .fbp-send:disabled { background: #2f2f2f; color: #6b6b6b; cursor: not-allowed; }
+  .fbp-err {
+    position: relative;
+    background: #3a1414; border: 1px solid #5a2424; border-radius: 8px;
+    padding: 10px 30px 10px 12px; margin-bottom: 10px;
+    font-size: 12px; color: #ffb8b8; line-height: 1.5;
+  }
+  .fbp-err strong { color: #ff7878; }
+  .fbp-err-close {
+    position: absolute; top: 4px; right: 6px;
+    appearance: none; border: 0; background: transparent;
+    color: #ff7878; font-size: 16px; line-height: 1; padding: 2px 6px;
+    border-radius: 4px; cursor: pointer;
+  }
+  .fbp-err-close:hover { background: rgba(255,255,255,0.06); color: #fff; }
 
   /* ─── Acceptance criteria sheet ─── */
   .sm-ac-badge {
@@ -6816,13 +7131,15 @@ function AcceptanceSheet({ open, story, taskId, sid, onClose, actorName, ensureA
   );
 }
 
-function TopNav({ view, onChange }) {
+function TopNav({ view, onChange, openCounts = {}, onOpenFeedback }) {
+  // Tab id → context.view label used in comment rows, so we can pick the
+  // right count from the open-comments-by-view map.
   const tabs = [
-    { id: "prototype", label: "Prototype" },
-    { id: "tree",      label: "Opportunity tree" },
-    { id: "matrix",    label: "Impact–Effort" },
-    { id: "storymap",  label: "Storymap" },
-    { id: "handoff",   label: "Handoff" },
+    { id: "prototype", label: "Prototype",        ctxView: "Prototype" },
+    { id: "tree",      label: "Opportunity tree", ctxView: "Opportunity tree" },
+    { id: "matrix",    label: "Impact–Effort",    ctxView: "Impact–Effort" },
+    { id: "storymap",  label: "Storymap",         ctxView: "Storymap" },
+    { id: "handoff",   label: "Handoff",          ctxView: "Handoff" },
   ];
   const containerRef = useRef(null);
   const btnRefs = useRef({});
@@ -6852,18 +7169,41 @@ function TopNav({ view, onChange }) {
       <div className="topnav-inner" role="tablist" ref={containerRef}>
         <div className="topnav-indicator" aria-hidden="true"
           style={{ left: ind.left, width: ind.width, opacity: ind.ready ? 1 : 0 }} />
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            ref={el => { btnRefs.current[t.id] = el; }}
-            role="tab"
-            aria-selected={view === t.id}
-            className={view === t.id ? "active" : ""}
-            onClick={() => onChange(t.id)}>
-            <span className="tdot" aria-hidden="true" />
-            {t.label}
-          </button>
-        ))}
+        {tabs.map(t => {
+          const n = openCounts[t.ctxView] || 0;
+          return (
+            <button
+              key={t.id}
+              ref={el => { btnRefs.current[t.id] = el; }}
+              role="tab"
+              aria-selected={view === t.id}
+              className={view === t.id ? "active" : ""}
+              onClick={() => onChange(t.id)}>
+              <span className="tdot" aria-hidden="true" />
+              {t.label}
+              {n > 0 && (
+                <span
+                  className="tn-badge"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={n + " open feedback comments — click to view"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(t.id);
+                    onOpenFeedback && onOpenFeedback(t.ctxView);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault(); e.stopPropagation();
+                      onChange(t.id);
+                      onOpenFeedback && onOpenFeedback(t.ctxView);
+                    }
+                  }}
+                  title="Click to view feedback for this tab">{n}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </nav>
   );
@@ -6878,15 +7218,20 @@ const SUPABASE_ANON_KEY = "sb_publishable_h-o9kPkz9m-6FiWyKYAHMw_huVQuI-O";
 const SUPABASE_TABLE    = "prototype_state";
 const SUPABASE_EVENTS   = "prototype_events";
 const SUPABASE_AC       = "prototype_acceptance"; // acceptance criteria, one row per storyId
+const SUPABASE_COMMENTS = "prototype_comments";   // threaded feedback on the prototype
+
+// Slack incoming-webhook URL — when set, every new comment fires a
+// message to that Slack channel. Leave empty to disable. Generate at:
+// https://api.slack.com/messaging/webhooks
+const SLACK_WEBHOOK_URL = "";
 
 // Magic-header gate. Sent on every Supabase request as x-team-token;
 // the RLS policies on the server require this exact value to allow
-// inserts/updates. Reads are also gated so abuse can't enumerate the
-// tables either. Anyone who reads the JS can extract this string —
-// that's expected. It locks out drive-by bots and casual abuse, which
-// is the realistic threat for a static team prototype.
-// Rotate this string + run the matching SQL update if the URL leaks.
+// reads + writes. Anyone who reads the JS can extract this string —
+// that's expected. Stops drive-by abuse from bots without forcing
+// real login.
 const TEAM_TOKEN = "vend-user-connect-2026-bm7q4n";
+
 
 // Build a tiny helper. If keys are missing or the CDN failed to load,
 // every method becomes a no-op and the rest of the app falls back to
@@ -6907,6 +7252,10 @@ const cloudStore = (() => {
       getAcceptance: async () => null,
       setAcceptance: async () => false,
       getAcceptanceMap: async () => ({}),
+      getComments: async () => [],
+      addComment: async () => ({ row: null, error: "cloud-disabled" }),
+      setCommentResolved: async () => false,
+      getOpenCommentCounts: async () => ({}),
     };
   }
   let client;
@@ -6914,8 +7263,8 @@ const cloudStore = (() => {
     client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: false },
       global: {
-        // RLS policies require this header on every read/write — keeps
-        // out drive-by abuse even though the anon key is public.
+        // RLS policies require this header on every read/write —
+        // keeps drive-by bots out even though the anon key is public.
         headers: { "x-team-token": TEAM_TOKEN },
       },
     });
@@ -6930,6 +7279,10 @@ const cloudStore = (() => {
       getAcceptance: async () => null,
       setAcceptance: async () => false,
       getAcceptanceMap: async () => ({}),
+      getComments: async () => [],
+      addComment: async () => ({ row: null, error: "cloud-disabled" }),
+      setCommentResolved: async () => false,
+      getOpenCommentCounts: async () => ({}),
     };
   }
   return {
@@ -7014,8 +7367,138 @@ const cloudStore = (() => {
         return map;
       } catch (e) { console.warn("[cloud] getAcceptanceMap exception", e); return {}; }
     },
+
+    // ─── Comments / feedback ──────────────────────────────────────────
+    async getComments(limit = 200) {
+      try {
+        const { data, error } = await client
+          .from(SUPABASE_COMMENTS)
+          .select("id, parent_id, author, body, context, resolved, resolved_by, resolved_at, created_at")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (error) { console.warn("[cloud] getComments", error.message); return []; }
+        return data || [];
+      } catch (e) { console.warn("[cloud] getComments exception", e); return []; }
+    },
+    async addComment({ parent_id, author, body, context }) {
+      try {
+        const row = {
+          parent_id: parent_id || null,
+          author: (author || "").slice(0, 60),
+          body: (body || "").slice(0, 4000),
+          context: context || null,
+          resolved: false,
+        };
+        const { data, error } = await client
+          .from(SUPABASE_COMMENTS)
+          .insert(row)
+          .select()
+          .single();
+        if (error) {
+          console.warn("[cloud] addComment", error.message);
+          return { row: null, error: error.message };
+        }
+        return { row: data, error: null };
+      } catch (e) {
+        console.warn("[cloud] addComment exception", e);
+        return { row: null, error: e.message || String(e) };
+      }
+    },
+    async getOpenCommentCounts() {
+      try {
+        // Pull just enough columns to bucket open comments by view.
+        const { data, error } = await client
+          .from(SUPABASE_COMMENTS)
+          .select("context, resolved")
+          .eq("resolved", false);
+        if (error) { console.warn("[cloud] getOpenCommentCounts", error.message); return {}; }
+        const counts = {};
+        (data || []).forEach(r => {
+          const v = r.context && r.context.view;
+          if (!v) return;
+          counts[v] = (counts[v] || 0) + 1;
+        });
+        return counts;
+      } catch (e) { console.warn("[cloud] getOpenCommentCounts exception", e); return {}; }
+    },
+    async setCommentResolved(id, resolved, resolvedBy) {
+      try {
+        const patch = resolved
+          ? { resolved: true,  resolved_by: resolvedBy || null, resolved_at: new Date().toISOString() }
+          : { resolved: false, resolved_by: null, resolved_at: null };
+        const { error } = await client.from(SUPABASE_COMMENTS).update(patch).eq("id", id);
+        if (error) { console.warn("[cloud] setCommentResolved", error.message); return false; }
+        return true;
+      } catch (e) { console.warn("[cloud] setCommentResolved exception", e); return false; }
+    },
   };
 })();
+
+// Fire-and-forget Slack notification when a comment is posted. No-op if
+// SLACK_WEBHOOK_URL isn't set. Uses Slack's incoming-webhook JSON shape.
+// Sent with `mode: 'no-cors'` so the browser doesn't fight Slack's CORS
+// policy (we don't care about the response — Slack always returns "ok").
+function postCommentToSlack({ author, body, context, deepLink }) {
+  if (!SLACK_WEBHOOK_URL) return;
+  try {
+    const ctxParts = [];
+    if (context && context.view)     ctxParts.push("*View:* " + context.view);
+    if (context && context.screen)   ctxParts.push("*Screen:* " + context.screen);
+    if (context && context.platform) ctxParts.push("*Platform:* " + context.platform);
+    if (context && context.version)  ctxParts.push("*Version:* " + context.version);
+    const payload = {
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "*" + (author || "Anonymous") + "* left feedback on the prototype:\n>>> " + body,
+          },
+        },
+        ctxParts.length ? {
+          type: "context",
+          elements: [{ type: "mrkdwn", text: ctxParts.join("  ·  ") }],
+        } : null,
+        deepLink ? {
+          type: "actions",
+          elements: [{
+            type: "button",
+            text: { type: "plain_text", text: "Open in prototype" },
+            url: deepLink,
+          }],
+        } : null,
+      ].filter(Boolean),
+    };
+    fetch(SLACK_WEBHOOK_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(e => console.warn("[slack] post failed:", e));
+  } catch (e) {
+    console.warn("[slack] payload build failed:", e);
+  }
+}
+
+// Build the same screen / platform / version labels we use when posting
+// pinned comments — so filtering pins for the current screen is a simple
+// string compare against ctx.screen / ctx.platform / ctx.version.
+function currentScreenLabel(view, screen, overlay, magicMode, loadingPhase) {
+  if (view !== "prototype") return null;
+  return (
+    overlay ? "Overlay: " + overlay :
+    screen === "preview" && magicMode ? "Preview · Magic Apply" :
+    screen === "preview" && loadingPhase !== "ready" ? "Preview · loading" :
+    screen === "preview" ? "Preview · ready" :
+    screen
+  );
+}
+function currentPlatformLabel(p) {
+  return p === "ios" ? "iOS" : p === "android" ? "Android" : "Web";
+}
+function currentVersionLabel(v) {
+  return v === "mvp" ? "MVP" : v === "v1" ? "1.0" : "2.0";
+}
 
 // Tiny debouncer for save-on-edit so dragging doesn't hammer the API.
 function debounce(fn, ms) {
@@ -7043,7 +7526,18 @@ const MIRO_EMBED_URL  = "https://miro.com/app/live-embed/uXjVJFnE_0E=/?share_lin
 function QrModal({ trigger }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== "undefined" ? window.location.href : "";
+  // Encode the *fullscreen* URL — when the QR is scanned on a phone we
+  // want the visitor to land directly in a clean, edge-to-edge prototype
+  // view, not the team dashboard.
+  const url = (() => {
+    if (typeof window === "undefined") return "";
+    const u = new URL(window.location.href);
+    u.searchParams.set("fullscreen", "1");
+    // Anchor the URL on the prototype, not whichever strategy tab the
+    // QR-opener happens to be on.
+    u.hash = "";
+    return u.toString();
+  })();
   const qrSrc =
     "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=1&qzone=1&data=" +
     encodeURIComponent(url);
@@ -7214,6 +7708,12 @@ function describeEvent(e) {
       return "reset the Impact–Effort matrix to defaults";
     case "set-acceptance":
       return `updated acceptance criteria on “${truncate(d.story, 32)}”`;
+    case "comment-added":
+      return `left feedback on ${d.view || "the prototype"}: “${truncate(d.excerpt, 40)}”`;
+    case "comment-resolved":
+      return `resolved a comment: “${truncate(d.excerpt, 40)}”`;
+    case "comment-reopened":
+      return `reopened a comment: “${truncate(d.excerpt, 40)}”`;
     default:
       return e.action;
   }
@@ -7559,6 +8059,8 @@ function ConfettiBurst({ count = 32, spread = 180, gravity = 220, palette }) {
 // ─── Password gate ─────────────────────────────────────────────────────────
 // Client-side only — anyone with web-dev know-how can view source and read
 // the password. Fine for casual share-with-team gating, not for real secrets.
+// We'll layer real auth back on when free-tier email rate limits aren't in
+// the way of testing.
 const APP_PASSWORD = "simba";
 function PasswordGate({ onUnlock }) {
   const [pw, setPw] = useState("");
@@ -7577,7 +8079,7 @@ function PasswordGate({ onUnlock }) {
   return (
     <div className="pwgate">
       <div className="pwgate-card">
-        <h1>FINN Jobs · Apply prototype</h1>
+        <h1>Vend · User Connect</h1>
         <p className="pwgate-sub">Internal preview. Enter the password to continue.</p>
         <form onSubmit={submit}>
           <input
@@ -7598,7 +8100,30 @@ function PasswordGate({ onUnlock }) {
   );
 }
 
+// Detect fullscreen mode — the QR code embeds ?fullscreen=1 so scanning
+// on a phone lands directly in a clean, edge-to-edge prototype view with
+// no site chrome, no dev panel, no feedback FABs. Bypasses the auth gate
+// too — the prototype itself uses no team data, so there's nothing to
+// protect; the gate exists for the strategy/team views, not the demo.
+function isFullscreenMode() {
+  if (typeof window === "undefined") return false;
+  try {
+    const p = new URLSearchParams(window.location.search);
+    return p.get("fullscreen") === "1";
+  } catch (_) { return false; }
+}
+
 function App() {
+  const fullscreen = isFullscreenMode();
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (fullscreen) document.body.classList.add("fs-mode");
+    else document.body.classList.remove("fs-mode");
+    return () => document.body.classList.remove("fs-mode");
+  }, [fullscreen]);
+  // Fullscreen mode (scanned via QR) bypasses the password gate so phones
+  // can drop straight into the prototype without re-entering it each time.
+  if (fullscreen) return <AppShell fullscreen />;
   const [unlocked, setUnlocked] = useState(() => {
     try { return sessionStorage.getItem("vend-unlocked") === "1"; }
     catch (_) { return false; }
@@ -7624,6 +8149,335 @@ function featuresInVersion(stories, version) {
 function deepCloneJSON(o) { return JSON.parse(JSON.stringify(o)); }
 
 // ─── Feedback bridge — copies a Jira-formatted note + opens JEA-1179 ──────
+// Turn a raw Supabase error message into something a designer can act on.
+function friendlyCloudError(raw) {
+  if (!raw) return "";
+  const s = String(raw).toLowerCase();
+  if (s.includes("relation") && s.includes("does not exist")) {
+    return "The prototype_comments table doesn't exist yet. Open Supabase → SQL Editor and re-run the updated SQL block from the README (the one that creates prototype_comments + its policies).";
+  }
+  if (s.includes("row-level security") || s.includes("rls") || s.includes("permission denied")) {
+    return "Supabase is rejecting the write — usually because RLS policies for prototype_comments haven't been created. Re-run the updated SQL block from the README.";
+  }
+  if (s.includes("failed to fetch") || s.includes("network")) {
+    return "Couldn't reach Supabase. Check your internet connection and that the project URL in index.html is correct.";
+  }
+  if (s.includes("invalid api key") || s.includes("jwt")) {
+    return "Supabase rejected the API key. Check SUPABASE_ANON_KEY in index.html.";
+  }
+  return "Save failed: " + raw;
+}
+
+// Pin layer — an absolutely-positioned overlay on top of the iPhone
+// device that (a) captures clicks when pinMode is on and (b) renders
+// numbered dots for existing pinned comments on the current screen.
+function PinLayer({
+  pinMode, onAddPin, pendingPin, pinnedComments, onOpenPin,
+}) {
+  function handleClick(e) {
+    if (!pinMode) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width)  * 100;
+    const y = ((e.clientY - rect.top)  / rect.height) * 100;
+    onAddPin({ x, y });
+  }
+  return (
+    <div
+      className={"pin-layer" + (pinMode ? " pin-mode" : "")}
+      onClick={handleClick}>
+      {pinnedComments.map((c, i) => {
+        const p = c.context && c.context.pin;
+        if (!p) return null;
+        return (
+          <button
+            key={c.id}
+            className="pin-dot"
+            style={{ left: p.x + "%", top: p.y + "%" }}
+            onClick={(e) => { e.stopPropagation(); onOpenPin(c.id); }}
+            title={c.author + " · " + (c.body || "").slice(0, 80)}
+            aria-label={"Open comment by " + c.author}>
+            {i + 1}
+          </button>
+        );
+      })}
+      {pendingPin && (
+        <span
+          className="pin-dot pin-pending"
+          style={{ left: pendingPin.x + "%", top: pendingPin.y + "%" }}
+          aria-hidden="true">+</span>
+      )}
+    </div>
+  );
+}
+
+// ─── Feedback panel — threaded comments backed by Supabase ─────────────
+// Slides in from the right. Anyone can leave a top-level comment or reply
+// to an existing one. Comments auto-capture the current view/screen context
+// so reviewers see exactly where you were when you wrote them.
+function FeedbackPanel({
+  open, onClose, currentContext, actorName, ensureActor,
+  pendingPin, focusCommentId,
+}) {
+  // If there's a pending pin, attach its coords to the comment context.
+  const ctxWithPin = pendingPin
+    ? { ...currentContext, pin: { x: pendingPin.x, y: pendingPin.y, surface: pendingPin.surface || "device" } }
+    : currentContext;
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("open"); // all | thisview | open
+  const [body, setBody] = useState("");
+  const [replyParent, setReplyParent] = useState(null);
+  const [replyBody, setReplyBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+
+  async function refresh() {
+    setLoading(true);
+    const data = await cloudStore.getComments(200);
+    setComments(data);
+    setLoading(false);
+  }
+  useEffect(() => {
+    if (!open || !cloudStore.enabled) return;
+    let cancelled = false;
+    refresh();
+    const t = setInterval(() => { if (!cancelled) refresh(); }, 30000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [open]);
+  // If a pin was clicked, jump to "All" filter so we can find it, then
+  // scroll the matching article into view.
+  useEffect(() => {
+    if (!focusCommentId || !open) return;
+    setFilter("all");
+    const t = setTimeout(() => {
+      const el = document.querySelector("[data-fbp-id='" + focusCommentId + "']");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("fbp-focused");
+        setTimeout(() => el.classList.remove("fbp-focused"), 2200);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [focusCommentId, open, comments]);
+
+  async function submitTopLevel() {
+    if (!body.trim()) return;
+    setErrMsg("");
+    ensureActor(async (who) => {
+      setBusy(true);
+      const { row, error } = await cloudStore.addComment({
+        author: who,
+        body: body.trim(),
+        context: ctxWithPin,
+      });
+      setBusy(false);
+      if (error) {
+        setErrMsg(friendlyCloudError(error));
+        haptic("err");
+        return;
+      }
+      if (row) {
+        setBody("");
+        haptic("ok");
+        cloudStore.logEvent({
+          action: "comment-added",
+          actor: who,
+          detail: { excerpt: row.body.slice(0, 60), view: ctxWithPin?.view },
+        });
+        postCommentToSlack({
+          author: who,
+          body: row.body,
+          context: ctxWithPin,
+          deepLink: typeof window !== "undefined" ? window.location.href : null,
+        });
+        refresh();
+      }
+    });
+  }
+  async function submitReply(parentId) {
+    if (!replyBody.trim()) return;
+    setErrMsg("");
+    ensureActor(async (who) => {
+      setBusy(true);
+      const { row, error } = await cloudStore.addComment({
+        parent_id: parentId,
+        author: who,
+        body: replyBody.trim(),
+        context: currentContext,
+      });
+      setBusy(false);
+      if (error) {
+        setErrMsg(friendlyCloudError(error));
+        haptic("err");
+        return;
+      }
+      if (row) {
+        setReplyBody("");
+        setReplyParent(null);
+        haptic("ok");
+        refresh();
+      }
+    });
+  }
+  async function toggleResolve(c) {
+    ensureActor(async (who) => {
+      const next = !c.resolved;
+      const ok = await cloudStore.setCommentResolved(c.id, next, who);
+      if (ok) {
+        cloudStore.logEvent({
+          action: next ? "comment-resolved" : "comment-reopened",
+          actor: who,
+          detail: { excerpt: c.body.slice(0, 60) },
+        });
+        refresh();
+      }
+    });
+  }
+
+  if (!open) return null;
+
+  // Build the tree: top-level comments + nested replies.
+  const tops = comments.filter(c => !c.parent_id);
+  const repliesOf = (parentId) =>
+    comments.filter(c => c.parent_id === parentId)
+            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+  // Apply the filter to the top-level list.
+  const visible = tops.filter(c => {
+    if (filter === "open" && c.resolved) return false;
+    if (filter === "thisview") {
+      if (!c.context || !currentContext) return false;
+      return c.context.view === currentContext.view;
+    }
+    return true;
+  });
+
+  return (
+    <>
+      <div className="fbp-backdrop" onClick={onClose} />
+      <aside className="fbp-sheet" role="dialog" aria-label="Feedback">
+        <header className="fbp-head">
+          <h3>Feedback</h3>
+          <button className="fbp-close" onClick={onClose} aria-label="Close">×</button>
+        </header>
+        <div className="fbp-filter" role="tablist" aria-label="Filter">
+          {[
+            { id: "open",     label: "Open" },
+            { id: "thisview", label: "This view" },
+            { id: "all",      label: "All" },
+          ].map(t => (
+            <button key={t.id} role="tab" aria-selected={filter === t.id}
+              className={filter === t.id ? "active" : ""}
+              onClick={() => setFilter(t.id)}>{t.label}</button>
+          ))}
+          <span className="fbp-count">{visible.length} {visible.length === 1 ? "comment" : "comments"}</span>
+        </div>
+
+        <div className="fbp-list">
+          {!cloudStore.enabled ? (
+            <p className="fbp-empty">Cloud isn't configured — paste your Supabase URL + key in <code>index.html</code> to enable shared feedback.</p>
+          ) : loading && visible.length === 0 ? (
+            <p className="fbp-empty">Loading…</p>
+          ) : visible.length === 0 ? (
+            <p className="fbp-empty">
+              {filter === "open"     ? "No open feedback. 🎉" :
+               filter === "thisview" ? "No feedback on this view yet." :
+                                       "No feedback yet — be the first."}
+            </p>
+          ) : visible.map(c => (
+            <article key={c.id} data-fbp-id={c.id} className={"fbp-c" + (c.resolved ? " resolved" : "")}>
+              <div className="fbp-c-meta">
+                <span className="fbp-author">{c.author || "Anonymous"}</span>
+                <span className="fbp-time">{relativeTime(c.created_at)}</span>
+              </div>
+              {c.context && (
+                <div className="fbp-ctx">
+                  {c.context.view     && <span className="ctx"><span className="k">view</span> {c.context.view}</span>}
+                  {c.context.screen   && <span className="ctx"><span className="k">screen</span> {c.context.screen}</span>}
+                  {c.context.platform && <span className="ctx"><span className="k">platform</span> {c.context.platform}</span>}
+                  {c.context.version  && <span className="ctx"><span className="k">version</span> {c.context.version}</span>}
+                </div>
+              )}
+              <p className="fbp-body">{c.body}</p>
+              {c.resolved && (
+                <p className="fbp-resolved-line">
+                  Resolved {c.resolved_by ? "by " + c.resolved_by : ""} {c.resolved_at ? "· " + relativeTime(c.resolved_at) : ""}
+                </p>
+              )}
+              <div className="fbp-actions">
+                <button onClick={() => setReplyParent(replyParent === c.id ? null : c.id)}>
+                  {replyParent === c.id ? "Cancel" : "Reply"}
+                </button>
+                <button onClick={() => toggleResolve(c)}>
+                  {c.resolved ? "Reopen" : "Resolve"}
+                </button>
+              </div>
+              {/* Reply composer */}
+              {replyParent === c.id && (
+                <div className="fbp-reply">
+                  <textarea
+                    rows="2" autoFocus
+                    placeholder={"Reply as " + (actorName || "you") + "…"}
+                    value={replyBody}
+                    onChange={(e) => setReplyBody(e.target.value)} />
+                  <button className="fbp-send" onClick={() => submitReply(c.id)}
+                    disabled={!replyBody.trim() || busy}>
+                    {busy ? "Sending…" : "Reply"}
+                  </button>
+                </div>
+              )}
+              {/* Nested replies */}
+              {repliesOf(c.id).map(r => (
+                <div key={r.id} className="fbp-reply-item">
+                  <div className="fbp-c-meta">
+                    <span className="fbp-author">{r.author || "Anonymous"}</span>
+                    <span className="fbp-time">{relativeTime(r.created_at)}</span>
+                  </div>
+                  <p className="fbp-body">{r.body}</p>
+                </div>
+              ))}
+            </article>
+          ))}
+        </div>
+
+        <div className="fbp-composer">
+          {errMsg && (
+            <div className="fbp-err" role="alert">
+              <strong>Save failed.</strong> {errMsg}
+              <button className="fbp-err-close" onClick={() => setErrMsg("")} aria-label="Dismiss">×</button>
+            </div>
+          )}
+          <div className="fbp-ctx-preview" title="This comment will be tagged with the current view + screen">
+            Posting on:
+            {currentContext?.view     && <span className="ctx">{currentContext.view}</span>}
+            {currentContext?.screen   && <span className="ctx">{currentContext.screen}</span>}
+            {currentContext?.platform && <span className="ctx">{currentContext.platform}</span>}
+            {currentContext?.version  && <span className="ctx">{currentContext.version}</span>}
+            {pendingPin && (
+              <span className="ctx" style={{ background: "#1f3a5a", color: "#9cc0ff" }}>
+                📍 Pinned ({Math.round(pendingPin.x)}%, {Math.round(pendingPin.y)}%)
+              </span>
+            )}
+          </div>
+          <textarea
+            rows="3"
+            placeholder={cloudStore.enabled ? "Leave feedback for the team…" : "Cloud not configured — feedback won't be saved"}
+            value={body}
+            disabled={!cloudStore.enabled}
+            onChange={(e) => setBody(e.target.value)} />
+          <div className="fbp-composer-actions">
+            <span className="fbp-as">As <strong>{actorName || "Anonymous"}</strong></span>
+            <button className="fbp-send" onClick={submitTopLevel}
+              disabled={!body.trim() || busy || !cloudStore.enabled}>
+              {busy ? "Sending…" : "Post"}
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
 function FeedbackBridge({ context, onClose }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -7690,10 +8544,58 @@ function FeedbackBridge({ context, onClose }) {
   );
 }
 
-function AppShell() {
+function AppShell({ fullscreen = false }) {
   const isMobile = useIsMobile();
   const [mobSheet, setMobSheet] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // Pin mode for click-anywhere-to-comment overlay on the prototype.
+  const [pinMode, setPinMode] = useState(false);
+  // Pending pin: where the user clicked, waiting on the composer to submit.
+  const [pendingPin, setPendingPin] = useState(null); // { x, y, surface }
+  // Open-comment counts per view → small badges on the TopNav tabs.
+  const [openCounts, setOpenCounts] = useState({});
+  // Comments for the current screen (used to render existing pins).
+  const [screenPins, setScreenPins] = useState([]);
+  // Comment id → focus (for opening just that thread from a pin click).
+  const [focusCommentId, setFocusCommentId] = useState(null);
+
+  // Poll the open-counts every 60s (and on close-of-feedback-panel) so
+  // badges + pins stay roughly fresh without hammering the API.
+  const [allPrototypeComments, setAllPrototypeComments] = useState([]);
+  useEffect(() => {
+    if (!cloudStore.enabled) return;
+    let cancelled = false;
+    async function refresh() {
+      const [counts, all] = await Promise.all([
+        cloudStore.getOpenCommentCounts(),
+        cloudStore.getComments(500),
+      ]);
+      if (!cancelled) {
+        setOpenCounts(counts);
+        setAllPrototypeComments(all.filter(c =>
+          c.context && c.context.view === "Prototype" && c.context.pin
+        ));
+      }
+    }
+    refresh();
+    const t = setInterval(refresh, 60000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, []);
+  // Refresh counts + pin list whenever the feedback panel closes.
+  useEffect(() => {
+    if (feedbackOpen) return;
+    if (!cloudStore.enabled) return;
+    (async () => {
+      const [counts, all] = await Promise.all([
+        cloudStore.getOpenCommentCounts(),
+        cloudStore.getComments(500),
+      ]);
+      setOpenCounts(counts);
+      setAllPrototypeComments(all.filter(c =>
+        c.context && c.context.view === "Prototype" && c.context.pin
+      ));
+    })();
+  }, [feedbackOpen]);
   const [screenshotState, setScreenshotState] = useState("idle"); // idle | working | sent | fail
 
   function captureAndSendToMiro() {
@@ -7775,7 +8677,10 @@ function AppShell() {
     // the tab will open).
     window.open(MIRO_BOARD_URL, "_blank", "noopener,noreferrer");
   }
-  const [view, setView] = useState("prototype"); // prototype | tree | matrix | storymap
+  // In fullscreen mode we lock to the prototype view; everything else
+  // (Tree, Matrix, Storymap, Handoff) is team chrome that doesn't belong
+  // on a "scan to test on phone" experience.
+  const [view, setView] = useState(fullscreen ? "prototype" : "prototype");
   const [storyVersion, setStoryVersion] = useState("all"); // all | mvp | v1 | v2
   const [version, setVersion] = useState("mvp"); // dev panel toggle: mvp | v1 | v2
   const [platform, setPlatform] = useState("ios"); // ios | android | web (toggle UI hidden for now)
@@ -7891,19 +8796,19 @@ function AppShell() {
   const enableMagicApply = features.has("magic-apply");
 
   // Pseudonymous "who's editing" name — captured once on first edit and
-  // re-used for activity log attribution. No login, no PII; people just
+  // re-used for activity-log attribution. No login, no PII; people just
   // type their name. Stored in localStorage.
   const [actorName, setActorName] = useState(() => {
     try { return localStorage.getItem("vend-actor") || ""; } catch (_) { return ""; }
   });
   const [namePromptOpen, setNamePromptOpen] = useState(false);
+  const pendingActionRef = useRef(null);
   function ensureActor(thenRun) {
     if (actorName) { thenRun && thenRun(actorName); return; }
     setNamePromptOpen(true);
-    // We re-run the action via a one-shot ref after they submit a name.
+    // Re-run the action once a name is submitted.
     pendingActionRef.current = thenRun || null;
   }
-  const pendingActionRef = useRef(null);
   function submitActorName(name) {
     const clean = (name || "").trim().slice(0, 40);
     if (!clean) return;
@@ -7917,8 +8822,8 @@ function AppShell() {
     }
   }
 
-  // Drag-drop callbacks for the strategy views. Each move logs an event
-  // (asynchronously, non-blocking) so the team activity feed has history.
+  // Drag-drop callbacks — each move logs an event (non-blocking) so the
+  // team activity feed has history.
   function moveStory(taskId, fromRelease, idx, toRelease) {
     if (fromRelease === toRelease) return;
     ensureActor((who) => {
@@ -8163,11 +9068,20 @@ function AppShell() {
 
   return (
     <>
+      {fullscreen && (
+        <a
+          className="fs-exit"
+          href={window.location.pathname}
+          aria-label="Exit fullscreen prototype mode">
+          ×
+        </a>
+      )}
       <NamePrompt
         open={namePromptOpen}
         onSubmit={submitActorName}
         onClose={() => { setNamePromptOpen(false); pendingActionRef.current = null; }}
       />
+      {!fullscreen && (
       <div className="site-header">
         <div className="site-brand" aria-label="FINN User Connect">
           <img
@@ -8178,11 +9092,17 @@ function AppShell() {
           <span className="divider" aria-hidden="true" />
           <span className="wordmark">User Connect</span>
         </div>
-        <TopNav view={view} onChange={setView} />
+        <TopNav
+          view={view}
+          onChange={setView}
+          openCounts={openCounts}
+          onOpenFeedback={() => setFeedbackOpen(true)}
+        />
         <div className="site-tools" role="toolbar" aria-label="Team tools">
           <QrModal />
         </div>
       </div>
+      )}
       {view === "tree" && (
         <div key="tree-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
           <div className="view-toolbar">
@@ -8339,6 +9259,29 @@ function AppShell() {
               uploadMode={cvParams.uploadMode}
             />
           )}
+          {/* Click-anywhere comment overlay — sits on top of the device.
+              Only captures clicks when pinMode is on; otherwise pins are
+              still clickable but the layer is pointer-events: none. */}
+          <PinLayer
+            pinMode={pinMode}
+            pendingPin={pendingPin}
+            pinnedComments={allPrototypeComments.filter(c => {
+              const ctx = c.context || {};
+              return (
+                ctx.screen   === currentScreenLabel(view, screen, overlay, magicMode, loadingPhase) &&
+                ctx.platform === currentPlatformLabel(platform) &&
+                ctx.version  === currentVersionLabel(version)
+              );
+            })}
+            onAddPin={(p) => {
+              setPendingPin({ ...p, surface: "device" });
+              setFeedbackOpen(true);
+            }}
+            onOpenPin={(id) => {
+              setFocusCommentId(id);
+              setFeedbackOpen(true);
+            }}
+          />
         </Device>
       </div>
       </LangCtx.Provider>
@@ -8517,80 +9460,67 @@ function AppShell() {
     </div>
       )}
 
-      {/* Floating feedback tray — bottom-left, equal weight pills.
-          - Jira: clipboard-bridge to JEA-1179 (text feedback)
-          - Miro: screenshot → clipboard → user pastes on Miro board */}
+      {/* Single floating "Add a comment" pill — bottom-left.
+          On the Prototype view it toggles pin mode (click anywhere to drop a
+          pin + open the composer with that pin context). On the strategy
+          views it just opens the panel for typing — there's no canvas to pin
+          to. To READ existing feedback, click the red count badge on any
+          TopNav tab. */}
       <div className="fb-fab-tray">
-        <button className="fb-fab" onClick={() => setFeedbackOpen(true)} aria-label="Leave feedback in Jira">
-          <span className="dot" aria-hidden="true" />
-          Feedback to Jira
-        </button>
-        <button className="fb-fab-screenshot"
-          onClick={captureAndSendToMiro}
-          disabled={screenshotState === "working"}
-          aria-label="Capture screenshot for Miro">
-          <span className="icon" aria-hidden="true">📸</span>
-          {screenshotState === "working"    ? "Capturing…" :
-           screenshotState === "sent"       ? "✓ Copied — open Miro" :
-           screenshotState === "downloaded" ? "✓ Downloaded — drag to Miro" :
-           screenshotState === "fail"       ? "Capture failed" :
-           "Screenshot to Miro"}
+        <button
+          className={"fb-fab fb-fab-pin" + (pinMode ? " active" : "")}
+          onClick={() => {
+            if (view === "prototype") {
+              setPinMode(p => !p);
+              setPendingPin(null);
+            } else {
+              setFeedbackOpen(true);
+            }
+          }}
+          aria-pressed={view === "prototype" ? pinMode : undefined}
+          aria-label={view === "prototype" ? "Toggle pin-on-screen comment mode" : "Open feedback panel"}>
+          <span className="icon" aria-hidden="true">{pinMode ? "📍" : "💬"}</span>
+          {pinMode
+            ? "Click anywhere on the prototype to pin"
+            : "Add a comment"}
         </button>
       </div>
-      {(screenshotState === "sent" || screenshotState === "downloaded") && (
-        <div className="fb-toast-helper" role="status">
-          <div className="msg">
-            {screenshotState === "sent" ? (
-              <>
-                <strong>Screenshot copied.</strong> Open Miro, click an empty area of the canvas, then press{" "}
-                <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>V</kbd> to paste. Add a <strong>post-it next to it with your comment</strong>.
-                <div className="tip">Tip: if Miro shows a welcome modal, close it first — otherwise it eats the paste.</div>
-              </>
-            ) : (
-              <>
-                <strong>Screenshot saved</strong> as <code>user-connect-feedback.png</code>. Drag it onto the Miro board
-                and add a <strong>post-it next to it with your comment</strong>.
-              </>
-            )}
-          </div>
-          <button className="open" onClick={openMiroBoard}>Open Miro</button>
-          <button className="close" onClick={() => setScreenshotState("idle")} aria-label="Dismiss">×</button>
-        </div>
-      )}
-      {screenshotState === "fail" && (
-        <div className="fb-toast-helper fail" role="alert">
-          <div className="msg">Couldn't capture the screenshot. Try again, or use a normal screenshot + paste on Miro.</div>
-          <button className="close" onClick={() => setScreenshotState("idle")} aria-label="Dismiss">×</button>
-        </div>
-      )}
-      {feedbackOpen && (
-        <FeedbackBridge
-          onClose={() => setFeedbackOpen(false)}
-          context={{
-            view:
-              view === "prototype" ? "Prototype" :
-              view === "tree"      ? "Opportunity tree" :
-              view === "matrix"    ? "Impact–Effort" :
-              view === "storymap"  ? "Storymap" :
-              view === "handoff"   ? "Handoff" : view,
-            screen:
-              view === "prototype"
-                ? (overlay
-                    ? "Overlay: " + overlay
-                    : screen === "preview" && magicMode ? "Preview · Magic Apply"
-                    : screen === "preview" && loadingPhase !== "ready" ? "Preview · loading"
-                    : screen === "preview" ? "Preview · ready"
-                    : screen)
-                : null,
-            platform: view === "prototype"
-              ? (platform === "ios" ? "iOS" : platform === "android" ? "Android" : "Web")
+      <FeedbackPanel
+        open={feedbackOpen}
+        onClose={() => {
+          setFeedbackOpen(false);
+          setPendingPin(null);
+          setFocusCommentId(null);
+          setPinMode(false);
+        }}
+        actorName={actorName}
+        ensureActor={ensureActor}
+        pendingPin={pendingPin}
+        focusCommentId={focusCommentId}
+        currentContext={{
+          view:
+            view === "prototype" ? "Prototype" :
+            view === "tree"      ? "Opportunity tree" :
+            view === "matrix"    ? "Impact–Effort" :
+            view === "storymap"  ? "Storymap" :
+            view === "handoff"   ? "Handoff" : view,
+          screen:
+            view === "prototype"
+              ? (overlay
+                  ? "Overlay: " + overlay
+                  : screen === "preview" && magicMode ? "Preview · Magic Apply"
+                  : screen === "preview" && loadingPhase !== "ready" ? "Preview · loading"
+                  : screen === "preview" ? "Preview · ready"
+                  : screen)
               : null,
-            version: view === "prototype"
-              ? (version === "mvp" ? "MVP" : version === "v1" ? "1.0" : "2.0")
-              : null,
-          }}
-        />
-      )}
+          platform: view === "prototype"
+            ? (platform === "ios" ? "iOS" : platform === "android" ? "Android" : "Web")
+            : null,
+          version: view === "prototype"
+            ? (version === "mvp" ? "MVP" : version === "v1" ? "1.0" : "2.0")
+            : null,
+        }}
+      />
     </>
   );
 }
