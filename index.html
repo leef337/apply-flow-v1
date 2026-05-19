@@ -245,18 +245,29 @@
   /* ─── Fullscreen mode (scanned via QR on a real device) ─── */
   /* Strips all site chrome, dev panel, and feedback FABs. Renders the
      iPhone surface edge-to-edge so it feels like a real app. */
-  body.fs-mode { background: #fff; padding: 0; }
+  html.fs-mode, body.fs-mode {
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    height: 100vh; height: 100dvh;
+  }
   body.fs-mode .site-header,
   body.fs-mode .dev-panel,
   body.fs-mode .mob-fab,
   body.fs-mode .fb-fab-tray,
   body.fs-mode .fb-toast-helper,
-  body.fs-mode .site-tools { display: none !important; }
+  body.fs-mode .site-tools,
+  body.fs-mode .view-toolbar,
+  body.fs-mode .activity-popover,
+  body.fs-mode .activity-backdrop { display: none !important; }
+  body.fs-mode .layout,
   body.fs-mode .stage {
-    width: 100vw; height: 100vh; height: 100dvh;
-    padding: 0; margin: 0;
-    min-height: 0;
-    overflow: hidden;
+    width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+    padding: 0 !important; margin: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    gap: 0 !important;
   }
   body.fs-mode .device-bezel {
     width: 100vw !important;
@@ -265,9 +276,12 @@
     max-width: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    /* Account for iPhone notch / Dynamic Island via safe-area padding. */
+    padding-top: env(safe-area-inset-top, 0) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0) !important;
   }
   /* Hide the simulated iPhone chrome (status bar + dynamic island + home
-     indicator) since the real device already has its own at the top. */
+     indicator) since the real device already has its own. */
   body.fs-mode .device-chrome { display: none !important; }
   /* Reclaim the space the simulated status bar was leaving below it. */
   body.fs-mode .device-bezel > div:not(.device-chrome) { padding-top: 0 !important; }
@@ -1009,10 +1023,16 @@
     display: inline-block;
   }
 
-  /* ─── Feedback FAB tray (bottom-left, equal weight) ─── */
+  /* ─── Feedback FAB tray (bottom-left, vertical stack) ─── */
   .fb-fab-tray {
     position: fixed; left: 22px; bottom: 22px; z-index: 800;
-    display: inline-flex; align-items: center; gap: 10px;
+    display: inline-flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  }
+  /* The QR pill below "Add a comment" is the secondary action — quieter
+     so it doesn't compete with the primary action above. */
+  .fb-fab-qr {
+    background: rgba(29,29,29,0.78) !important;
+    backdrop-filter: blur(8px);
   }
   .fb-fab {
     height: 42px; padding: 0 16px 0 14px;
@@ -5708,6 +5728,9 @@ const SOLUTIONS = [
 
 // ─── Jira linkage ─────────────────────────────────────────────────────────
 const JIRA_BASE = "https://nmp-jira.atlassian.net/browse/";
+// Last time the JIRA_STATUS map below was reconciled against live Jira.
+// Update this date whenever you ask Claude (or anyone) to re-sync.
+const JIRA_STATUS_SYNCED_AT = "2026-05-19";
 
 // ─── Storymap data (Jeff Patton shape) ───────────────────────────────────
 // Top row: activities — high-level user goals. They span the backbone tasks
@@ -6001,6 +6024,10 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
         Jira chip linking to <a href={JIRA_BASE + "JEA-1092"} target="_blank" rel="noopener noreferrer"
         style={{ color: "var(--finn-blue)", fontWeight: 600 }}>JEA Agentic Apply</a> tickets — amber "No Jira" badges
         flag stories the team should consider ticketing. Edits persist on this device.
+      </p>
+      <p className="sub" style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: -8 }}>
+        Jira statuses last synced <strong>{JIRA_STATUS_SYNCED_AT}</strong>.
+        Ping Claude in Cowork ("re-sync Jira statuses") to refresh.
       </p>
 
       <div className="sm-version-toggle" role="tablist" aria-label="Release filter">
@@ -8117,9 +8144,24 @@ function App() {
   const fullscreen = isFullscreenMode();
   useEffect(() => {
     if (typeof document === "undefined") return;
-    if (fullscreen) document.body.classList.add("fs-mode");
-    else document.body.classList.remove("fs-mode");
-    return () => document.body.classList.remove("fs-mode");
+    if (fullscreen) {
+      document.body.classList.add("fs-mode");
+      document.documentElement.classList.add("fs-mode");
+      // iOS Safari trick: scrolling to 1px collapses the URL bar so the
+      // prototype takes the full visible height. Defer slightly to let
+      // the layout settle first.
+      const ticker = setTimeout(() => {
+        try { window.scrollTo(0, 1); } catch (_) {}
+      }, 50);
+      return () => {
+        clearTimeout(ticker);
+        document.body.classList.remove("fs-mode");
+        document.documentElement.classList.remove("fs-mode");
+      };
+    } else {
+      document.body.classList.remove("fs-mode");
+      document.documentElement.classList.remove("fs-mode");
+    }
   }, [fullscreen]);
   // Fullscreen mode (scanned via QR) bypasses the password gate so phones
   // can drop straight into the prototype without re-entering it each time.
@@ -8216,7 +8258,7 @@ function PinLayer({
 // so reviewers see exactly where you were when you wrote them.
 function FeedbackPanel({
   open, onClose, currentContext, actorName, ensureActor,
-  pendingPin, focusCommentId,
+  pendingPin, focusCommentId, onCommentsChanged,
 }) {
   // If there's a pending pin, attach its coords to the comment context.
   const ctxWithPin = pendingPin
@@ -8291,6 +8333,7 @@ function FeedbackPanel({
           deepLink: typeof window !== "undefined" ? window.location.href : null,
         });
         refresh();
+        onCommentsChanged && onCommentsChanged();
       }
     });
   }
@@ -8316,6 +8359,7 @@ function FeedbackPanel({
         setReplyParent(null);
         haptic("ok");
         refresh();
+        onCommentsChanged && onCommentsChanged();
       }
     });
   }
@@ -8330,6 +8374,7 @@ function FeedbackPanel({
           detail: { excerpt: c.body.slice(0, 60) },
         });
         refresh();
+        onCommentsChanged && onCommentsChanged();
       }
     });
   }
@@ -8559,42 +8604,36 @@ function AppShell({ fullscreen = false }) {
   // Comment id → focus (for opening just that thread from a pin click).
   const [focusCommentId, setFocusCommentId] = useState(null);
 
-  // Poll the open-counts every 60s (and on close-of-feedback-panel) so
-  // badges + pins stay roughly fresh without hammering the API.
+  // Refresh comment counts + the pin-eligible list. Called on a 60s
+  // timer, when the feedback panel closes, AND whenever the panel
+  // commits a mutation (add/resolve/reopen). Resolved comments are
+  // filtered out of BOTH the badge counts (server-side via .eq("resolved", false))
+  // and the pin layer (client-side filter below).
   const [allPrototypeComments, setAllPrototypeComments] = useState([]);
+  async function refreshCommentsAndCounts() {
+    if (!cloudStore.enabled) return;
+    const [counts, all] = await Promise.all([
+      cloudStore.getOpenCommentCounts(),
+      cloudStore.getComments(500),
+    ]);
+    setOpenCounts(counts);
+    // Pins only render for unresolved comments — resolved threads
+    // shouldn't litter the canvas with stale dots.
+    setAllPrototypeComments(all.filter(c =>
+      c.context && c.context.view === "Prototype" && c.context.pin && !c.resolved
+    ));
+  }
   useEffect(() => {
     if (!cloudStore.enabled) return;
-    let cancelled = false;
-    async function refresh() {
-      const [counts, all] = await Promise.all([
-        cloudStore.getOpenCommentCounts(),
-        cloudStore.getComments(500),
-      ]);
-      if (!cancelled) {
-        setOpenCounts(counts);
-        setAllPrototypeComments(all.filter(c =>
-          c.context && c.context.view === "Prototype" && c.context.pin
-        ));
-      }
-    }
-    refresh();
-    const t = setInterval(refresh, 60000);
-    return () => { cancelled = true; clearInterval(t); };
+    refreshCommentsAndCounts();
+    const t = setInterval(refreshCommentsAndCounts, 60000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Refresh counts + pin list whenever the feedback panel closes.
   useEffect(() => {
     if (feedbackOpen) return;
-    if (!cloudStore.enabled) return;
-    (async () => {
-      const [counts, all] = await Promise.all([
-        cloudStore.getOpenCommentCounts(),
-        cloudStore.getComments(500),
-      ]);
-      setOpenCounts(counts);
-      setAllPrototypeComments(all.filter(c =>
-        c.context && c.context.view === "Prototype" && c.context.pin
-      ));
-    })();
+    refreshCommentsAndCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedbackOpen]);
   const [screenshotState, setScreenshotState] = useState("idle"); // idle | working | sent | fail
 
@@ -9098,9 +9137,6 @@ function AppShell({ fullscreen = false }) {
           openCounts={openCounts}
           onOpenFeedback={() => setFeedbackOpen(true)}
         />
-        <div className="site-tools" role="toolbar" aria-label="Team tools">
-          <QrModal />
-        </div>
       </div>
       )}
       {view === "tree" && (
@@ -9460,12 +9496,11 @@ function AppShell({ fullscreen = false }) {
     </div>
       )}
 
-      {/* Single floating "Add a comment" pill — bottom-left.
-          On the Prototype view it toggles pin mode (click anywhere to drop a
-          pin + open the composer with that pin context). On the strategy
-          views it just opens the panel for typing — there's no canvas to pin
-          to. To READ existing feedback, click the red count badge on any
-          TopNav tab. */}
+      {/* Floating tray, bottom-left.
+          - "Add a comment" → pin mode on Prototype, panel on other views.
+          - "Open on phone" → QR modal so a teammate can scan and test on
+            their actual device.
+          To READ existing feedback, click the red count badge on any tab. */}
       <div className="fb-fab-tray">
         <button
           className={"fb-fab fb-fab-pin" + (pinMode ? " active" : "")}
@@ -9484,6 +9519,13 @@ function AppShell({ fullscreen = false }) {
             ? "Click anywhere on the prototype to pin"
             : "Add a comment"}
         </button>
+        <QrModal trigger={(open) => (
+          <button className="fb-fab fb-fab-qr" onClick={open}
+            aria-label="Open this prototype on a phone">
+            <span className="icon" aria-hidden="true">📱</span>
+            Open on phone
+          </button>
+        )} />
       </div>
       <FeedbackPanel
         open={feedbackOpen}
@@ -9497,6 +9539,7 @@ function AppShell({ fullscreen = false }) {
         ensureActor={ensureActor}
         pendingPin={pendingPin}
         focusCommentId={focusCommentId}
+        onCommentsChanged={refreshCommentsAndCounts}
         currentContext={{
           view:
             view === "prototype" ? "Prototype" :
