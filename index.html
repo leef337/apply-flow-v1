@@ -276,9 +276,10 @@
     max-width: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    /* Account for iPhone notch / Dynamic Island via safe-area padding. */
-    padding-top: env(safe-area-inset-top, 0) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0) !important;
+    /* Truly flush — no safe-area padding. The OS status bar overlays
+       the content; that's the intended app-like feel. Individual screens
+       handle their own top spacing via useMetrics when needed. */
+    padding: 0 !important;
   }
   /* Hide the simulated iPhone chrome (status bar + dynamic island + home
      indicator) since the real device already has its own. */
@@ -2950,7 +2951,20 @@ const DEVICE_METRICS = {
   web:     { statusBarH: 92, homeArea: 4  },
 };
 function useMetrics() {
-  return DEVICE_METRICS[usePlatform()];
+  const base = DEVICE_METRICS[usePlatform()];
+  // In fullscreen mode (QR scan on a real phone) we strip the simulated
+  // top status-bar height — the real device already has its own status
+  // bar, so the prototype shouldn't reserve extra space and end up with
+  // big white margins. Same for the simulated home-indicator at bottom.
+  if (typeof window !== "undefined") {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("fullscreen") === "1") {
+        return { ...base, statusBarH: 0, homeArea: 0 };
+      }
+    } catch (_) {}
+  }
+  return base;
 }
 // Legacy fallbacks (only kept for any non-component contexts)
 const STATUS_BAR_H = 54;
@@ -8286,18 +8300,97 @@ function friendlyCloudError(raw) {
 // Pin layer — an absolutely-positioned overlay on top of the iPhone
 // device that (a) captures clicks when pinMode is on and (b) renders
 // numbered dots for existing pinned comments on the current screen.
+// Pins anchor to the *scrolled content* of the prototype, not the
+// viewport: we capture the y-coordinate relative to the full scroll
+// height when adding, and translate by current scrollTop when rendering,
+// so pins stay attached to the UI element they were dropped on as the
+// user scrolls.
 function PinLayer({
   pinMode, onAddPin, pendingPin, pinnedComments, onOpenPin,
 }) {
+  const layerRef = useRef(null);
+  const [scrollTick, setScrollTick] = useState(0);
+
+  // Find the nearest scrollable ancestor by walking up from the layer.
+  function getScrollContainer() {
+    let el = layerRef.current && layerRef.current.parentElement;
+    while (el) {
+      const cs = window.getComputedStyle(el);
+      const oy = cs.overflowY;
+      if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  // Subscribe to scroll on the surrounding scrollable element so pin
+  // positions re-render. Re-attach if the scrollable element changes
+  // (e.g. switching screens inside the prototype).
+  useEffect(() => {
+    let raf = 0;
+    function bump() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setScrollTick(t => t + 1));
+    }
+    // Try the immediate parent first; otherwise scan ancestors.
+    const containers = new Set();
+    const direct = layerRef.current && layerRef.current.parentElement;
+    if (direct) containers.add(direct);
+    const scrollable = getScrollContainer();
+    if (scrollable) containers.add(scrollable);
+    // Also listen to the device-bezel itself in case its inner content scrolls.
+    const bezel = layerRef.current && layerRef.current.closest(".device-bezel");
+    if (bezel) containers.add(bezel);
+    containers.forEach(c => c.addEventListener("scroll", bump, { passive: true }));
+    return () => {
+      cancelAnimationFrame(raf);
+      containers.forEach(c => c.removeEventListener("scroll", bump));
+    };
+  }, [pinnedComments.length]);
+
   function handleClick(e) {
     if (!pinMode) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width)  * 100;
-    const y = ((e.clientY - rect.top)  / rect.height) * 100;
-    onAddPin({ x, y });
+    const sc = getScrollContainer();
+    // y is captured relative to FULL scroll height when there's an
+    // internal scroll, so the pin stays attached to the underlying
+    // content even as the user scrolls.
+    if (sc) {
+      const scRect = sc.getBoundingClientRect();
+      const xPct = ((e.clientX - scRect.left) / sc.clientWidth) * 100;
+      const contentY = (e.clientY - scRect.top) + sc.scrollTop;
+      const yPct = (contentY / sc.scrollHeight) * 100;
+      onAddPin({ x: xPct, y: yPct, scrolled: true });
+    } else {
+      const x = ((e.clientX - rect.left) / rect.width)  * 100;
+      const y = ((e.clientY - rect.top)  / rect.height) * 100;
+      onAddPin({ x, y, scrolled: false });
+    }
   }
+
+  // Compute on-screen position for a pin, translating from
+  // content-relative % into current viewport-relative px when scrolled.
+  function pinPosition(p) {
+    const sc = getScrollContainer();
+    if (sc && p.scrolled) {
+      const scRect = sc.getBoundingClientRect();
+      const layerRect = layerRef.current ? layerRef.current.getBoundingClientRect() : { top: 0, left: 0 };
+      const contentY = (p.y / 100) * sc.scrollHeight;
+      const viewY = contentY - sc.scrollTop + (scRect.top - layerRect.top);
+      const viewX = (p.x / 100) * sc.clientWidth + (scRect.left - layerRect.left);
+      return { left: viewX + "px", top: viewY + "px" };
+    }
+    return { left: p.x + "%", top: p.y + "%" };
+  }
+
+  // scrollTick is referenced so re-renders are scheduled on scroll.
+  void scrollTick;
+
   return (
     <div
+      ref={layerRef}
       className={"pin-layer" + (pinMode ? " pin-mode" : "")}
       onClick={handleClick}>
       {pinnedComments.map((c, i) => {
@@ -8307,7 +8400,7 @@ function PinLayer({
           <button
             key={c.id}
             className="pin-dot"
-            style={{ left: p.x + "%", top: p.y + "%" }}
+            style={pinPosition(p)}
             onClick={(e) => { e.stopPropagation(); onOpenPin(c.id); }}
             title={c.author + " · " + (c.body || "").slice(0, 80)}
             aria-label={"Open comment by " + c.author}>
@@ -8318,7 +8411,7 @@ function PinLayer({
       {pendingPin && (
         <span
           className="pin-dot pin-pending"
-          style={{ left: pendingPin.x + "%", top: pendingPin.y + "%" }}
+          style={pinPosition(pendingPin)}
           aria-hidden="true">+</span>
       )}
     </div>
