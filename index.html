@@ -1511,6 +1511,36 @@
     transition: background 160ms var(--ease-modal), color 160ms var(--ease-modal);
   }
   .fbp-actions button:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  /* Two-stage delete: subtle "Delete" affordance, then a loud "Confirm delete"
+     pill once clicked so it can't be triggered accidentally. */
+  .fbp-actions button.fbp-danger {
+    color: #ff7878; border-color: rgba(255,120,120,0.32);
+  }
+  .fbp-actions button.fbp-danger:hover {
+    background: rgba(255,69,58,0.12); color: #ff453a; border-color: #ff453a;
+  }
+  .fbp-actions button.fbp-confirm-delete {
+    background: #ff453a; color: #fff; border-color: #ff453a;
+  }
+  .fbp-actions button.fbp-confirm-delete:hover {
+    background: #d92e23; border-color: #d92e23;
+  }
+  .fbp-actions button.fbp-confirm-delete:disabled {
+    opacity: 0.6; cursor: wait;
+  }
+  /* Smaller delete pill for inline reply rows */
+  .fbp-reply-del {
+    appearance: none; border: 0; background: transparent;
+    color: #9a9a9a;
+    font: 600 10.5px/1 var(--sys-text); letter-spacing: -0.02em;
+    padding: 4px 8px; border-radius: 6px;
+    cursor: pointer;
+  }
+  .fbp-reply-del:hover { color: #ff7878; background: rgba(255,69,58,0.08); }
+  .fbp-reply-del.fbp-confirm-delete {
+    background: #ff453a; color: #fff;
+  }
+  .fbp-reply-del.fbp-confirm-delete:hover { background: #d92e23; }
 
   .fbp-reply {
     margin: 10px 0 0;
@@ -7282,6 +7312,7 @@ const cloudStore = (() => {
       getComments: async () => [],
       addComment: async () => ({ row: null, error: "cloud-disabled" }),
       setCommentResolved: async () => false,
+      deleteComment: async () => false,
       getOpenCommentCounts: async () => ({}),
     };
   }
@@ -7309,6 +7340,7 @@ const cloudStore = (() => {
       getComments: async () => [],
       addComment: async () => ({ row: null, error: "cloud-disabled" }),
       setCommentResolved: async () => false,
+      deleteComment: async () => false,
       getOpenCommentCounts: async () => ({}),
     };
   }
@@ -7337,10 +7369,22 @@ const cloudStore = (() => {
     },
     async logEvent({ action, detail, actor }) {
       try {
-        const { error } = await client
+        // Insert + select so we can verify the row landed (Supabase
+        // silently returns 0-affected when an RLS INSERT policy is missing
+        // for the prototype_events table — no error, no row).
+        const { data, error } = await client
           .from(SUPABASE_EVENTS)
-          .insert({ action, detail: detail || null, actor: actor || null });
-        if (error) { console.warn("[cloud] logEvent", error.message); return false; }
+          .insert({ action, detail: detail || null, actor: actor || null })
+          .select();
+        if (error) {
+          console.warn("[cloud] logEvent failed:", error.message, "— most likely missing 'team can insert events' RLS policy on prototype_events");
+          return false;
+        }
+        if (!data || data.length === 0) {
+          console.warn("[cloud] logEvent — insert returned 0 rows. Missing RLS policy on prototype_events? Run the full token-gated SQL block from the README.");
+          return false;
+        }
+        console.log("[cloud] logged event:", action, detail);
         return true;
       } catch (e) { console.warn("[cloud] logEvent exception", e); return false; }
     },
@@ -7447,6 +7491,33 @@ const cloudStore = (() => {
         });
         return counts;
       } catch (e) { console.warn("[cloud] getOpenCommentCounts exception", e); return {}; }
+    },
+    async deleteComment(id) {
+      try {
+        // Cascades to replies via ON DELETE CASCADE on parent_id.
+        // .select() returns the deleted rows — used as a sanity check
+        // because Supabase silently returns 0-affected when an RLS DELETE
+        // policy is missing (no error thrown, just nothing deleted).
+        const { data, error } = await client
+          .from(SUPABASE_COMMENTS)
+          .delete()
+          .eq("id", id)
+          .select();
+        if (error) {
+          console.warn("[cloud] deleteComment", error.message);
+          return { ok: false, error: error.message };
+        }
+        if (!data || data.length === 0) {
+          return {
+            ok: false,
+            error: "row-level security blocked the delete — add the 'team can delete comments' policy in Supabase SQL Editor",
+          };
+        }
+        return { ok: true, error: null };
+      } catch (e) {
+        console.warn("[cloud] deleteComment exception", e);
+        return { ok: false, error: e.message || String(e) };
+      }
     },
     async setCommentResolved(id, resolved, resolvedBy) {
       try {
@@ -7741,6 +7812,8 @@ function describeEvent(e) {
       return `resolved a comment: “${truncate(d.excerpt, 40)}”`;
     case "comment-reopened":
       return `reopened a comment: “${truncate(d.excerpt, 40)}”`;
+    case "comment-deleted":
+      return `deleted a ${d.wasReply ? "reply" : "comment"}: “${truncate(d.excerpt, 40)}”`;
     default:
       return e.action;
   }
@@ -8199,7 +8272,7 @@ function friendlyCloudError(raw) {
     return "The prototype_comments table doesn't exist yet. Open Supabase → SQL Editor and re-run the updated SQL block from the README (the one that creates prototype_comments + its policies).";
   }
   if (s.includes("row-level security") || s.includes("rls") || s.includes("permission denied")) {
-    return "Supabase is rejecting the write — usually because RLS policies for prototype_comments haven't been created. Re-run the updated SQL block from the README.";
+    return "Supabase is rejecting the write. Most often this means the matching RLS policy hasn't been created yet — open SQL Editor and run the 'team can delete comments' policy from the README (or the full token-gated block to refresh all of them).";
   }
   if (s.includes("failed to fetch") || s.includes("network")) {
     return "Couldn't reach Supabase. Check your internet connection and that the project URL in index.html is correct.";
@@ -8272,6 +8345,8 @@ function FeedbackPanel({
   const [replyBody, setReplyBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [errMsg, setErrMsg] = useState("");
+  // ID of the comment currently in "are you sure?" delete-confirm state.
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   async function refresh() {
     setLoading(true);
@@ -8378,6 +8453,28 @@ function FeedbackPanel({
       }
     });
   }
+  async function deleteComment(c) {
+    setErrMsg("");
+    ensureActor(async (who) => {
+      setBusy(true);
+      const { ok, error } = await cloudStore.deleteComment(c.id);
+      setBusy(false);
+      if (!ok) {
+        setErrMsg(friendlyCloudError(error || "Couldn't delete the comment."));
+        haptic("err");
+        return;
+      }
+      cloudStore.logEvent({
+        action: "comment-deleted",
+        actor: who,
+        detail: { excerpt: c.body.slice(0, 60), wasReply: !!c.parent_id },
+      });
+      setConfirmDelete(null);
+      haptic("ok");
+      refresh();
+      onCommentsChanged && onCommentsChanged();
+    });
+  }
 
   if (!open) return null;
 
@@ -8456,6 +8553,16 @@ function FeedbackPanel({
                 <button onClick={() => toggleResolve(c)}>
                   {c.resolved ? "Reopen" : "Resolve"}
                 </button>
+                {confirmDelete === c.id ? (
+                  <>
+                    <button className="fbp-confirm-delete" onClick={() => deleteComment(c)} disabled={busy}>
+                      {busy ? "Deleting…" : "Confirm delete"}
+                    </button>
+                    <button onClick={() => setConfirmDelete(null)}>Cancel</button>
+                  </>
+                ) : (
+                  <button className="fbp-danger" onClick={() => setConfirmDelete(c.id)}>Delete</button>
+                )}
               </div>
               {/* Reply composer */}
               {replyParent === c.id && (
@@ -8477,6 +8584,19 @@ function FeedbackPanel({
                   <div className="fbp-c-meta">
                     <span className="fbp-author">{r.author || "Anonymous"}</span>
                     <span className="fbp-time">{relativeTime(r.created_at)}</span>
+                    {confirmDelete === r.id ? (
+                      <span style={{ marginLeft: "auto", display: "inline-flex", gap: 4 }}>
+                        <button className="fbp-confirm-delete fbp-reply-del" onClick={() => deleteComment(r)} disabled={busy}>
+                          {busy ? "…" : "Confirm"}
+                        </button>
+                        <button className="fbp-reply-del" onClick={() => setConfirmDelete(null)}>Cancel</button>
+                      </span>
+                    ) : (
+                      <button className="fbp-reply-del fbp-danger"
+                        style={{ marginLeft: "auto" }}
+                        onClick={() => setConfirmDelete(r.id)}
+                        aria-label="Delete this reply">Delete</button>
+                    )}
                   </div>
                   <p className="fbp-body">{r.body}</p>
                 </div>
@@ -9107,14 +9227,6 @@ function AppShell({ fullscreen = false }) {
 
   return (
     <>
-      {fullscreen && (
-        <a
-          className="fs-exit"
-          href={window.location.pathname}
-          aria-label="Exit fullscreen prototype mode">
-          ×
-        </a>
-      )}
       <NamePrompt
         open={namePromptOpen}
         onSubmit={submitActorName}
@@ -9523,7 +9635,7 @@ function AppShell({ fullscreen = false }) {
           <button className="fb-fab fb-fab-qr" onClick={open}
             aria-label="Open this prototype on a phone">
             <span className="icon" aria-hidden="true">📱</span>
-            Open on phone
+            Open prototype on phone
           </button>
         )} />
       </div>
