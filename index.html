@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0063fb">
 <title>Vend · User Connect — Easy + Agentic apply prototype</title>
-<link rel="stylesheet" href="../../design_system/colors_and_type.css">
+<link rel="stylesheet" href="colors_and_type.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Flex:wght@400;500;700&display=swap" rel="stylesheet">
@@ -27,7 +27,10 @@
     --warn-soft: #fdedb0;
     --red: #cc1414;
     --red-soft: #fadddd;
-    --sys-text: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    /* FINNType is loaded by colors_and_type.css. Prepend it so every
+       component (which all use font-family: inherit) picks up FINN's brand
+       face, with the system stack as a fallback while the .ttf loads. */
+    --sys-text: "FINNType", "FINNTypeWebStrippet", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
     /* iOS-native motion curves.
        --ease-out:    standard exits, hover/colour transitions.
        --ease-modal:  iOS sheet present/dismiss curve — confident in, gentle out.
@@ -207,6 +210,31 @@
     to   { opacity: 1; transform: translate3d(0,    0, 0); }
   }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  /* Slicker fade for transitions inside the agentic preparing rows.
+     A touch slower + 4px upward drift makes each state swap feel
+     deliberate — not a hard cut. */
+  @keyframes arSoftFade {
+    from { opacity: 0; transform: translate3d(0, 4px, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0,    0); }
+  }
+  .ar-soft-fade { animation: arSoftFade 380ms var(--ease-out) both; }
+  /* Gentle scale-pop for the green check landing in place of the spinner
+     when a section completes. Softer than the regular popin — no overshoot
+     so it reads as "settling into place" rather than "celebration". */
+  @keyframes arCheckLand {
+    0%   { transform: scale(0.5); opacity: 0; }
+    60%  { transform: scale(1.04); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .ar-check-land { animation: arCheckLand 440ms var(--ease-spring) both; }
+  /* The whole row gets a quiet 200ms tint shift when its check lands —
+     reinforces that the row is now active / done. Done at the parent
+     level so it doesn't compete with the icon's own scale animation. */
+  @keyframes arRowSettle {
+    from { background: #fafbfd; }
+    to   { background: #ffffff; }
+  }
+  .ar-row.just-done { animation: arRowSettle 600ms var(--ease-out) both; }
   @keyframes popin {
     0%   { transform: scale(0.6); opacity: 0; }
     55%  { transform: scale(1.06); opacity: 1; }
@@ -1331,6 +1359,244 @@
     border-radius: 6px; cursor: pointer;
   }
   .qr-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+
+  /* ─── Agentic review screen (native port of web flow) ─── */
+  .ar-screen {
+    position: absolute; inset: 0;
+    background: #fff;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .ar-scroll {
+    flex: 1; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0;
+  }
+  .ar-gutter {
+    padding: 0 20px;
+  }
+  .ar-bottom-gutter {
+    padding: 16px 20px 8px;
+  }
+  .ar-backlink {
+    appearance: none; border: 0; background: transparent;
+    color: var(--finn-blue);
+    font: 600 15px/1 var(--sys-text); letter-spacing: -0.1px;
+    padding: 12px 0 14px;
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .ar-title {
+    margin: 0 0 4px;
+    font-size: 26px; font-weight: 800; line-height: 1.2;
+    color: var(--ink); letter-spacing: -0.6px;
+  }
+  .ar-subtitle {
+    margin: 0 0 14px;
+    font-size: 14px; font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .ar-lede {
+    margin: 0 0 10px;
+    font-size: 14px; line-height: 1.5;
+    color: var(--ink-mute);
+  }
+  .ar-prep-banner {
+    margin: 18px 0 22px;
+    padding: 14px 16px;
+    background: #eef3ff;
+    border: 1px solid #c8d6f5;
+    border-radius: 12px;
+    color: var(--ink);
+    font-size: 14px; line-height: 1.5;
+  }
+  .ar-prep-banner strong { display: block; margin-bottom: 2px; }
+  .ar-analyzing {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin: 0 0 20px;
+    padding: 6px 10px;
+    background: #fff;
+    color: var(--ink-mute);
+    font-size: 15px; font-weight: 500;
+  }
+  .ar-sparkle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--finn-blue);
+    animation: arSparklePulse 1.6s ease-in-out infinite;
+  }
+  .ar-sparkle img { filter: brightness(0) invert(1); }
+  @keyframes arSparklePulse {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(1.07); }
+  }
+  .ar-skeleton-card {
+    background: #eef3ff;
+    border-radius: 12px;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 0;
+  }
+  @keyframes arSkeletonPulse {
+    0%,100% { opacity: 1; }
+    50%     { opacity: 0.55; }
+  }
+
+  /* Section rows — visually identical to MVP's PreviewRow.
+     Each section is a flat list item separated by 0.5px dividers,
+     edge-to-edge with no card border / radius. The screen above wraps
+     these in a container that already has horizontal padding; the rows
+     reach out with negative left/right margins so dividers run flush. */
+  .ar-rows {
+    display: flex; flex-direction: column;
+    margin: 18px 0 0;
+    background: #fff;
+  }
+  .ar-row {
+    background: #fff;
+    border-top: 0.5px solid #ededed;
+  }
+  .ar-row:last-child { border-bottom: 0.5px solid #ededed; }
+  .ar-row-head {
+    appearance: none; border: 0; background: transparent;
+    width: 100%; box-sizing: border-box;
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 20px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .ar-row-head:active { background: rgba(0,0,0,0.02); }
+  .ar-row-check {
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .ar-row-text {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .ar-row-title {
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 600 16px/1.25 var(--sys-text); letter-spacing: -0.2px;
+    color: var(--ink);
+    flex-wrap: wrap;
+  }
+  .ar-row-sub {
+    font: 400 13px/1.35 var(--sys-text);
+    color: var(--ink-soft);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .ar-row.open .ar-row-sub { white-space: normal; }
+  .ar-row-edit {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 2px;
+    color: var(--finn-blue);
+    font: 600 15px/1 var(--sys-text); letter-spacing: -0.1px;
+    padding: 8px 2px 8px 8px;
+    min-height: 44px;
+  }
+  .ar-row-body {
+    padding: 20px 20px 28px;
+    background: #fff;
+    animation: fadein 220ms var(--ease-modal);
+  }
+  /* ReviewItem — matches the MVP Employer Questions card pattern
+     (heading + grey answer pill + small source tag below). Tapping the
+     answer pill swaps it for an editable input inline. */
+  .ar-rv { margin-bottom: 28px; }
+  .ar-rv:last-child { margin-bottom: 0; }
+  .ar-rv-heading {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font: 600 16px/1.3 var(--sys-text); letter-spacing: -0.15px;
+    color: var(--ink);
+    margin: 0 0 10px;
+  }
+  .ar-rv-heading-label {
+    /* The label text itself, distinct from the source tag and edited chip
+       that float to its right. */
+    font: inherit;
+    color: inherit;
+  }
+  .ar-rv-answer {
+    appearance: none; border: 0; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; box-sizing: border-box; text-align: left;
+    padding: 14px 16px; border-radius: 10px;
+    background: #f7f7f9;
+    color: var(--ink);
+    font: 500 15px/1.4 var(--sys-text); letter-spacing: -0.1px;
+    font-family: inherit;
+    transition: background 140ms var(--ease-out);
+  }
+  .ar-rv-answer:hover { background: #f0f0f3; }
+  .ar-rv-input {
+    width: 100%; box-sizing: border-box;
+    padding: 14px 16px; border-radius: 10px;
+    border: 1px solid var(--finn-blue);
+    outline: 0; background: #fff;
+    color: var(--ink); caret-color: var(--finn-blue);
+    font: 500 15px/1.4 var(--sys-text); letter-spacing: -0.1px;
+    font-family: inherit;
+  }
+  /* Source attribution tag — sits inline to the right of the field
+     heading. Light blue chip (eaf2ff / finn-blue) per the design
+     direction; "ai" variant uses the same colors with a sparkle icon. */
+  .ar-rv-source {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    background: #eaf2ff;
+    color: var(--finn-blue);
+    font: 500 11px/1.2 var(--sys-text); letter-spacing: -0.05px;
+    white-space: nowrap;
+    text-transform: none;
+  }
+  .ar-edited {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 9999px;
+    background: #fdedb0; color: #6b520a;
+    font: 600 11px/1.3 var(--sys-text); letter-spacing: -0.05px;
+    white-space: nowrap;
+  }
+  /* Pill-style single-select used for Gender / Yes-No. Sits inside the
+     ReviewItem (heading + pills + footnote). Native radio is visually
+     hidden but kept for screen readers + form semantics. */
+  .ar-radio-pills {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .ar-radio-pill {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #f7f7f9;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    padding: 10px 18px;
+    font: 500 15px/1 var(--sys-text); letter-spacing: -0.1px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out);
+    min-height: 40px;
+  }
+  .ar-radio-pill input {
+    position: absolute; top: 0; left: 0;
+    width: 1px; height: 1px;
+    opacity: 0; pointer-events: none;
+    overflow: hidden; clip: rect(0 0 0 0);
+  }
+  .ar-radio-pill:hover { background: #f0f0f3; }
+  .ar-radio-pill.on {
+    background: var(--finn-blue);
+    border-color: var(--finn-blue);
+    color: #fff;
+    font-weight: 600;
+  }
+  .ar-radio-pill.on:hover { background: #0058e0; border-color: #0058e0; }
+  .ar-confirm-card {
+    margin: 4px 0 0;
+    padding: 4px 14px;
+    background: #f7f7f9;
+    border-radius: 14px;
+  }
 
   /* ─── Pin-on-screen layer (Figma-style click-anywhere comments) ─── */
   .pin-layer {
@@ -2828,19 +3094,30 @@ function Device({ platform, children }) {
     if (isMobile || platform === "web") return;
     const node = wrapRef.current;
     if (!node) return;
+    // Only text-like inputs should pop the keyboard. Checkboxes, radios,
+    // submit buttons etc are also <input> elements but tapping them must
+    // not surface a keyboard — that's confusing and was the bug behind the
+    // "keyboard opens when I click the confirm checkbox" report.
+    const NON_TEXT_INPUT_TYPES = new Set([
+      "checkbox", "radio", "button", "submit", "reset",
+      "file", "image", "range", "color", "hidden",
+    ]);
+    const isTextInput = (el) => {
+      if (!el) return false;
+      if (el.isContentEditable) return true;
+      const tag = el.tagName;
+      if (tag === "TEXTAREA") return true;
+      if (tag === "INPUT") return !NON_TEXT_INPUT_TYPES.has((el.type || "text").toLowerCase());
+      return false;
+    };
     const handleIn = (e) => {
-      const tag = e.target && e.target.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target && e.target.isContentEditable)) {
-        setKbdOpen(true);
-      }
+      if (isTextInput(e.target)) setKbdOpen(true);
     };
     const handleOut = (e) => {
-      const tag = e.target && e.target.tagName;
-      if (tag !== "INPUT" && tag !== "TEXTAREA") return;
+      if (!isTextInput(e.target)) return;
       // Defer so re-focus to another input within the same tick doesn't flicker.
       setTimeout(() => {
-        const a = document.activeElement;
-        if (!a || (a.tagName !== "INPUT" && a.tagName !== "TEXTAREA")) {
+        if (!isTextInput(document.activeElement)) {
           setKbdOpen(false);
         }
       }, 0);
@@ -3777,7 +4054,7 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}>
-            <RiveSpinner size={32} src="../../design_system/assets/finn_ai_spinner_allstates.riv" />
+            <RiveSpinner size={32} src="assets/finn_ai_spinner_allstates.riv" />
           </div>
         );
       }
@@ -4993,6 +5270,9 @@ function TailorSheet({ onDone, onClose }) {
 // ===========================================================
 function InputField({ label, value, onChange, type = "text", autoComplete, placeholder, last }) {
   const [focused, setFocused] = useState(false);
+  // Allow a JSX label (e.g. label + Edited chip). Strings get the usual
+  // uppercase treatment for consistency with the rest of the form fields.
+  const labelEl = typeof label === "string" ? label.toUpperCase() : label;
   return (
     <div style={{
       display: "flex", flexDirection: "column",
@@ -5001,10 +5281,11 @@ function InputField({ label, value, onChange, type = "text", autoComplete, place
       position: "relative",
     }}>
       <label style={{
+        display: "flex", alignItems: "center", gap: 8,
         fontSize: 12, color: focused ? "#0063fb" : "#6b6b6b",
         marginBottom: 2, letterSpacing: 0.1,
         transition: "color 160ms var(--ease-out)",
-      }}>{label.toUpperCase()}</label>
+      }}>{labelEl}</label>
       <input
         type={type} value={value}
         autoComplete={autoComplete} placeholder={placeholder}
@@ -5540,6 +5821,714 @@ function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts",
 // ===========================================================
 // CONFIRMATION
 // ===========================================================
+// ─── AgenticReviewScreen ─────────────────────────────────────────────
+// Full-screen iOS view (not a bottom sheet) — port of the live web Agentic
+// flow into the native design language. Two internal phases:
+//   1. "preparing" — sparkle + skeleton placeholders while the agent
+//      "analyzes" the application (~1.6s simulated).
+//   2. "ready"     — three editable sections (Personopplysninger,
+//      Vedlegg, Tilleggsspørsmål), a confirmation checkbox, and Send.
+// Each field is tappable to edit inline; on edit, a "Redigert" chip
+// appears next to that field's label so reviewers see what the user
+// touched after the agent's draft.
+function AgenticReviewScreen({ job, onClose, onSend }) {
+  const t = useT();
+  const { statusBarH, homeArea } = useMetrics();
+  const platform = usePlatform();
+  const sheetRadius = PLATFORM_RADII[platform].sheet;
+  const backdropH = statusBarH + 16;
+  const [sheetTab, setSheetTab] = useState("application"); // application | ad
+  const [phase, setPhase] = useState("preparing"); // preparing | ready
+
+  // Labels are re-computed every render so a language toggle relabels the
+  // form without resetting user edits. Initial values for "value" fields
+  // (gender, qNorsk) are stored as the *English* canonical value to keep
+  // the edit-flag comparison stable across language switches.
+  const LABELS = {
+    firstName: t({ en: "First name", no: "Fornavn" }),
+    lastName:  t({ en: "Last name",  no: "Etternavn" }),
+    email:     t({ en: "Email",      no: "Epost" }),
+    phone:     t({ en: "Phone number", no: "Telefonnummer" }),
+    gender:    t({ en: "Gender",     no: "Kjønn" }),
+    linkedin:  t({ en: "LinkedIn URL", no: "LinkedIn-lenke" }),
+    cv:        t({ en: "CV",         no: "CV" }),
+    letter:    t({ en: "Cover letter", no: "Søknadsbrev" }),
+    qNorsk:    t({ en: "Do you speak fluent Norwegian?", no: "Behersker du norsk flytende?" }),
+    qExp:      t({ en: "How many years of relevant experience do you have?", no: "Hvor mange års relevant erfaring har du?" }),
+  };
+
+  // Value-field initial state. For free-text fields these are stored as-is;
+  // for enum fields (gender, qNorsk) we store the *English* canonical so
+  // the "edited" flag survives a language toggle. The rendered radio labels
+  // are translated locally in GenderRow / YesNoRow.
+  const initial = {
+    firstName: { v: "George",                e: false },
+    lastName:  { v: "Town",                  e: false },
+    email:     { v: "georgetownt@gmail.com", e: false },
+    phone:     { v: "98 73 88 21",           e: false },
+    gender:    { v: "Male",                  e: false }, // canonical English
+    linkedin:  { v: "Georgetownlinkedin",    e: false },
+    cv:        { v: "CV_2025.pdf",           e: false },
+    letter:    { v: "Cover_Letter_2025.doc", e: false },
+    qNorsk:    { v: "Yes",                   e: false }, // canonical English
+    qExp:      { v: "10+ years",             e: false },
+  };
+  const [fields, setFields] = useState(initial);
+  const [includeLinkedin, setIncludeLinkedin] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
+  const [editing, setEditing] = useState(null); // field key currently inline-edited
+  // Which section's child edit sheet is currently open. The agentic review
+  // sheet stays visible behind it; the section sheet stacks on top at a
+  // higher z-index. Null = no child sheet open.
+  const [sectionSheet, setSectionSheet] = useState(null); // null | "personalia" | "vedlegg" | "questions"
+  // Per-section preparing state. Sections complete one at a time —
+  // Personal details first ("Analysing application…"), then Attachments
+  // ("Reading documents…"), then Additional questions ("Building
+  // application…"). Each is "queued" → "working" → "done".
+  const [sectionPrep, setSectionPrep] = useState({
+    personalia: "working",
+    vedlegg:    "queued",
+    questions:  "queued",
+  });
+
+  // Stage the preparing phase so each section completes one at a time.
+  // ~1.5s per section. Personal details first (it's the fastest — just a
+  // lookup), then Attachments (heavier — actually reading the CV + letter),
+  // then Additional questions (slowest — composing a tailored answer).
+  useEffect(() => {
+    const t1 = setTimeout(() => setSectionPrep({
+      personalia: "done", vedlegg: "working", questions: "queued",
+    }), 1500);
+    const t2 = setTimeout(() => setSectionPrep({
+      personalia: "done", vedlegg: "done", questions: "working",
+    }), 3000);
+    const t3 = setTimeout(() => {
+      setSectionPrep({ personalia: "done", vedlegg: "done", questions: "done" });
+      setPhase("ready");
+      haptic("ok");
+    }, 4500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
+  // Status-line copy per section while it's "working". When the section is
+  // "queued" it shows the generic waiting line; when "done" it falls
+  // through to the section's normal summary sub.
+  const SECTION_WORKING_TEXT = {
+    personalia: { en: "Analysing application…", no: "Analyserer søknaden …" },
+    vedlegg:    { en: "Reading documents…",     no: "Leser dokumenter …" },
+    questions:  { en: "Building application…",  no: "Bygger søknaden …" },
+  };
+  const SECTION_QUEUED_TEXT = { en: "Waiting…", no: "Venter …" };
+
+  function update(key, v) {
+    setFields(prev => ({
+      ...prev,
+      [key]: { ...prev[key], v, e: v !== initial[key].v },
+    }));
+  }
+
+  // A small "Edited" / "Redigert" chip — appears next to a field label
+  // when the user has touched the agent's pre-filled value. Same visual
+  // language as MVP's source pills (rounded 9999, 11px / 500). Explicit
+  // textTransform: none so it survives parent labels that uppercase.
+  function EditedChip() {
+    return (
+      <span style={{
+        display: "inline-flex", alignItems: "center",
+        fontSize: 11, fontWeight: 500,
+        padding: "2px 8px", borderRadius: 9999,
+        background: "#fdedb0", color: "#6b520a",
+        whiteSpace: "nowrap", letterSpacing: -0.05,
+        textTransform: "none",
+      }}>{t({ en: "Edited", no: "Redigert" })}</span>
+    );
+  }
+
+  // Skeleton block while preparing.
+  function Skeleton({ w = "100%", h = 14, mt = 8 }) {
+    return (
+      <div style={{
+        width: w, height: h, marginTop: mt,
+        background: "#dde5f3", borderRadius: 6,
+        animation: "arSkeletonPulse 1.4s ease-in-out infinite",
+      }} />
+    );
+  }
+
+  // Source attribution per field — used in the footnote line ("From your
+  // profile · tap to edit"). Matches the language MVP uses in the Question
+  // component.
+  const SOURCE_BY_KEY = {
+    firstName: { en: "From your profile",       no: "Fra profilen din" },
+    lastName:  { en: "From your profile",       no: "Fra profilen din" },
+    email:     { en: "From your profile",       no: "Fra profilen din" },
+    phone:     { en: "From your profile",       no: "Fra profilen din" },
+    gender:    { en: "From your profile",       no: "Fra profilen din" },
+    linkedin:  { en: "From your profile",       no: "Fra profilen din" },
+    cv:        { en: "From your profile",       no: "Fra profilen din" },
+    letter:    { en: "AI draft for this role",  no: "AI-utkast for denne jobben" },
+    qNorsk:    { en: "From your Tailor answers", no: "Fra svarene i Tilpass" },
+    qExp:      { en: "From your Tailor answers", no: "Fra svarene i Tilpass" },
+  };
+
+  // ReviewItem — the canonical Agentic field pattern. Matches MVP's
+  // Question component (heading + answer pill + source tag below). The
+  // answer pill is tappable to swap into an editable input. For enum
+  // fields, pass `options` instead and the pill row becomes a PillRadio
+  // group. The source attribution is now a styled tag, not inline text.
+  function ReviewItem({ k, type = "text", autoComplete, options }) {
+    const f = fields[k];
+    const isEditing = editing === k;
+    const src = SOURCE_BY_KEY[k] || { en: "From your profile", no: "Fra profilen din" };
+    const isAI = k === "letter";
+
+    let control;
+    if (options) {
+      control = (
+        <div className="ar-radio-pills" role="radiogroup" aria-label={LABELS[k]}>
+          {options.map(o => (
+            <label key={o.en} className={"ar-radio-pill press" + (f.v === o.en ? " on" : "")}>
+              <input type="radio" name={k} value={o.en} checked={f.v === o.en}
+                onChange={() => { haptic("tap"); update(k, o.en); }} />
+              {t(o)}
+            </label>
+          ))}
+        </div>
+      );
+    } else if (isEditing) {
+      control = (
+        <input
+          className="ar-rv-input"
+          type={type}
+          autoComplete={autoComplete}
+          value={f.v}
+          autoFocus
+          onChange={(e) => update(k, e.target.value)}
+          onBlur={() => setEditing(null)}
+          onKeyDown={(e) => { if (e.key === "Enter") setEditing(null); }}
+        />
+      );
+    } else {
+      control = (
+        <button className="ar-rv-answer press"
+          onClick={() => { haptic("tap"); setEditing(k); }}>
+          {f.v || <span style={{ color: "#cc1414", fontWeight: 600 }}>—</span>}
+        </button>
+      );
+    }
+
+    return (
+      <div className="ar-rv">
+        <p className="ar-rv-heading">
+          <span className="ar-rv-heading-label">{LABELS[k]}</span>
+          <span className="ar-rv-source">{t(src)}</span>
+          {f.e && <EditedChip />}
+        </p>
+        {control}
+      </div>
+    );
+  }
+
+  // File rows reuse the same CVOption card the CV / cover-letter picker uses
+  // elsewhere in the app — same icon disk, same chevron, same selection
+  // language. Tap to swap → fakes a fresh file pick. Source attribution
+  // sits inline to the right of the heading as a light-blue tag.
+  function FileCard({ k }) {
+    const f = fields[k];
+    const src = SOURCE_BY_KEY[k];
+    const swap = () => update(k, k === "cv" ? "CV_new.pdf" : "Cover_letter_new.doc");
+    return (
+      <div className="ar-rv">
+        <p className="ar-rv-heading">
+          <span className="ar-rv-heading-label">{LABELS[k]}</span>
+          <span className="ar-rv-source">{t(src)}</span>
+          {f.e && <EditedChip />}
+        </p>
+        <CVOption
+          icon={k === "letter" ? "sparkle" : "file"}
+          title={f.v || t({ en: "No file selected", no: "Ingen fil valgt" })}
+          sub={t({ en: "Tap to change", no: "Trykk for å bytte" })}
+          showChevron
+          onClick={swap}
+        />
+      </div>
+    );
+  }
+
+  // Computed section status — "any field edited?" → drives the Edited chip
+  // on the collapsed section row.
+  const personaliaEdited = fields.firstName.e || fields.lastName.e || fields.email.e
+                        || fields.phone.e || fields.gender.e || fields.linkedin.e;
+  const vedleggEdited    = fields.cv.e || fields.letter.e;
+  const questionsEdited  = fields.qNorsk.e || fields.qExp.e;
+
+  // Subtitle summaries (what the agent prepared, in plain text). Enum
+  // values are stored canonically in English (Yes/No, Male/Female/Other)
+  // so we translate them locally for display.
+  const yesNoDisplay = t({ en: fields.qNorsk.v, no: fields.qNorsk.v === "Yes" ? "Ja" : "Nei" });
+  const personaliaSub = `${fields.firstName.v} ${fields.lastName.v} · ${fields.email.v}`;
+  const vedleggSub    = [fields.cv.v, fields.letter.v].filter(Boolean).join(" · ")
+                        || t({ en: "No attachments", no: "Ingen vedlegg" });
+  const questionsSub  = `${t({ en: "Norwegian", no: "Norsk" })}: ${yesNoDisplay} · ${fields.qExp.v}`;
+
+  function SectionRow({ id, title, sub, edited, status = "done" }) {
+    const loading = status === "working";
+    const queued  = status === "queued";
+    const idle    = loading || queued;
+    // Capture which "leaf" animation to play for the leading icon. Keys
+    // force React to unmount/mount on status change so each variant gets
+    // its arSoftFade / arCheckLand entrance.
+    let leadingIcon;
+    if (loading) {
+      leadingIcon = (
+        <div key="working" className="ar-soft-fade" style={{
+          width: 32, height: 32, borderRadius: 9999,
+          background: "#f0f0f3",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <span style={{
+            width: 16, height: 16, borderRadius: 9999,
+            border: "2px solid rgba(0,99,251,0.20)",
+            borderTopColor: "#0063fb",
+            animation: "spin 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite",
+            display: "inline-block",
+          }} />
+        </div>
+      );
+    } else if (queued) {
+      leadingIcon = (
+        <div key="queued" className="ar-soft-fade" style={{
+          width: 32, height: 32, borderRadius: 9999,
+          border: "1.5px solid #d4d4d4", background: "#fff",
+        }} />
+      );
+    } else {
+      leadingIcon = (
+        <div key="done" className="ar-check-land" style={{
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          width: 32, height: 32,
+        }}>
+          <Icon name="check-circle" size={28} color="#1f8a3b" stroke={2} />
+        </div>
+      );
+    }
+    return (
+      <div className="ar-row">
+        <button className="ar-row-head press"
+          onClick={() => { if (!idle) { haptic("tap"); setSectionSheet(id); } }}
+          disabled={idle}
+          aria-haspopup="dialog"
+          aria-busy={loading || undefined}
+          style={{
+            cursor: idle ? "default" : "pointer",
+            opacity: queued ? 0.7 : 1,
+            transition: "opacity 380ms var(--ease-out)",
+          }}>
+          <span className="ar-row-check" aria-hidden="true">
+            {leadingIcon}
+          </span>
+          <span className="ar-row-text">
+            <span className="ar-row-title">
+              {title}
+              {edited && !idle && <span key="chip" className="ar-soft-fade" style={{ display: "inline-flex" }}><EditedChip /></span>}
+            </span>
+            {/* Key-driven remount so the sub-line softly fades whenever its
+                text changes (Waiting → Analysing → summary, etc). */}
+            <span key={String(sub)} className="ar-row-sub ar-soft-fade">
+              {sub}
+            </span>
+          </span>
+          {!idle && (
+            <span key="edit" className="ar-row-edit ar-soft-fade">
+              {t({ en: "Edit", no: "Endre" })}
+              <Icon name="chevron-right" size={16} color="#0063fb" stroke={2.2} />
+            </span>
+          )}
+        </button>
+      </div>
+    );
+  }
+
+  // Helper — what sub-line to show for a section during preparing phase.
+  // "working" → its dedicated working text. "queued" → generic waiting.
+  function prepSub(secId) {
+    const s = sectionPrep[secId];
+    if (s === "working") return t(SECTION_WORKING_TEXT[secId]);
+    if (s === "queued")  return t(SECTION_QUEUED_TEXT);
+    return null; // "done" falls through to the section's normal summary
+  }
+
+  // ─── Sheet body — Application tab ──────────────────────────────────
+  // The agentic application body. Phases:
+  //   - preparing: section rows shown with per-section spinners — Personal
+  //                details completes first, then Attachments, then
+  //                Additional questions, each ~1.5s, ~4.5s total
+  //   - ready:     lede + 3 collapsible sections + confirm switch
+  const applicationBody = phase === "preparing" ? (
+    <>
+      <div style={{ padding: "16px 20px 8px" }}>
+        <p key="lede-prep" className="ar-lede ar-soft-fade">
+          {t({
+            en: "We're preparing your application. This will only take a moment.",
+            no: "Vi forbereder søknaden din. Dette tar bare et øyeblikk.",
+          })}
+        </p>
+      </div>
+      <div className="ar-rows">
+        <SectionRow id="personalia"
+          status={sectionPrep.personalia}
+          title={t({ en: "Personal details", no: "Personopplysninger" })}
+          sub={sectionPrep.personalia === "done" ? personaliaSub : prepSub("personalia")} />
+        <SectionRow id="vedlegg"
+          status={sectionPrep.vedlegg}
+          title={t({ en: "Attachments", no: "Vedlegg" })}
+          sub={sectionPrep.vedlegg === "done" ? vedleggSub : prepSub("vedlegg")} />
+        <SectionRow id="questions"
+          status={sectionPrep.questions}
+          title={t({ en: "Additional questions", no: "Tilleggsspørsmål" })}
+          sub={sectionPrep.questions === "done" ? questionsSub : prepSub("questions")} />
+      </div>
+    </>
+  ) : (
+    <>
+      <div style={{ padding: "12px 20px 4px" }}>
+        <p key="lede-ready" className="ar-lede ar-soft-fade">
+          {t({
+            en: "We've auto-filled your application based on your Job profile. Review and confirm, and we'll send it for you.",
+            no: "Vi har automatisk fylt ut søknaden din basert på Jobbprofilen din. Se gjennom og bekreft, så sender vi for deg.",
+          })}
+        </p>
+      </div>
+
+      <div className="ar-rows">
+        <SectionRow
+          id="personalia"
+          title={t({ en: "Personal details", no: "Personopplysninger" })}
+          sub={personaliaSub}
+          edited={personaliaEdited} />
+        <SectionRow
+          id="vedlegg"
+          title={t({ en: "Attachments", no: "Vedlegg" })}
+          sub={vedleggSub}
+          edited={vedleggEdited} />
+        <SectionRow
+          id="questions"
+          title={t({ en: "Additional questions", no: "Tilleggsspørsmål" })}
+          sub={questionsSub}
+          edited={questionsEdited} />
+      </div>
+
+      <div className="ar-soft-fade" style={{ padding: "20px 20px 12px", animationDelay: "120ms" }}>
+        <div className="ar-confirm-card">
+          <IOSSwitch
+            checked={confirmed}
+            onChange={setConfirmed}
+            label={t({
+              en: "I confirm all the information above is correct",
+              no: "Jeg bekrefter at informasjonen ovenfor er korrekt",
+            })}
+            hint={confirmed
+              ? t({ en: "Ready to send", no: "Klar til å sendes" })
+              : t({ en: "Required before sending", no: "Må bekreftes før du sender" })}
+          />
+        </div>
+      </div>
+    </>
+  );
+
+  // ─── Section sheet bodies ──────────────────────────────────────────
+  // Each section's edit form lives in its own bottom drawer that
+  // overlays the agentic review sheet. Same shell pattern as MVP's
+  // EditSheet so the form-editing experience feels native.
+  const SECTION_TITLES = {
+    personalia: { en: "Personal details", no: "Personopplysninger" },
+    vedlegg:    { en: "Attachments",      no: "Vedlegg" },
+    questions:  { en: "Additional questions", no: "Tilleggsspørsmål" },
+  };
+
+  const sectionBody = sectionSheet === "personalia" ? (
+    <>
+      <ReviewItem k="firstName" autoComplete="given-name" />
+      <ReviewItem k="lastName"  autoComplete="family-name" />
+      <ReviewItem k="email"     type="email" autoComplete="email" />
+      <ReviewItem k="phone"     type="tel"   autoComplete="tel" />
+      <ReviewItem k="gender" options={[
+        { en: "Male",   no: "Mann" },
+        { en: "Female", no: "Kvinne" },
+        { en: "Other",  no: "Annet" },
+      ]} />
+      <div className="ar-rv">
+        <p className="ar-rv-heading">
+          <span className="ar-rv-heading-label">{LABELS.linkedin}</span>
+          <span className="ar-rv-source">{t({ en: "From your profile", no: "Fra profilen din" })}</span>
+          <span style={{
+            display: "inline-flex", alignItems: "center",
+            fontSize: 11, fontWeight: 500,
+            padding: "2px 8px", borderRadius: 9999,
+            background: "#f0f0f3", color: "#6b6b6b",
+            whiteSpace: "nowrap", letterSpacing: -0.05,
+          }}>{t({ en: "Optional", no: "Valgfri" })}</span>
+          {fields.linkedin.e && <EditedChip />}
+        </p>
+        {editing === "linkedin" ? (
+          <input className="ar-rv-input"
+            value={fields.linkedin.v} autoFocus
+            onChange={(e) => update("linkedin", e.target.value)}
+            onBlur={() => setEditing(null)}
+            onKeyDown={(e) => { if (e.key === "Enter") setEditing(null); }} />
+        ) : (
+          <button className="ar-rv-answer press"
+            onClick={() => { haptic("tap"); setEditing("linkedin"); }}>
+            {fields.linkedin.v}
+          </button>
+        )}
+        <div style={{ marginTop: 14, borderTop: "0.5px solid #ededed" }}>
+          <IOSSwitch
+            checked={includeLinkedin}
+            onChange={setIncludeLinkedin}
+            label={t({ en: "Include LinkedIn in this application", no: "Inkluder LinkedIn i denne søknaden" })}
+            hint={t({
+              en: "Toggle off to leave it out of this submission.",
+              no: "Slå av for å utelate fra denne søknaden.",
+            })}
+          />
+        </div>
+      </div>
+    </>
+  ) : sectionSheet === "vedlegg" ? (
+    <>
+      <FileCard k="cv" />
+      <FileCard k="letter" />
+    </>
+  ) : sectionSheet === "questions" ? (
+    <>
+      <ReviewItem k="qNorsk" options={[
+        { en: "Yes", no: "Ja"  },
+        { en: "No",  no: "Nei" },
+      ]} />
+      <ReviewItem k="qExp" />
+    </>
+  ) : null;
+
+  return (
+    <>
+    <div style={{
+      position: "absolute", inset: 0, zIndex: 50,
+      display: "flex", flexDirection: "column",
+      background: "rgba(0,0,0,.30)",
+      animation: "fadein 300ms var(--ease-modal)",
+    }}>
+      {/* Backdrop — tap to dismiss */}
+      <div onClick={() => { haptic("tap"); onClose?.(); }}
+        style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+
+      {/* Sheet body — slides up */}
+      <div style={{
+        flex: 1, background: "#fff",
+        borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+        display: "flex", flexDirection: "column",
+        boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
+        position: "relative", overflow: "hidden",
+        animation: "slideup 440ms var(--ease-modal)",
+      }}>
+        {/* Drag handle */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
+          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+        </div>
+
+        {/* Header — logo + "Applying as" + job title / company + close */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 14,
+          padding: "10px 16px 14px",
+        }}>
+          <CompanyLogo size={48} initials={job.initials} color={job.brandColor} logo={job.logo} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              fontSize: 11, fontWeight: 600, color: "#6b6b6b",
+              margin: "0 0 3px", letterSpacing: 0.6, textTransform: "uppercase",
+              lineHeight: 1,
+            }}>{t({ en: "Applying as", no: "Søker som" })}</p>
+            <p style={{
+              fontSize: 16, fontWeight: 700, color: "#1d1d1d",
+              margin: "0 0 2px", lineHeight: 1.2, letterSpacing: -0.2,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>{t({ en: job.title, no: job.titleNo })}</p>
+            <p style={{
+              fontSize: 13, color: "#6b6b6b", margin: 0, lineHeight: 1.3,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>{job.company}</p>
+          </div>
+          <button className="press"
+            onClick={() => { haptic("tap"); onClose?.(); }}
+            aria-label={t({ en: "Close", no: "Lukk" })}
+            style={{
+              width: 32, height: 32, borderRadius: 9999,
+              background: "#f0f0f3", border: 0, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+            <Icon name="x" size={16} color="#1d1d1d" stroke={2.4} />
+          </button>
+        </div>
+
+        {/* In-sheet tabs: Application ↔ Job ad. Identical to MVP. */}
+        <div style={{ padding: "2px 16px 12px" }}>
+          <div role="tablist" aria-label={t({ en: "Sheet view", no: "Visning" })}
+            style={{
+              position: "relative",
+              display: "grid", gridTemplateColumns: "1fr 1fr",
+              background: "#eef0f5", borderRadius: 10, padding: 3,
+              fontFamily: "inherit",
+            }}>
+            <div aria-hidden="true" style={{
+              position: "absolute", top: 3, bottom: 3,
+              left: sheetTab === "application" ? 3 : "calc(50% + 0px)",
+              width: "calc(50% - 3px)",
+              background: "#fff", borderRadius: 8,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.08), 0 1px 1px rgba(0,0,0,0.04)",
+              transition: "left 320ms var(--ease-modal)",
+            }} />
+            <button role="tab" aria-selected={sheetTab === "application"}
+              onClick={() => { haptic("tap"); setSheetTab("application"); }}
+              className="press"
+              style={{
+                position: "relative", zIndex: 1,
+                background: "transparent", border: 0,
+                padding: "8px 10px",
+                font: "600 13px/1 inherit", letterSpacing: -0.1,
+                color: sheetTab === "application" ? "#1d1d1d" : "#6b6b6b",
+                cursor: "pointer", borderRadius: 8,
+                transition: "color 160ms var(--ease-out)",
+                fontFamily: "inherit",
+              }}>
+              {t({ en: "Application", no: "Søknaden" })}
+            </button>
+            <button role="tab" aria-selected={sheetTab === "ad"}
+              onClick={() => { haptic("tap"); setSheetTab("ad"); }}
+              className="press"
+              style={{
+                position: "relative", zIndex: 1,
+                background: "transparent", border: 0,
+                padding: "8px 10px",
+                font: "600 13px/1 inherit", letterSpacing: -0.1,
+                color: sheetTab === "ad" ? "#1d1d1d" : "#6b6b6b",
+                cursor: "pointer", borderRadius: 8,
+                transition: "color 160ms var(--ease-out)",
+                fontFamily: "inherit",
+              }}>
+              {t({ en: "Job ad", no: "Annonsen" })}
+            </button>
+          </div>
+        </div>
+
+        {/* Body — scrolls. Swaps between Application content and Job ad. */}
+        <div className="scroll-area" style={{ flex: 1, overflowY: "auto" }}>
+          {sheetTab === "application" ? (
+            <div key="app-body" style={{ animation: "fadeup 320ms var(--ease-modal)" }}>
+              {applicationBody}
+            </div>
+          ) : (
+            <div key="ad-body" style={{ animation: "fadeup 340ms var(--ease-modal)" }}>
+              <JobAdContent job={job} embedded />
+              <div style={{ height: 12 }} />
+            </div>
+          )}
+        </div>
+
+        {/* Footer — pinned Send (only on application tab, ready phase) */}
+        {sheetTab === "application" && phase === "ready" && (
+          <div className="ar-soft-fade" style={{
+            padding: "12px 16px",
+            paddingBottom: `calc(12px + ${homeArea}px)`,
+            background: "#fff",
+            borderTop: "0.5px solid rgba(0,0,0,0.06)",
+            display: "flex", flexDirection: "column", gap: 8,
+            animationDelay: "180ms",
+          }}>
+            <PrimaryButton
+              onClick={() => { if (confirmed) onSend(); }}
+              disabled={!confirmed}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <Icon name="send" size={18} color="#fff" stroke={2.2} />
+                {t({ en: "Send application", no: "Send søknad" })}
+              </span>
+            </PrimaryButton>
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* ─── Child section edit sheet ─────────────────────────────────────
+        Overlays the agentic review sheet at a higher z-index. Tapping a
+        section row above sets `sectionSheet`, which mounts this sheet.
+        Closing it returns to the review sheet underneath. */}
+    {sectionSheet && (
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 60,
+        display: "flex", flexDirection: "column",
+        background: "rgba(0,0,0,.30)",
+        animation: "fadein 300ms var(--ease-modal)",
+      }}>
+        <div onClick={() => { haptic("tap"); setSectionSheet(null); }}
+          style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+        <div style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
+          overflow: "hidden",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
+          {/* Drag handle */}
+          <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
+            <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          </div>
+          {/* Title bar */}
+          <div style={{
+            padding: "10px 16px 14px",
+            borderBottom: "0.5px solid #ededed",
+            display: "flex", alignItems: "center", gap: 12,
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1d", margin: 0,
+                letterSpacing: -0.2, lineHeight: 1.2 }}>
+                {t(SECTION_TITLES[sectionSheet])}
+              </p>
+            </div>
+            <button className="press"
+              onClick={() => { haptic("tap"); setSectionSheet(null); }}
+              aria-label={t({ en: "Close", no: "Lukk" })}
+              style={{
+                width: 32, height: 32, borderRadius: 9999,
+                background: "#f0f0f3", border: 0, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+              <Icon name="x" size={16} color="#1d1d1d" stroke={2.4} />
+            </button>
+          </div>
+          {/* Body */}
+          <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "20px 20px 24px" }}>
+            {sectionBody}
+          </div>
+          {/* Footer */}
+          <div style={{
+            padding: "12px 16px",
+            paddingBottom: `calc(12px + ${homeArea}px)`,
+            background: "#fff",
+            borderTop: "0.5px solid rgba(0,0,0,0.06)",
+          }}>
+            <PrimaryButton onClick={() => { haptic("ok"); setSectionSheet(null); }}>
+              {t({ en: "Done", no: "Ferdig" })}
+            </PrimaryButton>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
+  );
+}
+
 function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
   const t = useT();
   const platform = usePlatform();
@@ -5961,7 +6950,14 @@ const _LEGACY_STORYMAP_UNUSED = [
     },
 ];
 
-function Dropdown({ label, value, onChange, options, lang }) {
+function Dropdown({ label, value, onChange, options, groups, lang }) {
+  // Renders either a flat list of options OR a grouped list via <optgroup>
+  // when `groups` is supplied. Each group has `{ label, options }`.
+  const renderOption = (o) => (
+    <option key={o.id} value={o.id}>
+      {typeof o.label === "string" ? o.label : (lang === "en" ? o.label.en : o.label.no)}
+    </option>
+  );
   return (
     <div className="controls-group">
       <div className="controls-label">
@@ -5969,11 +6965,13 @@ function Dropdown({ label, value, onChange, options, lang }) {
       </div>
       <div className="dev-select">
         <select value={value} onChange={(e) => onChange(e.target.value)}>
-          {options.map(o => (
-            <option key={o.id} value={o.id}>
-              {typeof o.label === "string" ? o.label : (lang === "en" ? o.label.en : o.label.no)}
-            </option>
-          ))}
+          {groups
+            ? groups.map(g => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.options.map(renderOption)}
+                </optgroup>
+              ))
+            : options.map(renderOption)}
         </select>
       </div>
     </div>
@@ -7609,7 +8607,10 @@ function currentPlatformLabel(p) {
   return p === "ios" ? "iOS" : p === "android" ? "Android" : "Web";
 }
 function currentVersionLabel(v) {
-  return v === "mvp" ? "MVP" : v === "v1" ? "1.0" : "2.0";
+  return v === "mvp" ? "MVP" :
+         v === "v1"  ? "1.0" :
+         v === "v2"  ? "2.0" :
+         v === "agentic" ? "Agentic" : v;
 }
 
 // Tiny debouncer for save-on-edit so dragging doesn't hammer the API.
@@ -9257,6 +10258,7 @@ function AppShell({ fullscreen = false }) {
   function goApply() {
     if (userState === "not-logged-in") { setOverlay("login"); return; }
     if (userState === "already-applied") return; // shouldn't be tappable
+    if (version === "agentic") { setScreen("agentic-review"); return; }
     if (enableMagicApply) { startMagicApply(); return; }
     setScreen("preview");
     startProgressiveLoad();
@@ -9299,6 +10301,12 @@ function AppShell({ fullscreen = false }) {
   } else if (screen === "preparing") {
     bodyScreen = <PreparingScreen job={JOB} onReady={() => setScreen("preview")} />;
   } else if (screen === "preview") {
+    bodyScreen = <JobDetailScreen job={JOB} onApply={() => {}} onBack={() => {}} userState={userState} />;
+  } else if (screen === "agentic-review") {
+    // Agentic version overlays a bottom sheet on top of the job ad screen.
+    // Same shell pattern as ApplicationPreviewSheet — the job ad is visible
+    // through the sheet's translucent backdrop, swipe/tap-to-dismiss works,
+    // and the in-sheet "Job ad" tab lets the seeker re-read the listing.
     bodyScreen = <JobDetailScreen job={JOB} onApply={() => {}} onBack={() => {}} userState={userState} />;
   } else if (screen === "confirmation") {
     bodyScreen = <ConfirmationScreen job={JOB} onDone={() => openActivity("sent")} onReset={reset} magic={magicSent} />;
@@ -9450,6 +10458,13 @@ function AppShell({ fullscreen = false }) {
                 if (rowId === "cv") setCvPickerActive(true);
                 setOverlay("edit:" + rowId);
               }}
+            />
+          )}
+          {screen === "agentic-review" && (
+            <AgenticReviewScreen
+              job={JOB}
+              onClose={() => setScreen("jobad")}
+              onSend={send}
             />
           )}
           {overlay === "letter" && (
@@ -9606,10 +10621,21 @@ function AppShell({ fullscreen = false }) {
             value={version}
             lang={lang}
             onChange={setVersion}
-            options={[
-              { id: "mvp", label: "MVP — shipping now" },
-              { id: "v1",  label: "1.0 — next release" },
-              { id: "v2",  label: "2.0 — beyond" },
+            groups={[
+              {
+                label: "Agentic",
+                options: [
+                  { id: "agentic", label: "MVP" },
+                ],
+              },
+              {
+                label: "Easy apply",
+                options: [
+                  { id: "mvp", label: "MVP" },
+                  { id: "v1",  label: "1.0" },
+                  { id: "v2",  label: "2.0 yolo mode" },
+                ],
+              },
             ]}
           />
           <div className="controls-group">
@@ -9765,7 +10791,10 @@ function AppShell({ fullscreen = false }) {
             ? (platform === "ios" ? "iOS" : platform === "android" ? "Android" : "Web")
             : null,
           version: view === "prototype"
-            ? (version === "mvp" ? "MVP" : version === "v1" ? "1.0" : "2.0")
+            ? (version === "mvp" ? "MVP" :
+               version === "v1"  ? "1.0" :
+               version === "v2"  ? "2.0" :
+               version === "agentic" ? "Agentic" : version)
             : null,
         }}
       />
