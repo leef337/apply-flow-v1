@@ -1518,24 +1518,24 @@
     color: inherit;
   }
   .ar-rv-answer {
-    appearance: none; border: 0; cursor: pointer;
+    appearance: none; border: 1px solid transparent; cursor: pointer;
     display: flex; align-items: center; gap: 8px;
     width: 100%; box-sizing: border-box; text-align: left;
-    padding: 14px 16px; border-radius: 10px;
+    padding: 14px 16px; border-radius: 12px;
     background: #f7f7f9;
     color: var(--ink);
-    font: 500 15px/1.4 var(--sys-text); letter-spacing: -0.1px;
+    font: 500 17px/1.35 var(--sys-text); letter-spacing: -0.2px;
     font-family: inherit;
-    transition: background 140ms var(--ease-out);
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out);
   }
   .ar-rv-answer:hover { background: #f0f0f3; }
   .ar-rv-input {
     width: 100%; box-sizing: border-box;
-    padding: 14px 16px; border-radius: 10px;
+    padding: 14px 16px; border-radius: 12px;
     border: 1px solid var(--finn-blue);
-    outline: 0; background: #fff;
+    outline: 0; background: #f7f7f9;
     color: var(--ink); caret-color: var(--finn-blue);
-    font: 500 15px/1.4 var(--sys-text); letter-spacing: -0.1px;
+    font: 500 17px/1.35 var(--sys-text); letter-spacing: -0.2px;
     font-family: inherit;
   }
   /* Source attribution tag — sits inline to the right of the field
@@ -1550,6 +1550,24 @@
     font: 500 11px/1.2 var(--sys-text); letter-spacing: -0.05px;
     white-space: nowrap;
     text-transform: none;
+  }
+  /* Missing-state — sits in the heading where the source tag would, +
+     the helper "This field is required" line beneath the answer. Same
+     red language as the system's negative source pills. */
+  .ar-rv-missing {
+    display: inline-flex; align-items: center;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: #fadddd;
+    color: #a31818;
+    font: 600 13px/1.2 var(--sys-text); letter-spacing: -0.1px;
+    white-space: nowrap;
+    text-transform: none;
+  }
+  .ar-rv-error {
+    margin: 8px 4px 0;
+    color: #cc1414;
+    font: 500 13px/1.4 var(--sys-text); letter-spacing: -0.05px;
   }
   .ar-edited {
     display: inline-flex; align-items: center;
@@ -1992,6 +2010,91 @@
     font-size: 11.5px; color: #f0c97c; line-height: 1.5;
   }
   .ac-warn code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; }
+
+  /* ─── Definition of Ready / Done block in the AC sheet ─── */
+  .dor-dod {
+    margin: 0 0 18px;
+    padding: 14px 14px 10px;
+    background: #161617;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+  }
+  .dor-dod-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 10px;
+  }
+  .dor-dod-title {
+    font: 700 11px/1 var(--sys-text); letter-spacing: 0.05em;
+    color: #c8c8c8; text-transform: uppercase;
+  }
+  .dor-dod-counts {
+    font: 500 11.5px/1.2 var(--sys-text); color: #9a9a9a;
+    display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  }
+  .dor-dod-counts strong { color: #fff; font-weight: 700; }
+  .dor-dod-sep { color: #555; padding: 0 2px; }
+  .dor-dod-saving { color: #f0c97c; font-style: italic; margin-left: 4px; }
+  .dor-dod-edited { color: #6b6b6b; }
+  .dor-dod-cols {
+    display: grid; gap: 10px;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 520px) {
+    .dor-dod-cols { grid-template-columns: 1fr; }
+  }
+  .dor-col, .dod-col {
+    border: 0; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .dor-col legend, .dod-col legend {
+    font: 600 10.5px/1 var(--sys-text); letter-spacing: 0.04em;
+    color: #8e8e90; text-transform: uppercase;
+    padding: 0 0 6px;
+  }
+  .chk {
+    display: grid; align-items: start;
+    grid-template-columns: 16px 1fr;
+    column-gap: 8px; row-gap: 1px;
+    padding: 6px 8px; border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 140ms var(--ease-modal);
+  }
+  .chk:hover { background: rgba(255,255,255,0.04); }
+  .chk input[type="checkbox"] {
+    width: 16px; height: 16px;
+    margin: 2px 0 0;
+    accent-color: #0063fb;
+    cursor: pointer;
+  }
+  .chk input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.5; }
+  .chk .chk-label {
+    font: 600 12.5px/1.25 var(--sys-text); color: #ededed;
+    letter-spacing: -0.1px;
+  }
+  .chk .chk-hint {
+    grid-column: 2 / 3;
+    font: 400 10.5px/1.4 var(--sys-text); color: #7a7a7c;
+  }
+  .chk.on .chk-label { color: #6fb8ff; }
+
+  /* Small readiness pill that lives on the storymap card (light theme). */
+  .sm-ready-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 700 9.5px/1 var(--sys-text); letter-spacing: 0.04em;
+    background: #eef3fb; color: #0044b0;
+    padding: 3px 6px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .sm-ready-pill .sm-ready-dot {
+    width: 6px; height: 6px; border-radius: 9999px;
+    background: #0063fb;
+  }
+  .sm-ready-pill.all {
+    background: #d4f4dd; color: #156b2a;
+  }
+  .sm-ready-pill.all .sm-ready-dot { background: #1f8a3b; }
+
   @media (max-width: 640px) {
     .ac-sheet { width: 100%; max-width: 100%; }
   }
@@ -2263,6 +2366,96 @@
   .ho-tabs button:hover { color: var(--ink); border-color: #c9c9c9; }
   .ho-tabs button.active {
     background: #0063fb; color: #fff; border-color: #0063fb;
+  }
+  /* Opportunity-tree page header — h1 left, optional Reset on right.
+     Sub-tab strip sits in a fixed slot underneath the description, so the
+     strip never shifts position when you flip between Tree and Impact–Effort. */
+  .otree-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .otree-reset {
+    appearance: none; border: 1px solid var(--hair);
+    background: #fff; border-radius: 999px;
+    padding: 6px 12px; font: 600 12px/1 var(--sys-text);
+    color: var(--ink-mute); cursor: pointer;
+  }
+  .otree-reset:hover { color: var(--ink); border-color: #c9c9c9; }
+
+  /* "What's new" changelog inside the Handoff page */
+  .hn-wrap { display: flex; flex-direction: column; gap: 16px; }
+  .hn-filter {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    padding: 4px 0 2px;
+  }
+  .hn-chip {
+    appearance: none; border: 1px solid var(--hair);
+    background: #fff; padding: 5px 10px; border-radius: 999px;
+    font: 600 11px/1 var(--sys-text); letter-spacing: -0.05px;
+    color: var(--ink-mute); cursor: pointer;
+    transition: background 160ms var(--ease-modal), color 160ms var(--ease-modal), border-color 160ms var(--ease-modal);
+  }
+  .hn-chip:hover { color: var(--ink); border-color: #c9c9c9; }
+  .hn-chip.active {
+    background: #1a1a1a; color: #fff; border-color: #1a1a1a;
+  }
+  .hn-list {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .hn-entry {
+    border: 1px solid var(--hair); border-radius: 12px;
+    background: #fff; padding: 14px 16px;
+  }
+  .hn-meta {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    font: 500 11px/1.2 var(--sys-text); color: var(--ink-mute);
+    margin-bottom: 6px;
+  }
+  .hn-date { font-variant-numeric: tabular-nums; }
+  .hn-author::before { content: "· "; }
+  .hn-tags { display: inline-flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+  .hn-tag {
+    font: 600 10px/1 var(--sys-text); letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 3px 6px; border-radius: 4px;
+    background: #f1f3f5; color: #404040;
+  }
+  .hn-tag.t-design   { background: #eaf2ff; color: #0044b0; }
+  .hn-tag.t-pm       { background: #fff3e0; color: #b56600; }
+  .hn-tag.t-be       { background: #f0f0f3; color: #2c2c2e; }
+  .hn-tag.t-ios      { background: #e7f7ee; color: #186e30; }
+  .hn-tag.t-android  { background: #ecfff0; color: #1f8a3b; }
+  .hn-tag.t-web      { background: #f3edff; color: #4d2bb5; }
+  .hn-tag.t-data     { background: #fff8dc; color: #6b520a; }
+  .hn-tag.t-site,
+  .hn-tag.t-all      { background: #1a1a1a; color: #fff; }
+  .hn-title {
+    font: 700 15px/1.3 var(--sys-text);
+    color: var(--ink);
+    margin: 0 0 4px;
+  }
+  .hn-body {
+    font: 400 13px/1.45 var(--sys-text);
+    color: var(--ink-mute);
+    margin: 0;
+  }
+  .hn-empty {
+    font: 400 13px/1.45 var(--sys-text);
+    color: var(--ink-mute);
+    border: 1px dashed var(--hair); border-radius: 12px;
+    padding: 14px 16px; background: #fafbfc;
+    list-style: none;
+  }
+  .hn-foot {
+    font: 400 11px/1.5 var(--sys-text);
+    color: var(--ink-mute);
+    border-top: 1px dashed var(--hair);
+    padding-top: 10px; margin: 4px 0 0;
+  }
+  .hn-foot code {
+    background: #f1f3f5; padding: 1px 5px; border-radius: 4px;
+    font: 500 11px/1 ui-monospace, monospace;
   }
   .ho-states {
     display: grid; gap: 8px;
@@ -3639,6 +3832,8 @@ function ApplicationPreviewSheet({
   job, state, loadingPhase = "ready", version = "mvp",
   magicMode = false, magicStep = 0,
   showJobMatch = false,
+  showSourcePills = true,
+  showInSheetTabs = true,
   onSend, onClose, onOpenLetter, onOpenCV, onOpenEdit, onFillMissing, onOpenActivity,
 }) {
   const t = useT();
@@ -3831,7 +4026,12 @@ function ApplicationPreviewSheet({
         )}
 
         {/* In-sheet tabs: Application ↔ Job ad. Lets the seeker re-read the ad
-            without dismissing the draft. iOS segmented control look. */}
+            without dismissing the draft. iOS segmented control look.
+            Gated by the `in-sheet-tabs` feature — drag the story card on
+            the Story Map between MVP / v1 / v2 to toggle. When hidden,
+            the sheet just shows the application body (sheetTab defaults
+            to "application"). */}
+        {showInSheetTabs && (
         <div style={{ padding: "2px 16px 12px" }}>
           <div role="tablist" aria-label={t({ en: "Sheet view", no: "Visning" })}
             style={{
@@ -3882,6 +4082,7 @@ function ApplicationPreviewSheet({
             </button>
           </div>
         </div>
+        )}
 
         {anyMissing && sheetTab === "application" && (
           <div style={{
@@ -4250,14 +4451,16 @@ Let's talk.
 Lee Frost`,
 };
 
-function CoverLetterSheet({ onClose, onOpenSelectFile }) {
+function CoverLetterSheet({ onClose, onOpenSelectFile, enableAiLetter = true }) {
   const t = useT();
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
   const backdropH = statusBarH + 16;
   const [style, setStyle] = useState("formal");
-  const [text, setText] = useState(LETTER_VARIANTS.formal);
+  // Initial text: AI draft when the feature is on, blank otherwise (the
+  // user is expected to write it themselves or pick a file).
+  const [text, setText] = useState(enableAiLetter ? LETTER_VARIANTS.formal : "");
   const [edited, setEdited] = useState(false);
 
   function applyStyle(id) {
@@ -4316,8 +4519,10 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 8,
           }}>
-            {t({ en: "Writing Assistant", no: "Skriveassistent" })}
-            <AILogo size={18} />
+            {enableAiLetter
+              ? t({ en: "Writing Assistant", no: "Skriveassistent" })
+              : t({ en: "Cover letter",      no: "Søknadsbrev" })}
+            {enableAiLetter && <AILogo size={18} />}
           </h2>
           {/* Invisible spacer keeps the title optically centred */}
           <div style={{ width: 36, height: 36, flexShrink: 0 }} aria-hidden="true" />
@@ -4329,12 +4534,21 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
           textAlign: "center", letterSpacing: -0.1,
           maxWidth: 320, marginLeft: "auto", marginRight: "auto",
         }}>
-          {t({
-            en: "Pick a style to draft, or write your own below.",
-            no: "Velg en stil – eller skriv selv nedenfor.",
-          })}
+          {enableAiLetter
+            ? t({
+                en: "Pick a style to draft, or write your own below.",
+                no: "Velg en stil – eller skriv selv nedenfor.",
+              })
+            : t({
+                en: "Upload your cover letter or write it below.",
+                no: "Last opp søknadsbrevet ditt eller skriv det nedenfor.",
+              })}
         </p>
 
+        {/* AI style pills + 'or' divider — only when the ai-letter feature
+            is on. When off, the sheet falls back to upload + free-text. */}
+        {enableAiLetter && (
+        <>
         <div style={{
           padding: "0 16px 14px",
           display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center",
@@ -4376,6 +4590,8 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
           }}>{t({ en: "or", no: "eller" })}</span>
           <div style={{ flex: 1, height: 1, background: "#ededed" }} />
         </div>
+        </>
+        )}
 
         {/* Prominent alternative — upload or select your own */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
@@ -5270,22 +5486,21 @@ function TailorSheet({ onDone, onClose }) {
 // ===========================================================
 function InputField({ label, value, onChange, type = "text", autoComplete, placeholder, last }) {
   const [focused, setFocused] = useState(false);
-  // Allow a JSX label (e.g. label + Edited chip). Strings get the usual
-  // uppercase treatment for consistency with the rest of the form fields.
-  const labelEl = typeof label === "string" ? label.toUpperCase() : label;
+  // Filled-card style: label above the input in sentence case, input
+  // itself is a grey #f7f7f9 rounded card with finn-blue border on
+  // focus. Used everywhere across MVP, 1.0, 2.0 and Agentic so the
+  // form-input language is consistent.
   return (
     <div style={{
       display: "flex", flexDirection: "column",
-      padding: "8px 4px 12px",
-      borderBottom: last ? "none" : "0.5px solid #ededed",
-      position: "relative",
+      paddingBottom: last ? 0 : 14,
     }}>
       <label style={{
         display: "flex", alignItems: "center", gap: 8,
-        fontSize: 12, color: focused ? "#0063fb" : "#6b6b6b",
-        marginBottom: 2, letterSpacing: 0.1,
-        transition: "color 160ms var(--ease-out)",
-      }}>{labelEl}</label>
+        fontSize: 14, color: "#6b6b6b", fontWeight: 400,
+        marginBottom: 6, fontFamily: "inherit",
+        letterSpacing: -0.05,
+      }}>{label}</label>
       <input
         type={type} value={value}
         autoComplete={autoComplete} placeholder={placeholder}
@@ -5294,17 +5509,18 @@ function InputField({ label, value, onChange, type = "text", autoComplete, place
         onBlur={() => setFocused(false)}
         style={{
           fontSize: 17, color: "#1d1d1d", fontWeight: 500,
-          border: 0, outline: 0, background: "transparent",
-          padding: "4px 0", fontFamily: "inherit",
+          border: focused ? "1px solid #0063fb" : "1px solid transparent",
+          outline: 0,
+          background: "#f7f7f9",
+          padding: "14px 16px",
+          borderRadius: 12,
+          fontFamily: "inherit",
           letterSpacing: -0.2, width: "100%",
+          boxSizing: "border-box",
           caretColor: "#0063fb",
+          transition: "border-color 160ms var(--ease-out)",
         }}
       />
-      <div style={{
-        position: "absolute", bottom: -0.5, left: 0, right: 0,
-        height: focused ? 2 : 0, background: "#0063fb",
-        transition: "height 160ms var(--ease-out)",
-      }} />
     </div>
   );
 }
@@ -5831,7 +6047,7 @@ function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts",
 // Each field is tappable to edit inline; on edit, a "Redigert" chip
 // appears next to that field's label so reviewers see what the user
 // touched after the agent's draft.
-function AgenticReviewScreen({ job, onClose, onSend }) {
+function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, showInSheetTabs = true }) {
   const t = useT();
   const { statusBarH, homeArea } = useMetrics();
   const platform = usePlatform();
@@ -5955,9 +6171,10 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
     );
   }
 
-  // Source attribution per field — used in the footnote line ("From your
-  // profile · tap to edit"). Matches the language MVP uses in the Question
-  // component.
+  // Source attribution per field — shown as a light-blue tag to the
+  // right of the heading. Employer questions (qNorsk, qExp) come straight
+  // from the employer so they don't carry a source tag; if the value is
+  // empty we show a red "Missing" tag instead.
   const SOURCE_BY_KEY = {
     firstName: { en: "From your profile",       no: "Fra profilen din" },
     lastName:  { en: "From your profile",       no: "Fra profilen din" },
@@ -5967,20 +6184,21 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
     linkedin:  { en: "From your profile",       no: "Fra profilen din" },
     cv:        { en: "From your profile",       no: "Fra profilen din" },
     letter:    { en: "AI draft for this role",  no: "AI-utkast for denne jobben" },
-    qNorsk:    { en: "From your Tailor answers", no: "Fra svarene i Tilpass" },
-    qExp:      { en: "From your Tailor answers", no: "Fra svarene i Tilpass" },
+    // qNorsk + qExp: no source tag — employer questions are answered by
+    // the seeker, not provided by FINN or pulled from a profile.
   };
 
-  // ReviewItem — the canonical Agentic field pattern. Matches MVP's
-  // Question component (heading + answer pill + source tag below). The
-  // answer pill is tappable to swap into an editable input. For enum
-  // fields, pass `options` instead and the pill row becomes a PillRadio
-  // group. The source attribution is now a styled tag, not inline text.
+  // ReviewItem — the canonical Agentic field pattern. Heading + answer
+  // pill + (source tag OR Missing tag). Tap the answer pill to swap into
+  // an editable input. For enum fields, pass `options` and the pill row
+  // becomes a PillRadio group. If the stored value is empty, a red
+  // "Missing" tag replaces the source tag and a "This field is required"
+  // line shows under the answer.
   function ReviewItem({ k, type = "text", autoComplete, options }) {
     const f = fields[k];
     const isEditing = editing === k;
-    const src = SOURCE_BY_KEY[k] || { en: "From your profile", no: "Fra profilen din" };
-    const isAI = k === "letter";
+    const src = SOURCE_BY_KEY[k]; // undefined for employer questions
+    const isMissing = !f.v;
 
     let control;
     if (options) {
@@ -6011,8 +6229,9 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
     } else {
       control = (
         <button className="ar-rv-answer press"
-          onClick={() => { haptic("tap"); setEditing(k); }}>
-          {f.v || <span style={{ color: "#cc1414", fontWeight: 600 }}>—</span>}
+          onClick={() => { haptic("tap"); setEditing(k); }}
+          style={isMissing ? { color: "#6b6b6b" } : null}>
+          {f.v || <span style={{ color: "#6b6b6b" }}>—</span>}
         </button>
       );
     }
@@ -6021,10 +6240,17 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
       <div className="ar-rv">
         <p className="ar-rv-heading">
           <span className="ar-rv-heading-label">{LABELS[k]}</span>
-          <span className="ar-rv-source">{t(src)}</span>
-          {f.e && <EditedChip />}
+          {isMissing
+            ? <span className="ar-rv-missing">{t({ en: "Missing", no: "Mangler" })}</span>
+            : (src && showSourcePills && <span className="ar-rv-source">{t(src)}</span>)}
+          {f.e && !isMissing && <EditedChip />}
         </p>
         {control}
+        {isMissing && (
+          <p className="ar-rv-error">
+            {t({ en: "This field is required", no: "Dette feltet er påkrevd" })}
+          </p>
+        )}
       </div>
     );
   }
@@ -6041,7 +6267,7 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
       <div className="ar-rv">
         <p className="ar-rv-heading">
           <span className="ar-rv-heading-label">{LABELS[k]}</span>
-          <span className="ar-rv-source">{t(src)}</span>
+          {src && showSourcePills && <span className="ar-rv-source">{t(src)}</span>}
           {f.e && <EditedChip />}
         </p>
         <CVOption
@@ -6167,12 +6393,20 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
   const applicationBody = phase === "preparing" ? (
     <>
       <div style={{ padding: "16px 20px 8px" }}>
-        <p key="lede-prep" className="ar-lede ar-soft-fade">
+        <div key="prep-notice" className="ar-soft-fade" style={{
+          padding: "14px 16px",
+          background: "#eaf2ff",
+          border: "1px solid rgba(0,99,251,0.16)",
+          borderRadius: 14,
+          color: "#1d1d1d",
+          font: "500 14px/1.45 var(--sys-text)",
+          letterSpacing: -0.1,
+        }} role="status" aria-live="polite">
           {t({
-            en: "We're preparing your application. This will only take a moment.",
-            no: "Vi forbereder søknaden din. Dette tar bare et øyeblikk.",
+            en: "Preparing your application! Please do not close the page.",
+            no: "Forbereder søknaden din! Ikke lukk siden.",
           })}
-        </p>
+        </div>
       </div>
       <div className="ar-rows">
         <SectionRow id="personalia"
@@ -6259,15 +6493,16 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
       ]} />
       <div className="ar-rv">
         <p className="ar-rv-heading">
-          <span className="ar-rv-heading-label">{LABELS.linkedin}</span>
-          <span className="ar-rv-source">{t({ en: "From your profile", no: "Fra profilen din" })}</span>
-          <span style={{
-            display: "inline-flex", alignItems: "center",
-            fontSize: 11, fontWeight: 500,
-            padding: "2px 8px", borderRadius: 9999,
-            background: "#f0f0f3", color: "#6b6b6b",
-            whiteSpace: "nowrap", letterSpacing: -0.05,
-          }}>{t({ en: "Optional", no: "Valgfri" })}</span>
+          <span className="ar-rv-heading-label">
+            {LABELS.linkedin}
+            <span style={{
+              marginLeft: 8,
+              fontSize: 14, fontWeight: 400,
+              color: "#6b6b6b",
+              letterSpacing: -0.05,
+            }}>{t({ en: "Optional", no: "Valgfri" })}</span>
+          </span>
+          {showSourcePills && <span className="ar-rv-source">{t({ en: "From your profile", no: "Fra profilen din" })}</span>}
           {fields.linkedin.e && <EditedChip />}
         </p>
         {editing === "linkedin" ? (
@@ -6286,10 +6521,9 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
           <IOSSwitch
             checked={includeLinkedin}
             onChange={setIncludeLinkedin}
-            label={t({ en: "Include LinkedIn in this application", no: "Inkluder LinkedIn i denne søknaden" })}
-            hint={t({
-              en: "Toggle off to leave it out of this submission.",
-              no: "Slå av for å utelate fra denne søknaden.",
+            label={t({
+              en: "Add this optional information to my application",
+              no: "Legg til denne valgfrie informasjonen i søknaden min",
             })}
           />
         </div>
@@ -6371,7 +6605,10 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
           </button>
         </div>
 
-        {/* In-sheet tabs: Application ↔ Job ad. Identical to MVP. */}
+        {/* In-sheet tabs: Application ↔ Job ad. Identical to MVP.
+            Gated by the `in-sheet-tabs` feature — toggled from the
+            Story Map. */}
+        {showInSheetTabs && (
         <div style={{ padding: "2px 16px 12px" }}>
           <div role="tablist" aria-label={t({ en: "Sheet view", no: "Visning" })}
             style={{
@@ -6420,6 +6657,7 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
             </button>
           </div>
         </div>
+        )}
 
         {/* Body — scrolls. Swaps between Application content and Job ad. */}
         <div className="scroll-area" style={{ flex: 1, overflowY: "auto" }}>
@@ -6811,9 +7049,9 @@ const STORYMAP = {
                      v1:  [{ story: "Faster model means letter is ready in under 2s.", hyp: "1.2", n: null, jira: "JEA-1113" }],
                      v2:  [] },
     "review":      { mvp: [
-                       { story: "Source pills tell me where each value came from.", hyp: "2.1", n: 4, key: "pb", jira: "JEA-1179" },
+                       { story: "Source pills tell me where each value came from.", hyp: "2.1", n: 4, key: "pb", feature: "source-pills", jira: "JEA-1179" },
                        { story: "Header keeps role + company so I never lose context.", hyp: "2.2", n: 8, key: "pb", jira: "JEA-1179" },
-                       { story: "Flip between Application and Job ad inside the sheet.", hyp: "2.2", n: 14, key: "pb", jira: null },
+                       { story: "Flip between Application and Job ad inside the sheet.", hyp: "2.2", n: 14, key: "pb", feature: "in-sheet-tabs", jira: null },
                      ],
                      v1:  [{ story: "Confidence cue on AI-filled fields.", hyp: "2.1", n: null, jira: null }],
                      v2:  [{ story: "Compare this draft with my last application.", hyp: null, n: null, jira: null }] },
@@ -6824,6 +7062,7 @@ const STORYMAP = {
                      v1:  [{ story: "Tailored CV highlights what matches the listing.", hyp: "2.1", n: null, feature: "tailored-cv", jira: null }],
                      v2:  [{ story: "Batch-tailor for multiple roles at once.", hyp: null, n: null, jira: null }] },
     "edit-letter": { mvp: [
+                       { story: "FINN drafts a cover letter for me from my CV + the job ad.", hyp: "2.1", n: null, feature: "ai-letter", jira: "JEA-1146" },
                        { story: "Tap Tilpass for agentic Q&A — opt-in, not forced.", hyp: "2.2", n: 7, key: "pb", jira: "JEA-1179" },
                        { story: "Choose 'Skriv selv' if I prefer to write it myself.", hyp: "2.2", n: 6, key: "pb", jira: "JEA-1146" },
                      ],
@@ -6992,18 +7231,24 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
   const [acTarget, setAcTarget] = useState(null); // { taskId, story, sid }
   // Map of storyId → bool, "does this card have AC saved?" — lazy-loaded.
   const [acMap, setAcMap] = useState({});
+  // Map of storyId → { ready: {...}, done: {...} } for the small per-card pill.
+  const [readyMap, setReadyMap] = useState({});
   useEffect(() => {
     if (!cloudStore.enabled) return;
     let cancelled = false;
     (async () => {
-      const map = await cloudStore.getAcceptanceMap();
+      const [acRows, readyRows] = await Promise.all([
+        cloudStore.getAcceptanceMap(),
+        cloudStore.getReadinessMap(),
+      ]);
       if (!cancelled) {
         const flags = {};
-        Object.keys(map).forEach(k => {
-          const r = map[k];
+        Object.keys(acRows).forEach(k => {
+          const r = acRows[k];
           if (r && (r.given || r.when_ || r.then_)) flags[k] = true;
         });
         setAcMap(flags);
+        setReadyMap(readyRows || {});
       }
     })();
     return () => { cancelled = true; };
@@ -7124,6 +7369,7 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
                           draggable
                           onDragStart={onDragStart(b.id, r.id, si)}
                           hasAcceptance={!!acMap[sid]}
+                          readiness={readyMap[sid]}
                           onClick={() => setAcTarget({ taskId: b.id, story: s, sid })} />
                       );
                     })}
@@ -7316,17 +7562,21 @@ const HANDOFF = {
 };
 
 function HandoffView() {
-  const [section, setSection] = useState("sitemap");
+  // Default landing tab is "What's new" so anyone returning to the site
+  // sees what changed since they last looked.
+  const [section, setSection] = useState("whatsnew");
   return (
     <section className="surface" aria-label="Developer handoff">
       <h1>Developer handoff</h1>
       <p className="sub">
-        Specs and patterns for engineers picking up this prototype. Tokens map to FINN's WARP
-        design system; the same components have iOS, Android, and Web equivalents documented per row.
+        What's changed lately, plus the live specs and patterns for engineers picking up this
+        prototype. Tokens map to FINN's WARP design system; the same components have iOS,
+        Android, and Web equivalents documented per row.
       </p>
 
       <div className="ho-tabs" role="tablist">
         {[
+          { id: "whatsnew",       label: "What's new" },
           { id: "sitemap",        label: "Site map" },
           { id: "tokens",         label: "Design tokens" },
           { id: "components",     label: "Components" },
@@ -7342,6 +7592,7 @@ function HandoffView() {
         ))}
       </div>
 
+      {section === "whatsnew"       && <HandoffWhatsNew />}
       {section === "sitemap"        && <HandoffSitemap />}
       {section === "tokens"         && <HandoffTokens />}
       {section === "components"     && <HandoffComponents />}
@@ -7351,6 +7602,112 @@ function HandoffView() {
       {section === "backend"        && <HandoffBackend />}
       {section === "instrumentation"&& <HandoffInstrumentation />}
     </section>
+  );
+}
+
+// ─── What's new — site-level changelog ──────────────────────────────────
+// Append new entries at the top. Keep them short — one line "what" + one
+// line "why" — so an engineer coming back Monday can scan the last ~10
+// changes in under a minute. Long discussions belong in Slack / RATIONALE.
+//
+// `tags` are roles that should care about a given change:
+//   "design" "pm" "be" "ios" "android" "web" "data" "site" "all"
+// The filter pills at the top of the changelog use these.
+const CHANGELOG = [
+  {
+    date: "2026-05-22",
+    author: "Lee",
+    title: "Impact–Effort folded into Opportunity tree page",
+    body: "Top-level tab bar drops Impact–Effort; it now lives as a sub-tab of the Opportunity-tree page. Stops the matrix and the storymap competing as separate prioritisation tools.",
+    tags: ["pm", "design", "site"],
+  },
+  {
+    date: "2026-05-22",
+    author: "Lee",
+    title: "Handoff page now opens on What's new",
+    body: "First sub-tab is this changelog — so anyone returning to the site sees what changed since their last visit before they hit the specs.",
+    tags: ["all", "site"],
+  },
+  {
+    date: "2026-05-22",
+    author: "Lee",
+    title: "Definition of Ready / Done on every storymap card",
+    body: "Open any story → checklist for design / spec / events / a11y on one side, code / tests / flag / QA on the other. Synced to Supabase like AC. Card chip now shows a tiny DoR n/4 · DoD n/4 readiness pill.",
+    tags: ["pm", "design", "be", "ios", "android", "web"],
+  },
+  {
+    date: "2026-05-19",
+    author: "Lee",
+    title: "JIRA_STATUS map reconciled against live tickets",
+    body: "JEA-1134 marked done · JEA-1179 and JEA-1074 marked in-dev. See JIRA_STATUS_SYNCED_AT at top of stories block. Re-pull weekly.",
+    tags: ["pm", "be", "ios", "android", "web"],
+  },
+  {
+    date: "2026-05-15",
+    author: "Lee",
+    title: "v1.1 iOS polish landed in the prototype",
+    body: "Universal .press class, haptic on Send / Tailor / confirm, sheet popin + skeleton shimmer, continuous-curve radii. See RATIONALE → 'iOS polish in v1.1'.",
+    tags: ["design", "ios"],
+  },
+  {
+    date: "2026-05-13",
+    author: "Lee",
+    title: "RATIONALE & HANDOFF added to repo",
+    body: "Written reasoning for every decision the prototype makes, mapped to the opportunity tree. Read once before the next design review.",
+    tags: ["design", "pm", "be", "ios", "android", "web"],
+  },
+];
+
+function HandoffWhatsNew() {
+  const ROLE_TAGS = [
+    { id: "all",     label: "All"        },
+    { id: "design",  label: "Design"     },
+    { id: "pm",      label: "PM"         },
+    { id: "be",      label: "Backend"    },
+    { id: "ios",     label: "iOS"        },
+    { id: "android", label: "Android"    },
+    { id: "web",     label: "Web"        },
+  ];
+  const [role, setRole] = useState("all");
+  const visible = role === "all"
+    ? CHANGELOG
+    : CHANGELOG.filter(e => e.tags.includes(role) || e.tags.includes("all"));
+
+  return (
+    <div className="hn-wrap">
+      <div className="hn-filter" role="tablist" aria-label="Filter by role">
+        {ROLE_TAGS.map(r => (
+          <button key={r.id} role="tab" aria-selected={role === r.id}
+            className={"hn-chip" + (role === r.id ? " active" : "")}
+            onClick={() => setRole(r.id)}>{r.label}</button>
+        ))}
+      </div>
+
+      <ol className="hn-list">
+        {visible.length === 0 && (
+          <li className="hn-empty">Nothing tagged for that role yet.</li>
+        )}
+        {visible.map((e, i) => (
+          <li key={i} className="hn-entry">
+            <div className="hn-meta">
+              <time className="hn-date">{e.date}</time>
+              <span className="hn-author">{e.author}</span>
+              <span className="hn-tags">
+                {e.tags.map(t => (
+                  <span key={t} className={"hn-tag t-" + t}>{t}</span>
+                ))}
+              </span>
+            </div>
+            <h4 className="hn-title">{e.title}</h4>
+            <p className="hn-body">{e.body}</p>
+          </li>
+        ))}
+      </ol>
+      <p className="hn-foot">
+        Append new entries at the top of the <code>CHANGELOG</code> array in <code>index.html</code>.
+        Keep them tight — one line of <em>what</em>, one line of <em>why</em>.
+      </p>
+    </div>
   );
 }
 
@@ -8044,7 +8401,17 @@ function storyId(taskId, story) {
   return "h:" + Math.abs(h).toString(36);
 }
 
-function SmCard({ story, release, now, draggable, onDragStart, onClick, hasAcceptance }) {
+function SmCard({ story, release, now, draggable, onDragStart, onClick, hasAcceptance, readiness }) {
+  // Readiness summary — small pill showing DoR n/4 · DoD n/4.
+  const dor = readiness ? countChecks(readiness.ready, DOR_ITEMS) : 0;
+  const dod = readiness ? countChecks(readiness.done,  DOD_ITEMS) : 0;
+  const showReadyPill = !!readiness && (dor > 0 || dod > 0);
+  const allDone = dor === DOR_ITEMS.length && dod === DOD_ITEMS.length;
+  // Tooltip describes the state at a glance for keyboard / hover users.
+  const readyTitle = showReadyPill
+    ? "Definition of Ready " + dor + "/" + DOR_ITEMS.length +
+      " · Definition of Done " + dod + "/" + DOD_ITEMS.length
+    : undefined;
   return (
     <div className={"sm-card " + release + (story.feature ? " sm-card-feature" : "")}
       draggable={draggable}
@@ -8060,6 +8427,12 @@ function SmCard({ story, release, now, draggable, onDragStart, onClick, hasAccep
         {now && <span className="sm-now-badge">In prototype</span>}
         {story.feature && <span className="sm-feature-pill">live feature</span>}
         {hasAcceptance && <span className="sm-ac-badge" title="Has acceptance criteria">AC ✓</span>}
+        {showReadyPill && (
+          <span className={"sm-ready-pill" + (allDone ? " all" : "")} title={readyTitle}>
+            <span className="sm-ready-dot" aria-hidden="true" />
+            {dor}/{DOR_ITEMS.length} · {dod}/{DOD_ITEMS.length}
+          </span>
+        )}
         {story.n != null && <span className={"ref-num " + (story.key || "pa")}>{story.n}</span>}
         {story.hyp && <span className="hyp">H {story.hyp}</span>}
       </div>
@@ -8068,30 +8441,45 @@ function SmCard({ story, release, now, draggable, onDragStart, onClick, hasAccep
 }
 
 // Side sheet for writing Given/When/Then acceptance criteria on a story.
+// Also hosts the Definition of Ready / Done checklist for the same story.
 function AcceptanceSheet({ open, story, taskId, sid, onClose, actorName, ensureActor, onActivity }) {
   const [given, setGiven] = useState("");
   const [whenStr, setWhenStr] = useState("");
   const [thenStr, setThenStr] = useState("");
+  const [ready, setReady] = useState({}); // { [key]: bool }
+  const [done,  setDone]  = useState({}); // { [key]: bool }
   const [loadedFor, setLoadedFor] = useState(null);
   const [meta, setMeta] = useState(null);  // {updated_by, updated_at}
+  const [readyMeta, setReadyMeta] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [savingChk, setSavingChk] = useState(false);
 
-  // Load AC for this story when opened.
+  // Load AC + readiness for this story when opened.
   useEffect(() => {
     if (!open || !sid || loadedFor === sid) return;
     let cancelled = false;
     (async () => {
-      const row = await cloudStore.getAcceptance(sid);
+      const [acRow, readinessRow] = await Promise.all([
+        cloudStore.getAcceptance(sid),
+        cloudStore.getReadiness(sid),
+      ]);
       if (cancelled) return;
-      if (row) {
-        setGiven(row.given || "");
-        setWhenStr(row.when_ || "");
-        setThenStr(row.then_ || "");
-        setMeta({ updated_by: row.updated_by, updated_at: row.updated_at });
+      if (acRow) {
+        setGiven(acRow.given || "");
+        setWhenStr(acRow.when_ || "");
+        setThenStr(acRow.then_ || "");
+        setMeta({ updated_by: acRow.updated_by, updated_at: acRow.updated_at });
       } else {
         setGiven(""); setWhenStr(""); setThenStr(""); setMeta(null);
+      }
+      if (readinessRow) {
+        setReady(readinessRow.ready || {});
+        setDone(readinessRow.done  || {});
+        setReadyMeta({ updated_by: readinessRow.updated_by, updated_at: readinessRow.updated_at });
+      } else {
+        setReady({}); setDone({}); setReadyMeta(null);
       }
       setLoadedFor(sid);
       setSaved(false);
@@ -8124,6 +8512,38 @@ function AcceptanceSheet({ open, story, taskId, sid, onClose, actorName, ensureA
     });
   }
 
+  function persistReadiness(nextReady, nextDone) {
+    ensureActor(async (who) => {
+      setSavingChk(true);
+      const ok = await cloudStore.setReadiness(sid, {
+        ready: nextReady, done: nextDone, updated_by: who,
+      });
+      setSavingChk(false);
+      if (ok) {
+        setReadyMeta({ updated_by: who, updated_at: new Date().toISOString() });
+        if (cloudStore.enabled) cloudStore.logEvent({
+          action: "set-readiness", actor: who,
+          detail: {
+            story: story.story, jira: story.jira,
+            dor: countChecks(nextReady, DOR_ITEMS),
+            dod: countChecks(nextDone,  DOD_ITEMS),
+          },
+        });
+        onActivity && onActivity();
+      }
+    });
+  }
+  function toggleReady(key) {
+    const next = { ...ready, [key]: !ready[key] };
+    setReady(next);
+    persistReadiness(next, done);
+  }
+  function toggleDone(key) {
+    const next = { ...done, [key]: !done[key] };
+    setDone(next);
+    persistReadiness(ready, next);
+  }
+
   function copyForJira() {
     const text = [
       story.jira ? "Acceptance criteria for " + story.jira : "Acceptance criteria — " + (story.story || ""),
@@ -8133,6 +8553,12 @@ function AcceptanceSheet({ open, story, taskId, sid, onClose, actorName, ensureA
       "Given " + (given || "—"),
       "When " + (whenStr || "—"),
       "Then " + (thenStr || "—"),
+      "",
+      "Definition of Ready: " + countChecks(ready, DOR_ITEMS) + " / " + DOR_ITEMS.length,
+      ...DOR_ITEMS.map(it => "  " + (ready[it.key] ? "[x]" : "[ ]") + " " + it.label),
+      "",
+      "Definition of Done: " + countChecks(done, DOD_ITEMS) + " / " + DOD_ITEMS.length,
+      ...DOD_ITEMS.map(it => "  " + (done[it.key]  ? "[x]" : "[ ]") + " " + it.label),
       "",
       meta && meta.updated_by ? "Last edited by " + meta.updated_by : "",
     ].filter(Boolean).join("\n");
@@ -8164,6 +8590,52 @@ function AcceptanceSheet({ open, story, taskId, sid, onClose, actorName, ensureA
               {meta.updated_at ? " · " + relativeTime(meta.updated_at) : ""}
             </span>
           )}
+        </div>
+
+        {/* Definition of Ready / Done checklist — two columns of four,
+            tick boxes persist immediately to Supabase. */}
+        <div className="dor-dod">
+          <div className="dor-dod-head">
+            <span className="dor-dod-title">Readiness</span>
+            <span className="dor-dod-counts">
+              DoR <strong>{countChecks(ready, DOR_ITEMS)}/{DOR_ITEMS.length}</strong>
+              <span className="dor-dod-sep" aria-hidden="true">·</span>
+              DoD <strong>{countChecks(done,  DOD_ITEMS)}/{DOD_ITEMS.length}</strong>
+              {savingChk && <span className="dor-dod-saving"> saving…</span>}
+              {readyMeta && readyMeta.updated_by && !savingChk && (
+                <span className="dor-dod-edited">
+                  · {readyMeta.updated_by}
+                  {readyMeta.updated_at ? " · " + relativeTime(readyMeta.updated_at) : ""}
+                </span>
+              )}
+            </span>
+          </div>
+          <div className="dor-dod-cols">
+            <fieldset className="dor-col">
+              <legend>Definition of Ready</legend>
+              {DOR_ITEMS.map(it => (
+                <label key={it.key} className={"chk" + (ready[it.key] ? " on" : "")}>
+                  <input type="checkbox" checked={!!ready[it.key]}
+                    onChange={() => toggleReady(it.key)}
+                    disabled={!cloudStore.enabled} />
+                  <span className="chk-label">{it.label}</span>
+                  <span className="chk-hint">{it.hint}</span>
+                </label>
+              ))}
+            </fieldset>
+            <fieldset className="dod-col">
+              <legend>Definition of Done</legend>
+              {DOD_ITEMS.map(it => (
+                <label key={it.key} className={"chk" + (done[it.key] ? " on" : "")}>
+                  <input type="checkbox" checked={!!done[it.key]}
+                    onChange={() => toggleDone(it.key)}
+                    disabled={!cloudStore.enabled} />
+                  <span className="chk-label">{it.label}</span>
+                  <span className="chk-hint">{it.hint}</span>
+                </label>
+              ))}
+            </fieldset>
+          </div>
         </div>
 
         <label className="ac-label">Given</label>
@@ -8203,10 +8675,12 @@ function AcceptanceSheet({ open, story, taskId, sid, onClose, actorName, ensureA
 function TopNav({ view, onChange, openCounts = {}, onOpenFeedback }) {
   // Tab id → context.view label used in comment rows, so we can pick the
   // right count from the open-comments-by-view map.
+  // Impact–Effort folded into the Opportunity-tree page as a sub-tab.
+  // We still receive comments tagged "Impact–Effort" — those roll up to
+  // the Opportunity-tree tab's count via the bumpedCounts step below.
   const tabs = [
     { id: "prototype", label: "Prototype",        ctxView: "Prototype" },
-    { id: "tree",      label: "Opportunity tree", ctxView: "Opportunity tree" },
-    { id: "matrix",    label: "Impact–Effort",    ctxView: "Impact–Effort" },
+    { id: "tree",      label: "Opportunity tree", ctxView: "Opportunity tree", absorb: ["Impact–Effort"] },
     { id: "storymap",  label: "Storymap",         ctxView: "Storymap" },
     { id: "handoff",   label: "Handoff",          ctxView: "Handoff" },
   ];
@@ -8239,7 +8713,10 @@ function TopNav({ view, onChange, openCounts = {}, onOpenFeedback }) {
         <div className="topnav-indicator" aria-hidden="true"
           style={{ left: ind.left, width: ind.width, opacity: ind.ready ? 1 : 0 }} />
         {tabs.map(t => {
-          const n = openCounts[t.ctxView] || 0;
+          // Roll absorbed contexts (e.g. Impact–Effort under Opportunity tree)
+          // into the parent tab's count so old comments still surface.
+          let n = openCounts[t.ctxView] || 0;
+          if (t.absorb) for (const k of t.absorb) n += openCounts[k] || 0;
           return (
             <button
               key={t.id}
@@ -8287,7 +8764,33 @@ const SUPABASE_ANON_KEY = "sb_publishable_h-o9kPkz9m-6FiWyKYAHMw_huVQuI-O";
 const SUPABASE_TABLE    = "prototype_state";
 const SUPABASE_EVENTS   = "prototype_events";
 const SUPABASE_AC       = "prototype_acceptance"; // acceptance criteria, one row per storyId
+const SUPABASE_READINESS= "prototype_readiness";  // DoR / DoD checklist, one row per storyId
 const SUPABASE_COMMENTS = "prototype_comments";   // threaded feedback on the prototype
+
+// ─── Definition of Ready / Done ──────────────────────────────────────────
+// Eight items split 4 + 4. Keep keys short — they're persisted in JSONB.
+// If you change a key here, write a migration that renames the column in
+// existing rows; otherwise old rows will silently lose that flag.
+const DOR_ITEMS = [
+  { key: "design",  label: "Design approved",        hint: "Lead designer signed off in Figma / prototype" },
+  { key: "ac",      label: "AC written",             hint: "Given / When / Then captured on this card" },
+  { key: "events",  label: "Analytics events spec'd",hint: "What we'll track on submit / abort / edit" },
+  { key: "copy",    label: "Copy reviewed (NO)",     hint: "Norwegian Bokmål passes the FINN voice rules" },
+];
+const DOD_ITEMS = [
+  { key: "code",    label: "Code merged",            hint: "PR landed on main behind a flag" },
+  { key: "tests",   label: "Tests pass",             hint: "Unit + integration green on CI" },
+  { key: "flag",    label: "Feature flag set",       hint: "Flag wired in Unleash / config service" },
+  { key: "qa",      label: "QA signed off",          hint: "Manual sweep on the target platform(s)" },
+];
+
+// Count how many keys are checked. Tolerates `state` being undefined.
+function countChecks(state, items) {
+  if (!state) return 0;
+  let n = 0;
+  for (const it of items) if (state[it.key]) n++;
+  return n;
+}
 
 // Slack incoming-webhook URL — when set, every new comment fires a
 // message to that Slack channel. Leave empty to disable. Generate at:
@@ -8321,6 +8824,9 @@ const cloudStore = (() => {
       getAcceptance: async () => null,
       setAcceptance: async () => false,
       getAcceptanceMap: async () => ({}),
+      getReadiness: async () => null,
+      setReadiness: async () => false,
+      getReadinessMap: async () => ({}),
       getComments: async () => [],
       addComment: async () => ({ row: null, error: "cloud-disabled" }),
       setCommentResolved: async () => false,
@@ -8349,6 +8855,9 @@ const cloudStore = (() => {
       getAcceptance: async () => null,
       setAcceptance: async () => false,
       getAcceptanceMap: async () => ({}),
+      getReadiness: async () => null,
+      setReadiness: async () => false,
+      getReadinessMap: async () => ({}),
       getComments: async () => [],
       addComment: async () => ({ row: null, error: "cloud-disabled" }),
       setCommentResolved: async () => false,
@@ -8449,6 +8958,46 @@ const cloudStore = (() => {
         (data || []).forEach(r => { map[r.story_id] = r; });
         return map;
       } catch (e) { console.warn("[cloud] getAcceptanceMap exception", e); return {}; }
+    },
+
+    // ─── Readiness (DoR / DoD checklist) ──────────────────────────────
+    async getReadiness(storyId) {
+      try {
+        const { data, error } = await client
+          .from(SUPABASE_READINESS)
+          .select("ready, done, updated_by, updated_at")
+          .eq("story_id", storyId)
+          .maybeSingle();
+        if (error) { console.warn("[cloud] getReadiness", error.message); return null; }
+        return data;
+      } catch (e) { console.warn("[cloud] getReadiness exception", e); return null; }
+    },
+    async setReadiness(storyId, { ready, done, updated_by }) {
+      try {
+        const row = {
+          story_id: storyId,
+          ready: ready || {},
+          done:  done  || {},
+          updated_by: updated_by || null,
+          updated_at: new Date().toISOString(),
+        };
+        const { error } = await client
+          .from(SUPABASE_READINESS)
+          .upsert(row, { onConflict: "story_id" });
+        if (error) { console.warn("[cloud] setReadiness", error.message); return false; }
+        return true;
+      } catch (e) { console.warn("[cloud] setReadiness exception", e); return false; }
+    },
+    async getReadinessMap() {
+      try {
+        const { data, error } = await client
+          .from(SUPABASE_READINESS)
+          .select("story_id, ready, done, updated_by, updated_at");
+        if (error) { console.warn("[cloud] getReadinessMap", error.message); return {}; }
+        const map = {};
+        (data || []).forEach(r => { map[r.story_id] = r; });
+        return map;
+      } catch (e) { console.warn("[cloud] getReadinessMap exception", e); return {}; }
     },
 
     // ─── Comments / feedback ──────────────────────────────────────────
@@ -8878,18 +9427,88 @@ function CloudStatusPill({ status, lastSyncedAt }) {
   );
 }
 
-function OpportunityTreeView() {
+// Sub-tab strip used by the Opportunity-tree page. Same visual language as
+// the Handoff page's `.ho-tabs` so the team only learns one pattern.
+function OpportunitySubTabs({ current, onChange }) {
+  const items = [
+    { id: "tree",   label: "Opportunity tree" },
+    { id: "matrix", label: "Impact–Effort" },
+  ];
+  return (
+    <div className="ho-tabs" role="tablist" aria-label="Opportunity sub-views" style={{ marginTop: 6, marginBottom: 14 }}>
+      {items.map(t => (
+        <button key={t.id} role="tab" aria-selected={current === t.id}
+          className={current === t.id ? "active" : ""}
+          onClick={() => onChange(t.id)}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function OpportunityTreeView({ solutions, onMoveSolution, onResetMatrix } = {}) {
   const { business, outcome, problems } = TREE_DATA;
   const [mode, setMode] = useState("snapshot"); // "snapshot" (default) | "miro"
+  // Sub-tab: "tree" (this page) | "matrix" (Impact–Effort, folded in May 2026).
+  // Lives in localStorage so a designer's preference survives reloads.
+  const [subTab, setSubTab] = useState(() => {
+    try { return localStorage.getItem("vend.opportunitySubTab") || "tree"; }
+    catch { return "tree"; }
+  });
+  function changeSubTab(next) {
+    setSubTab(next);
+    try { localStorage.setItem("vend.opportunitySubTab", next); } catch {}
+  }
+  // Both sub-tabs share one header — h1, description, sub-tab strip, and
+  // (when relevant) the matrix Reset button live in the same DOM slot so
+  // the strip never jumps between modes. Only the panel below swaps.
+  const showMatrix = subTab === "matrix";
   return (
     <section className="surface" aria-label="Opportunity tree">
-      <h1>Opportunity tree</h1>
+      <div className="otree-header">
+        <h1 style={{ margin: 0 }}>Opportunity tree</h1>
+        {showMatrix && solutions && onResetMatrix && (
+          <button onClick={onResetMatrix} className="otree-reset">
+            Reset positions
+          </button>
+        )}
+      </div>
       <p className="sub">
-        Curated snapshot below — fast to scan, links to the prototype's solution numbers.
-        The team's <strong>Miro board</strong> is the working source of truth and lives
-        behind the toggle on the right.
+        {showMatrix
+          ? <>Every solution from the tree, plotted by estimated lift on apply-step conversion (impact)
+              and shipping cost (effort). <strong>Drag any dot</strong> to update its scores.
+              Edits sync to the team.</>
+          : <>Curated snapshot below — fast to scan, links to the prototype's solution numbers.
+              The team's <strong>Miro board</strong> is the working source of truth and lives
+              behind the toggle on the right.</>}
       </p>
 
+      <OpportunitySubTabs current={subTab} onChange={changeSubTab} />
+
+      {showMatrix ? (
+        solutions ? (
+          <ImpactEffortView
+            embedded
+            solutions={solutions}
+            onMoveSolution={onMoveSolution}
+            onReset={onResetMatrix}
+          />
+        ) : (
+          <p className="sub">Matrix data isn't wired through yet.</p>
+        )
+      ) : (
+        <OpportunityTreeBody mode={mode} setMode={setMode} business={business} outcome={outcome} problems={problems} />
+      )}
+    </section>
+  );
+}
+
+// Inner body for the Tree sub-tab — extracted so the parent can keep one
+// stable header while the panel content swaps based on the active sub-tab.
+function OpportunityTreeBody({ mode, setMode, business, outcome, problems }) {
+  return (
+    <>
       <div className="miro-meta">
         <span className="source-pill" style={{
           background: mode === "miro" ? "#f7e7c4" : "#eaf2ff",
@@ -8959,11 +9578,11 @@ function OpportunityTreeView() {
           </div>
         </>
       )}
-    </section>
+    </>
   );
 }
 
-function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset }) {
+function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embedded }) {
   const [hoverN, setHoverN] = useState(null);
   const [draggingN, setDraggingN] = useState(null);
   const stageRef = useRef(null);
@@ -8999,8 +9618,14 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset }) {
     };
   }
 
+  // When `embedded` (rendered inside the Opportunity-tree page surface),
+  // skip our own section wrapper + H1 + Reset — the parent owns those so
+  // the header chrome stays in one place across sub-tabs.
+  const Wrap = embedded ? React.Fragment : "section";
+  const wrapProps = embedded ? {} : { className: "surface", "aria-label": "Impact and effort matrix" };
   return (
-    <section className="surface" aria-label="Impact and effort matrix">
+    <Wrap {...wrapProps}>
+      {!embedded && (
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <h1 style={{ margin: 0 }}>Impact–Effort matrix</h1>
         {onReset && (
@@ -9014,11 +9639,14 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset }) {
             }}>Reset positions</button>
         )}
       </div>
+      )}
+      {!embedded && (
       <p className="sub">
         Every solution from the opportunity tree, plotted by estimated lift on apply-step conversion (impact)
         and shipping cost (effort). <strong>Drag any dot</strong> to update its scores; tap the table to focus.
         Edits persist on this device.
       </p>
+      )}
 
       <div className="matrix-wrap">
         <div className="matrix-stage" role="img" aria-label="Impact and effort scatter plot">
@@ -9125,7 +9753,7 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset }) {
           ))}
         </tbody>
       </table>
-    </section>
+    </Wrap>
   );
 }
 
@@ -10047,6 +10675,12 @@ function AppShell({ fullscreen = false }) {
   const showJobMatch    = features.has("job-match");
   const showTailoredCV  = features.has("tailored-cv");
   const enableMagicApply = features.has("magic-apply");
+  // New drag-toggleable MVP behaviours. Each gates a specific bit of
+  // prototype UI; story cards in STORYMAP carry the matching `feature:`
+  // key so dragging them between release rows hides/shows the behaviour.
+  const showSourcePills  = features.has("source-pills");
+  const showInSheetTabs  = features.has("in-sheet-tabs");
+  const enableAiLetter   = features.has("ai-letter");
 
   // Pseudonymous "who's editing" name — captured once on first edit and
   // re-used for activity-log attribution. No login, no PII; people just
@@ -10354,22 +10988,17 @@ function AppShell({ fullscreen = false }) {
       )}
       {view === "tree" && (
         <div key="tree-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
-          <div className="view-toolbar">
-            <ActivityFeed enabled={cloudStore.enabled} actorName={actorName} />
-          </div>
-          <OpportunityTreeView />
-        </div>
-      )}
-      {view === "matrix" && (
-        <div key="matrix-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
+          {/* Toolbar carries the cloud-sync pill *and* activity feed so the
+              matrix sub-tab still surfaces sync state without us re-rendering
+              the chrome when the sub-tab flips. */}
           <div className="view-toolbar">
             <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
             <ActivityFeed enabled={cloudStore.enabled} actorName={actorName} />
           </div>
-          <ImpactEffortView
+          <OpportunityTreeView
             solutions={solutions}
             onMoveSolution={moveSolution}
-            onReset={resetMatrix}
+            onResetMatrix={resetMatrix}
           />
         </div>
       )}
@@ -10442,6 +11071,8 @@ function AppShell({ fullscreen = false }) {
               magicMode={magicMode}
               magicStep={magicStep}
               showJobMatch={showJobMatch}
+              showSourcePills={showSourcePills}
+              showInSheetTabs={showInSheetTabs}
               onClose={() => { cancelMagic(); setMagicMode(false); setScreen("jobad"); }}
               onSend={send}
               onOpenLetter={() => setOverlay("letter")}
@@ -10465,12 +11096,15 @@ function AppShell({ fullscreen = false }) {
               job={JOB}
               onClose={() => setScreen("jobad")}
               onSend={send}
+              showSourcePills={showSourcePills}
+              showInSheetTabs={showInSheetTabs}
             />
           )}
           {overlay === "letter" && (
             <CoverLetterSheet
               onClose={() => setOverlay(null)}
               onOpenSelectFile={() => setOverlay("select-letter")}
+              enableAiLetter={enableAiLetter}
             />
           )}
           {overlay === "login" && (
@@ -10775,7 +11409,6 @@ function AppShell({ fullscreen = false }) {
           view:
             view === "prototype" ? "Prototype" :
             view === "tree"      ? "Opportunity tree" :
-            view === "matrix"    ? "Impact–Effort" :
             view === "storymap"  ? "Storymap" :
             view === "handoff"   ? "Handoff" : view,
           screen:
