@@ -41,6 +41,29 @@
     --ease-spring: cubic-bezier(0.34, 1.30, 0.64, 1.05);
     --ease-tap:    cubic-bezier(0.25, 0.1, 0.25, 1);
   }
+  /* FINNType web font — inlined here so the prototype doesn't depend on
+     colors_and_type.css being present alongside index.html. The fonts/
+     directory must ship with index.html (already on GitHub Pages). */
+  @font-face {
+    font-family: "FINNType";
+    src: url("fonts/FINNTypeWebStrippet-Light.ttf") format("truetype");
+    font-weight: 300; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "FINNType";
+    src: url("fonts/FINNTypeWebStrippet-Regular.ttf") format("truetype");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "FINNType";
+    src: url("fonts/FINNTypeWebStrippet-Medium.ttf") format("truetype");
+    font-weight: 500; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "FINNType";
+    src: url("fonts/FINNTypeWebStrippet-Bold.ttf") format("truetype");
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
   html, body { background: #1a1a1a; min-height: 100vh; margin: 0; }
   body {
     display: flex; align-items: flex-start; justify-content: center;
@@ -49,6 +72,26 @@
     color: #fff;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  /* Defensive global button reset — every <button> in the prototype sets
+     its own visuals via either a class or inline style, so we kill the
+     browser default chrome here so that any new <button> we add doesn't
+     fall back to Chrome's chunky rounded-pill default when class styles
+     are missing or external CSS fails to load (e.g. on GitHub Pages). */
+  button {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    cursor: pointer;
   }
   #root { width: 100%; max-width: 1600px; }
   .layout {
