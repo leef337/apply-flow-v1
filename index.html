@@ -50,7 +50,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  #root { width: 100%; max-width: 1080px; }
+  #root { width: 100%; max-width: 1600px; }
   .layout {
     display: grid; grid-template-columns: 1fr 340px; gap: 40px;
     align-items: start;
@@ -213,20 +213,21 @@
   /* Slicker fade for transitions inside the agentic preparing rows.
      A touch slower + 4px upward drift makes each state swap feel
      deliberate — not a hard cut. */
+  /* Pure opacity crossfade — the previous 4px translate made each state swap
+     feel like a vertical jump. Locking the row layout + opacity-only fade
+     keeps text in place while it changes. */
   @keyframes arSoftFade {
-    from { opacity: 0; transform: translate3d(0, 4px, 0); }
-    to   { opacity: 1; transform: translate3d(0, 0,    0); }
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
-  .ar-soft-fade { animation: arSoftFade 380ms var(--ease-out) both; }
-  /* Gentle scale-pop for the green check landing in place of the spinner
-     when a section completes. Softer than the regular popin — no overshoot
-     so it reads as "settling into place" rather than "celebration". */
+  .ar-soft-fade { animation: arSoftFade 420ms cubic-bezier(0.45, 0, 0.25, 1) both; }
+  /* Soft settle for the green check landing in place of the spinner. No
+     scale overshoot — just a clean fade-in to match the apply-flow loader. */
   @keyframes arCheckLand {
-    0%   { transform: scale(0.5); opacity: 0; }
-    60%  { transform: scale(1.04); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
   }
-  .ar-check-land { animation: arCheckLand 440ms var(--ease-spring) both; }
+  .ar-check-land { animation: arCheckLand 440ms cubic-bezier(0.45, 0, 0.25, 1) both; }
   /* The whole row gets a quiet 200ms tint shift when its check lands —
      reinforces that the row is now active / done. Done at the parent
      level so it doesn't compete with the icon's own scale animation. */
@@ -255,19 +256,312 @@
     from { opacity: 0; transform: translate3d(0, 6px, 0); }
     to   { opacity: 1; transform: translate3d(0, 0,   0); }
   }
+  /* Softer skeleton shimmer — wider gradient, longer cycle, gentler contrast,
+     barely-there blue mid-stop so it reads as "AI thinking" rather than "loading bar". */
   @keyframes shimmer {
-    0% { background-position: -200px 0; }
-    100% { background-position: 200px 0; }
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
   .skeleton {
-    background: linear-gradient(90deg, #ececec 0%, #f6f6f6 50%, #ececec 100%);
-    background-size: 200px 100%;
-    animation: shimmer 1.9s ease-in-out infinite;
-    border-radius: 6px; display: inline-block;
+    background: linear-gradient(
+      100deg,
+      #eceef2 0%,
+      #f3f5f9 40%,
+      #eef2fb 50%,
+      #f3f5f9 60%,
+      #eceef2 100%
+    );
+    background-size: 240% 100%;
+    animation: shimmer 3.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+    border-radius: 9999px;
+    display: inline-block;
+  }
+  /* Very gentle breathing for the agentic loading disc — used in the
+     CSS fallback when the Rive runtime can't load. */
+  @keyframes aiBreath {
+    0%, 100% { transform: scale(1);     opacity: 0.94; }
+    50%      { transform: scale(1.025); opacity: 1;    }
+  }
+  /* Smooth linear rotation for the conic ring tail (CSS fallback only). */
+  @keyframes aiOrbit {
+    to { transform: rotate(360deg); }
+  }
+  /* Subtle FINN-blue text shimmer used over loading row titles. */
+  @keyframes aiSweep {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  /* Soft landing for completed status icons — fade in only, no scale overshoot,
+     so the check-circle doesn't visibly pop into existence. Replaces the older
+     "popin" curve for the apply-flow loading states. */
+  @keyframes softLand {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .ai-shimmer-text {
+    background: linear-gradient(
+      100deg,
+      #1d1d1d 0%,
+      #1d1d1d 42%,
+      rgba(0, 99, 251, 0.65) 50%,
+      #1d1d1d 58%,
+      #1d1d1d 100%
+    );
+    background-size: 240% 100%;
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+            color: transparent;
+    animation: aiSweep 3.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton,
+    .ai-shimmer-text { animation: none; }
   }
   @keyframes successflash {
     0% { box-shadow: 0 0 0 0 rgba(31, 138, 59, 0.45); }
     100% { box-shadow: 0 0 0 24px rgba(31, 138, 59, 0); }
+  }
+
+  /* ─── Desktop scene (Web · Desktop) ───────────────────────────────────
+     Renders when platform === "web" && webMode === "desktop". Replaces the
+     iPhone Device frame with a full-width FINN.no job-ad shell behind a
+     right-anchored 600px ApplyDrawer. Scoped to the agentic MVP. */
+  .desktop-scene {
+    position: relative;
+    width: 100%;
+    max-width: 1440px;
+    height: min(900px, calc(100vh - 64px));
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #ededed;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  .desktop-scene[data-bg-image="true"] {
+    background-image: url("assets/finn-jobad-desktop.png");
+    background-size: cover;
+    background-position: top center;
+    background-repeat: no-repeat;
+  }
+  .desktop-scene .fn-scroll {
+    width: 100%; height: 100%;
+    overflow: auto;
+    background: #fff;
+  }
+  /* FINN top bar — logo on the left, icon cluster on the right */
+  .fn-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px;
+    background: #fff;
+    border-bottom: 1px solid #ededed;
+    height: 56px; box-sizing: border-box;
+    position: sticky; top: 0; z-index: 2;
+  }
+  .fn-topbar .logo {
+    width: 64px; height: 22px;
+    display: inline-flex; align-items: center;
+  }
+  .fn-topbar .logo .square { width: 22px; height: 22px; border-radius: 4px; background: #0063fb; margin-right: 4px; }
+  .fn-topbar .logo .square.alt { background: #62E3FF; margin-right: 0; }
+  .fn-topbar .icons { display: inline-flex; align-items: center; gap: 18px; color: #1d1d1d; }
+  .fn-topbar .icons button {
+    appearance: none; border: 0; background: transparent;
+    width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+    color: #1d1d1d; cursor: pointer; border-radius: 9999px;
+  }
+  .fn-topbar .icons button:hover { background: #f0f0f3; }
+  /* Job-ad content area */
+  .fn-jobad {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 48px;
+    color: #1d1d1d;
+    font-family: var(--sys-text);
+  }
+  .fn-crumbs {
+    grid-column: 1 / -1;
+    font-size: 13px; color: #6b6b6b;
+    display: flex; gap: 6px; align-items: center;
+    margin-bottom: 18px;
+  }
+  .fn-crumbs a { color: #0063fb; text-decoration: none; }
+  .fn-crumbs span { color: #6b6b6b; }
+  .fn-actions-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .fn-actions-row .left { display: inline-flex; gap: 16px; }
+  .fn-actions-row button {
+    appearance: none; border: 0; background: transparent; padding: 6px;
+    width: 36px; height: 36px; border-radius: 9999px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #1d1d1d;
+  }
+  .fn-actions-row button:hover { background: #f0f0f3; }
+  .fn-actions-row .video {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 14px; font-weight: 600; color: #1d1d1d;
+    text-decoration: none; cursor: pointer;
+  }
+  .fn-title {
+    font-size: 36px; font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1.12;
+    margin: 0 0 10px;
+    color: #1d1d1d;
+  }
+  .fn-company { font-size: 16px; color: #1d1d1d; margin: 0 0 28px; }
+  .fn-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; max-width: 480px; }
+  .fn-meta .label { font-size: 13px; color: #6b6b6b; margin: 0 0 4px; }
+  .fn-meta .value { font-size: 15px; font-weight: 600; color: #1d1d1d; margin: 0; }
+  .fn-jobad h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; margin: 28px 0 10px; color: #1d1d1d; }
+  .fn-jobad h3 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; margin: 22px 0 6px; color: #1d1d1d; }
+  .fn-jobad p  { font-size: 15px; line-height: 1.6; margin: 0 0 14px; color: #1d1d1d; }
+  .fn-jobad ul { margin: 0 0 14px; padding-left: 22px; }
+  .fn-jobad ul li { font-size: 15px; line-height: 1.6; margin-bottom: 6px; color: #1d1d1d; position: relative; }
+  /* Sidebar */
+  .fn-side { display: flex; flex-direction: column; gap: 18px; }
+  .fn-side .brand-logo {
+    text-align: right; padding: 18px 4px 4px;
+    font: 700 22px/1 var(--sys-text); letter-spacing: -0.4px;
+  }
+  .fn-side .brand-logo small { display: block; font: 600 11px/1.4 var(--sys-text); color: #6b6b6b; letter-spacing: 0.04em; margin-top: 4px; }
+  .fn-side h4 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; margin: 0 0 14px; }
+  .fn-side .contact { font-size: 14px; line-height: 1.55; color: #1d1d1d; margin-bottom: 14px; }
+  .fn-side .contact .label { color: #1d1d1d; font-weight: 600; }
+  .fn-side .contact a { color: #0063fb; text-decoration: none; }
+  .fn-side .ctas { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 12px; }
+  .fn-side .cta-primary {
+    appearance: none; border: 0; cursor: pointer;
+    background: #0063fb; color: #fff;
+    font: 600 16px/1 var(--sys-text); letter-spacing: -0.1px;
+    padding: 14px 20px; border-radius: 10px;
+    transition: background 160ms var(--ease-out);
+  }
+  .fn-side .cta-primary:hover { background: #0050d4; }
+  .fn-side .cta-secondary {
+    appearance: none; cursor: pointer;
+    background: #fff; color: #0063fb;
+    border: 1px solid rgba(0,99,251,0.5);
+    font: 600 16px/1 var(--sys-text); letter-spacing: -0.1px;
+    padding: 14px 20px; border-radius: 10px;
+  }
+  .fn-side .cta-secondary:hover { background: #f5f9ff; }
+  .fn-side .fa-caption { font-size: 13px; color: #6b6b6b; line-height: 1.5; margin: 0; }
+  .fn-side .links { display: flex; flex-direction: column; gap: 12px; }
+  .fn-side .links a { color: #0063fb; font-size: 14px; line-height: 1.4; text-decoration: none; }
+
+  /* Backdrop + Apply drawer */
+  .apply-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.30);
+    z-index: 10;
+    animation: fadein 240ms cubic-bezier(0.45, 0, 0.25, 1);
+    cursor: pointer;
+  }
+  @keyframes drawerSlideIn {
+    from { transform: translate3d(20px, 0, 0); opacity: 0; }
+    to   { transform: translate3d(0,    0, 0); opacity: 1; }
+  }
+  .apply-drawer {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 480px; max-width: 100%;
+    background: #fff;
+    z-index: 11;
+    display: flex; flex-direction: column;
+    box-shadow: -8px 0 32px rgba(0,0,0,0.08);
+    animation: drawerSlideIn 360ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .apply-drawer .drawer-head {
+    padding: 18px 28px 14px;
+    border-bottom: 0.5px solid #ededed;
+    background: #fff;
+  }
+  .apply-drawer .drawer-back {
+    appearance: none; border: 0; background: transparent;
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #0063fb; cursor: pointer;
+    font: 600 14px/1 var(--sys-text); letter-spacing: -0.1px;
+    padding: 4px 0; margin-bottom: 12px;
+  }
+  .apply-drawer .drawer-back:hover { color: #0050d4; }
+  .apply-drawer h1 {
+    font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
+    margin: 0 0 6px; color: #1d1d1d;
+  }
+  .apply-drawer .drawer-sub {
+    font-size: 16px; font-weight: 600; color: #1d1d1d; margin: 0 0 14px;
+    letter-spacing: -0.2px;
+  }
+  .apply-drawer .drawer-lede {
+    font-size: 14px; color: #6b6b6b; line-height: 1.5; margin: 0 0 4px;
+  }
+  .apply-drawer .drawer-body {
+    flex: 1; overflow-y: auto;
+    padding: 4px 20px 20px;
+    display: flex; flex-direction: column;
+    background: #fff;
+  }
+  /* Section grouping — clean section header + divider hairline.
+     Matches the mobile section-sheet visual once you'd opened a section. */
+  .apply-drawer .drawer-section {
+    padding: 18px 0 8px;
+    border-top: 0.5px solid #ededed;
+  }
+  .apply-drawer .drawer-section:first-child { border-top: 0; padding-top: 4px; }
+  .apply-drawer .drawer-section-title {
+    font: 700 13px/1 var(--sys-text);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #6b6b6b;
+    margin: 0 0 18px;
+  }
+  /* Reuse the mobile .ar-rv field pattern verbatim inside the drawer so
+     headings, inputs, source pills, missing chips, and radio pills all
+     look identical to the mobile section-sheet content. The drawer just
+     widens the column. */
+  .apply-drawer .ar-rv { margin-bottom: 22px; }
+  .apply-drawer .drawer-foot {
+    padding: 16px 20px 22px;
+    border-top: 0.5px solid #ededed;
+    background: #fff;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .apply-drawer .drawer-head { padding: 18px 20px 14px; }
+  .apply-drawer h1 { font-size: 22px; }
+  /* File card inside Vedlegg — mirrors the mobile FileCard's CVOption look:
+     icon disk + filename + sub + chevron. */
+  .apply-drawer .file-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: #f7f7f9;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out);
+    width: 100%; box-sizing: border-box;
+    text-align: left; font-family: inherit;
+  }
+  .apply-drawer .file-card:hover { background: #f0f0f3; }
+  .apply-drawer .file-card .icon-disk {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: #fff; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .apply-drawer .file-card .meta { flex: 1; min-width: 0; }
+  .apply-drawer .file-card .name {
+    font: 600 15px/1.3 var(--sys-text); letter-spacing: -0.15px;
+    color: #1d1d1d; margin: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .apply-drawer .file-card .sub {
+    font: 500 12px/1.4 var(--sys-text); color: #6b6b6b; margin: 2px 0 0;
   }
 
   /* ─── Fullscreen mode (scanned via QR on a real device) ─── */
@@ -2881,7 +3175,9 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@rive-app/canvas@2.21.5"></script>
+<!-- Explicit UMD path — without /rive.js, unpkg may serve the ESM build
+     which never registers `window.rive` and silently fails. -->
+<script src="https://unpkg.com/@rive-app/canvas@2.21.5/rive.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -2972,11 +3268,33 @@ function AILogo({ size = 28, radius }) {
 }
 
 // ===========================================================
-// Rive spinner — loads the FINN AI spinner .riv file via the Rive web runtime
-// and renders it on a canvas. Falls back to a CSS spinner if the runtime or
-// asset fails to load (so the prototype still works offline / on slow nets).
+// FINN AI spinner — the .riv binary is inlined as base64 so RiveSpinner
+// works on any origin (file://, http://, GitHub Pages) without depending
+// on a fetch. Decoded to an ArrayBuffer the first time it's needed and
+// then reused for every mount.
 // ===========================================================
-function RiveSpinner({ size = 28, src }) {
+const FINN_AI_SPINNER_B64 = "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";
+let _finnAiSpinnerBuffer = null;
+function getFinnAiSpinnerBuffer() {
+  if (_finnAiSpinnerBuffer) return _finnAiSpinnerBuffer;
+  try {
+    const bin = atob(FINN_AI_SPINNER_B64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    _finnAiSpinnerBuffer = arr.buffer;
+    return _finnAiSpinnerBuffer;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ===========================================================
+// Rive spinner — renders the FINN AI spinner on a canvas. Loads from the
+// inlined buffer above (no fetch required, so works on file:// / GitHub
+// Pages / anywhere). Falls back to a polished CSS loader if the Rive
+// runtime hasn't loaded.
+// ===========================================================
+function RiveSpinner({ size = 32, src, artboard = "FINNLoading", stateMachine = "State Machine 1" }) {
   const canvasRef = useRef(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -2985,40 +3303,81 @@ function RiveSpinner({ size = 28, src }) {
       setFailed(true);
       return;
     }
+    const buffer = getFinnAiSpinnerBuffer();
+    if (!buffer && !src) {
+      setFailed(true);
+      return;
+    }
     let r;
+    let cancelled = false;
     try {
       r = new window.rive.Rive({
-        src,
+        // Prefer the inlined buffer over fetching src so this works on file://
+        ...(buffer ? { buffer } : { src }),
         canvas: canvasRef.current,
         autoplay: true,
-        fit: window.rive.Fit ? window.rive.Fit.Contain : "contain",
-        alignment: window.rive.Alignment ? window.rive.Alignment.Center : "center",
+        // FINNLoading is the artboard; "State Machine 1" is the actual state
+        // machine that drives the looping load animation. Both are required —
+        // passing only the artboard leaves the SM idle on its first frame.
+        artboard,
+        stateMachines: stateMachine,
+        // Modern layout API — keeps the artboard proportional inside the
+        // 32×32 slot regardless of the source artboard's aspect ratio.
+        layout: window.rive.Layout ? new window.rive.Layout({
+          fit:       window.rive.Fit.Contain,
+          alignment: window.rive.Alignment.Center,
+        }) : undefined,
+        onLoad: () => {
+          if (cancelled) return;
+          // Match the drawing surface to the CSS size at devicePixelRatio
+          // so the animation stays crisp on retina displays.
+          try { r.resizeDrawingSurfaceToCanvas(); } catch (_) {}
+        },
         onLoadError: () => setFailed(true),
       });
     } catch (e) {
       setFailed(true);
     }
+    const onResize = () => { try { r && r.resizeDrawingSurfaceToCanvas(); } catch (_) {} };
+    window.addEventListener("resize", onResize);
     return () => {
+      cancelled = true;
+      window.removeEventListener("resize", onResize);
       try { if (r && r.cleanup) r.cleanup(); } catch (_) {}
     };
-  }, [src]);
+  }, [src, stateMachine]);
 
   if (failed) {
+    // Softer fallback — matches the polish of the Rive loader: faint blue disc,
+    // thin conic comet-tail, gentle breathing. Used when the Rive runtime or
+    // .riv asset can't load (e.g. offline / blocked CDN).
     return (
       <span style={{
         width: size, height: size, borderRadius: 9999,
-        border: "2px solid rgba(0,99,251,0.20)",
-        borderTopColor: "#0063fb",
-        animation: "spin 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite",
-        display: "inline-block",
-      }} />
+        background: "radial-gradient(circle at 50% 50%, #f1f4fb 0%, #eef0f6 100%)",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        animation: "aiBreath 3.4s cubic-bezier(0.45, 0, 0.25, 1) infinite",
+        boxShadow: "inset 0 0 0 1px rgba(0, 99, 251, 0.05)",
+      }}>
+        <span style={{
+          width: Math.round(size * 0.68), height: Math.round(size * 0.68),
+          borderRadius: 9999,
+          background: "conic-gradient(from 0deg, rgba(0,99,251,0) 0deg, rgba(0,99,251,0.02) 160deg, rgba(0,99,251,0.28) 300deg, rgba(0,99,251,0.55) 358deg, rgba(0,99,251,0) 360deg)",
+          WebkitMask: "radial-gradient(circle, transparent 64%, #000 67%, #000 100%)",
+                  mask: "radial-gradient(circle, transparent 64%, #000 67%, #000 100%)",
+          filter: "blur(0.3px)",
+          animation: "aiOrbit 2.4s linear infinite",
+          display: "inline-block",
+        }} />
+      </span>
     );
   }
   return (
     <canvas
       ref={canvasRef}
       width={size * 2} height={size * 2}
-      style={{ width: size, height: size, display: "block" }}
+      style={{ width: size, height: size, display: "block", willChange: "transform" }}
+      aria-hidden="true"
     />
   );
 }
@@ -3560,6 +3919,9 @@ function PrimaryButton({ children, onClick, disabled, variant = "primary" }) {
         fontFamily: "inherit", fontSize, fontWeight,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
+        // Smooth the disabled→enabled flip so the button doesn't pop in
+        // brightness the moment loading finishes.
+        transition: "opacity 320ms cubic-bezier(0.4, 0, 0.2, 1), background 200ms var(--ease-out), color 200ms var(--ease-out)",
         letterSpacing: platform === "ios" ? -0.2 : 0.05,
         boxShadow: platform === "android" && variant === "primary"
           ? "0 1px 2px rgba(0,0,0,0.08), 0 2px 4px rgba(0,99,251,0.16)" : "none",
@@ -3832,8 +4194,6 @@ function ApplicationPreviewSheet({
   job, state, loadingPhase = "ready", version = "mvp",
   magicMode = false, magicStep = 0,
   showJobMatch = false,
-  showSourcePills = true,
-  showInSheetTabs = true,
   onSend, onClose, onOpenLetter, onOpenCV, onOpenEdit, onFillMissing, onOpenActivity,
 }) {
   const t = useT();
@@ -4026,12 +4386,7 @@ function ApplicationPreviewSheet({
         )}
 
         {/* In-sheet tabs: Application ↔ Job ad. Lets the seeker re-read the ad
-            without dismissing the draft. iOS segmented control look.
-            Gated by the `in-sheet-tabs` feature — drag the story card on
-            the Story Map between MVP / v1 / v2 to toggle. When hidden,
-            the sheet just shows the application body (sheetTab defaults
-            to "application"). */}
-        {showInSheetTabs && (
+            without dismissing the draft. iOS segmented control look. */}
         <div style={{ padding: "2px 16px 12px" }}>
           <div role="tablist" aria-label={t({ en: "Sheet view", no: "Visning" })}
             style={{
@@ -4082,7 +4437,6 @@ function ApplicationPreviewSheet({
             </button>
           </div>
         </div>
-        )}
 
         {anyMissing && sheetTab === "application" && (
           <div style={{
@@ -4214,22 +4568,44 @@ function ApplicationPreviewSheet({
             <PrimaryButton
               onClick={() => { haptic("ok"); onSend(); }}
               disabled={!allReady}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                {allReady ? (
-                  <><Icon name="send" size={18} color="#fff" stroke={2.2} />
-                    {t({ en: "Send application", no: "Send søknad" })}</>
-                ) : (
-                  <>
-                    <span style={{
-                      width: 16, height: 16, borderRadius: 9999,
-                      border: "2px solid rgba(255,255,255,0.4)",
-                      borderTopColor: "#fff",
-                      animation: "spin 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite",
-                      display: "inline-block",
-                    }} />
-                    {t({ en: "Drafting — keep scrolling", no: "Skriver utkast – bla videre" })}
-                  </>
-                )}
+              {/* Stacked content — Drafting and Send states share the SAME
+                  grid cell so the button sizes to the wider of the two and
+                  stays put. Pure opacity crossfade, no width changes. */}
+              <span style={{
+                display: "inline-grid",
+                gridTemplateColumns: "1fr",
+                gridTemplateRows: "1fr",
+                alignItems: "center", justifyItems: "center",
+                minHeight: 22,
+              }}>
+                <span style={{
+                  gridColumn: 1, gridRow: 1,
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  whiteSpace: "nowrap",
+                  opacity: allReady ? 0 : 1,
+                  transition: "opacity 320ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  pointerEvents: allReady ? "none" : "auto",
+                }}>
+                  <span style={{
+                    width: 16, height: 16, borderRadius: 9999,
+                    border: "2px solid rgba(255,255,255,0.4)",
+                    borderTopColor: "#fff",
+                    animation: "spin 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite",
+                    display: "inline-block",
+                  }} />
+                  {t({ en: "Drafting — keep scrolling", no: "Skriver utkast – bla videre" })}
+                </span>
+                <span style={{
+                  gridColumn: 1, gridRow: 1,
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  whiteSpace: "nowrap",
+                  opacity: allReady ? 1 : 0,
+                  transition: "opacity 360ms cubic-bezier(0.4, 0, 0.2, 1) 80ms",
+                  pointerEvents: allReady ? "auto" : "none",
+                }}>
+                  <Icon name="send" size={18} color="#fff" stroke={2.2} />
+                  {t({ en: "Send application", no: "Send søknad" })}
+                </span>
               </span>
             </PrimaryButton>
           )}
@@ -4244,70 +4620,72 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
   const isLoading = row.status === "loading";
   const label = editLabel ?? t({ en: "Edit", no: "Endre" });
 
-  const StatusIcon = () => {
+  // Keep the spinner mounted briefly after isLoading flips so the crossfade
+  // has a target to fade out against, instead of the canvas vanishing the
+  // moment React unmounts the loading branch.
+  const [spinnerLatched, setSpinnerLatched] = useState(isLoading);
+  useEffect(() => {
     if (isLoading) {
-      // Cover letter is the AI moment — use the FINN AI spinner Rive animation.
-      // Other rows (CV fetch, etc.) keep the lightweight CSS spinner.
-      if (row.id === "letter") {
-        return (
+      setSpinnerLatched(true);
+      return;
+    }
+    const t = setTimeout(() => setSpinnerLatched(false), 360);
+    return () => clearTimeout(t);
+  }, [isLoading]);
+
+  const StatusIcon = () => {
+    const isDone     = row.status === "done" || row.status === "ai";
+    const isQueued   = row.status === "queued";
+    const isMissing  = !isLoading && !isDone && !isQueued;
+    return (
+      <div style={{
+        position: "relative", width: 32, height: 32, flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {/* Spinner — stays mounted for ~360ms after isLoading flips so we
+            can fade it out instead of just dropping the canvas. */}
+        {spinnerLatched && (
           <div style={{
-            width: 32, height: 32,
+            position: "absolute", inset: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
+            opacity: isLoading ? 1 : 0,
+            transition: "opacity 320ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}>
             <RiveSpinner size={32} src="assets/finn_ai_spinner_allstates.riv" />
           </div>
-        );
-      }
-      return (
-        <div style={{
-          width: 32, height: 32, borderRadius: 9999,
-          background: "#f0f0f3",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
-        }}>
-          <span style={{
-            width: 16, height: 16, borderRadius: 9999,
-            border: "2px solid rgba(0,99,251,0.20)",
-            borderTopColor: "#0063fb",
-            animation: "spin 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite",
-            display: "inline-block",
+        )}
+        {/* Completed — check-circle. No scale overshoot; just a soft fade in
+            via CSS animation so it works whether the element mounts pre-loaded
+            (personalia/questions) or after loading→done (CV/letter). */}
+        {isDone && (
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            animation: "softLand 380ms cubic-bezier(0.4, 0, 0.2, 1) both",
+          }}>
+            <Icon name="check-circle" size={28} color="#1f8a3b" stroke={2} />
+          </div>
+        )}
+        {/* Queued — neutral outlined disc. */}
+        {isQueued && (
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: 9999,
+            border: "1.5px solid #d4d4d4", background: "#fff",
+            opacity: 0.85,
+            animation: "softLand 320ms cubic-bezier(0.4, 0, 0.2, 1) both",
           }} />
-        </div>
-      );
-    }
-    // "ai" rows render the same check-circle as "done"; the AI provenance is
-    // carried by the inline AI mark next to the title (see titleSuffix below)
-    // and the source pill (e.g. 'AI draft · editable').
-    if (row.status === "done" || row.status === "ai") {
-      return (
-        <div style={{
-          width: 32, height: 32,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0, animation: "popin 520ms var(--ease-spring)",
-        }}>
-          <Icon name="check-circle" size={28} color="#1f8a3b" stroke={2} />
-        </div>
-      );
-    }
-    if (row.status === "queued") {
-      return (
-        <div style={{
-          width: 32, height: 32, borderRadius: 9999,
-          border: "1.5px solid #d4d4d4", background: "#fff",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0, opacity: 0.85,
-        }} />
-      );
-    }
-    return (
-      <div style={{
-        width: 32, height: 32, borderRadius: 9999,
-        background: "#fadddd",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0,
-      }}>
-        <Icon name="alert" size={18} color="#cc1414" stroke={2.4} />
+        )}
+        {/* Missing — red alert. */}
+        {isMissing && (
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: 9999,
+            background: "#fadddd",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            animation: "softLand 380ms cubic-bezier(0.4, 0, 0.2, 1) both",
+          }}>
+            <Icon name="alert" size={18} color="#cc1414" stroke={2.4} />
+          </div>
+        )}
       </div>
     );
   };
@@ -4323,21 +4701,57 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
       borderTop: "0.5px solid #ededed",
       borderBottom: isLast ? "0.5px solid #ededed" : "none",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 16px" }}>
-        <StatusIcon />
-        <div style={{ flex: 1, minWidth: 0, animation: !isLoading ? "rowfade 260ms var(--ease-out)" : "none" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "16px 16px" }}>
+        {/* Status icon — fixed 32×32 slot so swap between spinner/check/queued
+            never shifts horizontal layout. Inner element fades in on mount. */}
+        <div style={{
+          width: 32, height: 32, flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <StatusIcon />
+        </div>
+        {/* Content column — height is locked by the always-rendered sub <p>
+            below, so the row never grows/shrinks when loading completes.
+            No more whole-content opacity flash; each element fades on its own. */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 8, marginBottom: 4,
-            flexWrap: "wrap",
+            flexWrap: "wrap", minHeight: 20,
           }}>
-            <p style={{
-              fontSize: 16, fontWeight: 600, color: "#1d1d1d",
-              margin: 0, lineHeight: 1.25, letterSpacing: -0.2,
-              display: "inline-flex", alignItems: "center", gap: 6,
-            }}>
-              {row.title}
-              {row.titleSuffix}
-            </p>
+            {/* Title — two stacked copies for a soft shimmer↔plain crossfade
+                instead of a hard class swap. The plain <p> is the one in
+                document flow (so titleSuffix size is reserved correctly);
+                the shimmer <p> is absolutely positioned on top of it. */}
+            <span style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <p
+                style={{
+                  fontSize: 16, fontWeight: 600, color: "#1d1d1d",
+                  margin: 0, lineHeight: 1.25, letterSpacing: -0.2,
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  opacity: isLoading ? 0 : 1,
+                  transition: "opacity 360ms cubic-bezier(0.4, 0, 0.2, 1) 80ms",
+                }}
+              >
+                {row.title}
+                {row.titleSuffix}
+              </p>
+              <p
+                className="ai-shimmer-text"
+                aria-hidden="true"
+                style={{
+                  position: "absolute", top: 0, left: 0,
+                  fontSize: 16, fontWeight: 600,
+                  margin: 0, lineHeight: 1.25, letterSpacing: -0.2,
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  whiteSpace: "nowrap",
+                  opacity: isLoading ? 1 : 0,
+                  transition: "opacity 280ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  pointerEvents: "none",
+                }}
+              >
+                {row.title}
+              </p>
+            </span>
             {row.source && (
               <span style={{
                 fontSize: 11, fontWeight: 500,
@@ -4347,15 +4761,32 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
               }}>{row.source}</span>
             )}
           </div>
-          {isLoading ? (
-            <span className="skeleton" style={{ width: 160, height: 12 }} />
-          ) : row.sub ? (
-            <p style={{
-              fontSize: 13,
-              color: row.status === "missing" ? "#cc1414" : "#6b6b6b",
-              margin: 0, lineHeight: 1.35,
-            }}>{row.sub}</p>
-          ) : null}
+          {/* Sub-area — height locked to the loaded text's height so the
+              skeleton/text crossfade never causes the row to grow. Both
+              children share the same coordinate space; opacities flip with
+              a tiny stagger so the swap feels like a soft handover. */}
+          <div style={{ position: "relative", minHeight: 18 }}>
+            {row.sub && (
+              <p style={{
+                fontSize: 13,
+                color: row.status === "missing" ? "#cc1414" : "#6b6b6b",
+                margin: 0, lineHeight: 1.35,
+                opacity: isLoading ? 0 : 1,
+                transition: "opacity 360ms cubic-bezier(0.4, 0, 0.2, 1) 80ms",
+              }}>{row.sub}</p>
+            )}
+            <span
+              className="skeleton"
+              style={{
+                position: "absolute", top: 4, left: 0,
+                width: 168, height: 10,
+                opacity: isLoading ? 1 : 0,
+                transition: "opacity 280ms cubic-bezier(0.4, 0, 0.2, 1)",
+                pointerEvents: "none",
+              }}
+              aria-hidden="true"
+            />
+          </div>
         </div>
         {row.preview && (
           <button
@@ -4451,16 +4882,14 @@ Let's talk.
 Lee Frost`,
 };
 
-function CoverLetterSheet({ onClose, onOpenSelectFile, enableAiLetter = true }) {
+function CoverLetterSheet({ onClose, onOpenSelectFile }) {
   const t = useT();
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
   const backdropH = statusBarH + 16;
   const [style, setStyle] = useState("formal");
-  // Initial text: AI draft when the feature is on, blank otherwise (the
-  // user is expected to write it themselves or pick a file).
-  const [text, setText] = useState(enableAiLetter ? LETTER_VARIANTS.formal : "");
+  const [text, setText] = useState(LETTER_VARIANTS.formal);
   const [edited, setEdited] = useState(false);
 
   function applyStyle(id) {
@@ -4519,10 +4948,8 @@ function CoverLetterSheet({ onClose, onOpenSelectFile, enableAiLetter = true }) 
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 8,
           }}>
-            {enableAiLetter
-              ? t({ en: "Writing Assistant", no: "Skriveassistent" })
-              : t({ en: "Cover letter",      no: "Søknadsbrev" })}
-            {enableAiLetter && <AILogo size={18} />}
+            {t({ en: "Writing Assistant", no: "Skriveassistent" })}
+            <AILogo size={18} />
           </h2>
           {/* Invisible spacer keeps the title optically centred */}
           <div style={{ width: 36, height: 36, flexShrink: 0 }} aria-hidden="true" />
@@ -4534,21 +4961,12 @@ function CoverLetterSheet({ onClose, onOpenSelectFile, enableAiLetter = true }) 
           textAlign: "center", letterSpacing: -0.1,
           maxWidth: 320, marginLeft: "auto", marginRight: "auto",
         }}>
-          {enableAiLetter
-            ? t({
-                en: "Pick a style to draft, or write your own below.",
-                no: "Velg en stil – eller skriv selv nedenfor.",
-              })
-            : t({
-                en: "Upload your cover letter or write it below.",
-                no: "Last opp søknadsbrevet ditt eller skriv det nedenfor.",
-              })}
+          {t({
+            en: "Pick a style to draft, or write your own below.",
+            no: "Velg en stil – eller skriv selv nedenfor.",
+          })}
         </p>
 
-        {/* AI style pills + 'or' divider — only when the ai-letter feature
-            is on. When off, the sheet falls back to upload + free-text. */}
-        {enableAiLetter && (
-        <>
         <div style={{
           padding: "0 16px 14px",
           display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center",
@@ -4590,8 +5008,6 @@ function CoverLetterSheet({ onClose, onOpenSelectFile, enableAiLetter = true }) 
           }}>{t({ en: "or", no: "eller" })}</span>
           <div style={{ flex: 1, height: 1, background: "#ededed" }} />
         </div>
-        </>
-        )}
 
         {/* Prominent alternative — upload or select your own */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
@@ -5488,7 +5904,7 @@ function InputField({ label, value, onChange, type = "text", autoComplete, place
   const [focused, setFocused] = useState(false);
   // Filled-card style: label above the input in sentence case, input
   // itself is a grey #f7f7f9 rounded card with finn-blue border on
-  // focus. Used everywhere across MVP, 1.0, 2.0 and Agentic so the
+  // focus. Used everywhere across MVP (Agentic), 1.0, 1.2 and 2.0 so the
   // form-input language is consistent.
   return (
     <div style={{
@@ -6047,7 +6463,7 @@ function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts",
 // Each field is tappable to edit inline; on edit, a "Redigert" chip
 // appears next to that field's label so reviewers see what the user
 // touched after the agent's draft.
-function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, showInSheetTabs = true }) {
+function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
   const t = useT();
   const { statusBarH, homeArea } = useMetrics();
   const platform = usePlatform();
@@ -6242,7 +6658,7 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
           <span className="ar-rv-heading-label">{LABELS[k]}</span>
           {isMissing
             ? <span className="ar-rv-missing">{t({ en: "Missing", no: "Mangler" })}</span>
-            : (src && showSourcePills && <span className="ar-rv-source">{t(src)}</span>)}
+            : (src && <span className="ar-rv-source">{t(src)}</span>)}
           {f.e && !isMissing && <EditedChip />}
         </p>
         {control}
@@ -6257,17 +6673,23 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
 
   // File rows reuse the same CVOption card the CV / cover-letter picker uses
   // elsewhere in the app — same icon disk, same chevron, same selection
-  // language. Tap to swap → fakes a fresh file pick. Source attribution
-  // sits inline to the right of the heading as a light-blue tag.
+  // language. Tapping a card opens the real Easy Apply picker → preview
+  // flow (CV picker → CVPreviewSheet) or the AI Writing Assistant sheet
+  // (Cover letter), routed through the App via onOpenCV / onOpenLetter
+  // callbacks so the overlays stack above this section sheet.
   function FileCard({ k }) {
     const f = fields[k];
     const src = SOURCE_BY_KEY[k];
-    const swap = () => update(k, k === "cv" ? "CV_new.pdf" : "Cover_letter_new.doc");
+    const open = () => {
+      haptic("tap");
+      if (k === "cv") onOpenCV?.();
+      else onOpenLetter?.();
+    };
     return (
       <div className="ar-rv">
         <p className="ar-rv-heading">
           <span className="ar-rv-heading-label">{LABELS[k]}</span>
-          {src && showSourcePills && <span className="ar-rv-source">{t(src)}</span>}
+          {src && <span className="ar-rv-source">{t(src)}</span>}
           {f.e && <EditedChip />}
         </p>
         <CVOption
@@ -6275,7 +6697,7 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
           title={f.v || t({ en: "No file selected", no: "Ingen fil valgt" })}
           sub={t({ en: "Tap to change", no: "Trykk for å bytte" })}
           showChevron
-          onClick={swap}
+          onClick={open}
         />
       </div>
     );
@@ -6304,21 +6726,18 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
     // Capture which "leaf" animation to play for the leading icon. Keys
     // force React to unmount/mount on status change so each variant gets
     // its arSoftFade / arCheckLand entrance.
+    // Use the same FINN AI Rive spinner as the easy-apply flow when the
+    // section is actively working. Queued stays as the neutral outlined
+    // disc; done lands the check-circle with a clean opacity fade (no
+    // scale overshoot).
     let leadingIcon;
     if (loading) {
       leadingIcon = (
         <div key="working" className="ar-soft-fade" style={{
-          width: 32, height: 32, borderRadius: 9999,
-          background: "#f0f0f3",
+          width: 32, height: 32,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <span style={{
-            width: 16, height: 16, borderRadius: 9999,
-            border: "2px solid rgba(0,99,251,0.20)",
-            borderTopColor: "#0063fb",
-            animation: "spin 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite",
-            display: "inline-block",
-          }} />
+          <RiveSpinner size={32} src="assets/finn_ai_spinner_allstates.riv" />
         </div>
       );
     } else if (queued) {
@@ -6347,8 +6766,11 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
           aria-busy={loading || undefined}
           style={{
             cursor: idle ? "default" : "pointer",
-            opacity: queued ? 0.7 : 1,
-            transition: "opacity 380ms var(--ease-out)",
+            // Queued rows are visually dimmer via softer text/icon colours,
+            // not via row-wide opacity — opacity transitions made the row's
+            // title and sub-text appear to "flash" the moment the row
+            // started working. Each row is now visually inert except for
+            // its leading icon crossfade and the per-row text content.
           }}>
           <span className="ar-row-check" aria-hidden="true">
             {leadingIcon}
@@ -6356,20 +6778,35 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
           <span className="ar-row-text">
             <span className="ar-row-title">
               {title}
-              {edited && !idle && <span key="chip" className="ar-soft-fade" style={{ display: "inline-flex" }}><EditedChip /></span>}
+              {edited && !idle && (
+                <span style={{
+                  display: "inline-flex",
+                  opacity: 1,
+                  transition: "opacity 380ms cubic-bezier(0.45, 0, 0.25, 1)",
+                }}><EditedChip /></span>
+              )}
             </span>
-            {/* Key-driven remount so the sub-line softly fades whenever its
-                text changes (Waiting → Analysing → summary, etc). */}
-            <span key={String(sub)} className="ar-row-sub ar-soft-fade">
+            {/* Sub-line — stable element. Text changes in place without a
+                key-driven remount, so updates in one row don't trigger any
+                visible animation that the eye reads as the whole list
+                flashing. The leading icon crossfade alone signals the row's
+                completion. */}
+            <span className="ar-row-sub">
               {sub}
             </span>
           </span>
-          {!idle && (
-            <span key="edit" className="ar-row-edit ar-soft-fade">
-              {t({ en: "Edit", no: "Endre" })}
-              <Icon name="chevron-right" size={16} color="#0063fb" stroke={2.2} />
-            </span>
-          )}
+          {/* Edit affordance — always rendered so the row's width stays
+              stable when a section transitions from working/queued → done.
+              Opacity flips with the idle state so it fades in instead of
+              taking layout space on completion. */}
+          <span className="ar-row-edit" style={{
+            opacity: idle ? 0 : 1,
+            transition: "opacity 380ms cubic-bezier(0.45, 0, 0.25, 1)",
+            pointerEvents: idle ? "none" : "auto",
+          }}>
+            {t({ en: "Edit", no: "Endre" })}
+            <Icon name="chevron-right" size={16} color="#0063fb" stroke={2.2} />
+          </span>
         </button>
       </div>
     );
@@ -6385,74 +6822,88 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
   }
 
   // ─── Sheet body — Application tab ──────────────────────────────────
-  // The agentic application body. Phases:
-  //   - preparing: section rows shown with per-section spinners — Personal
-  //                details completes first, then Attachments, then
-  //                Additional questions, each ~1.5s, ~4.5s total
-  //   - ready:     lede + 3 collapsible sections + confirm switch
-  const applicationBody = phase === "preparing" ? (
+  // Unified structure across BOTH phases so React reconciles every
+  // SectionRow at the same DOM position. Phase-specific UI (the prepare
+  // notice, the lede, the confirm card) crossfades in place instead of
+  // restructuring the body. This kills the "menu + text flashing" that
+  // happened when the whole subtree swapped at phase=ready.
+  const isPreparing = phase === "preparing";
+  const applicationBody = (
     <>
-      <div style={{ padding: "16px 20px 8px" }}>
-        <div key="prep-notice" className="ar-soft-fade" style={{
-          padding: "14px 16px",
-          background: "#eaf2ff",
-          border: "1px solid rgba(0,99,251,0.16)",
-          borderRadius: 14,
-          color: "#1d1d1d",
-          font: "500 14px/1.45 var(--sys-text)",
-          letterSpacing: -0.1,
-        }} role="status" aria-live="polite">
-          {t({
-            en: "Preparing your application! Please do not close the page.",
-            no: "Forbereder søknaden din! Ikke lukk siden.",
-          })}
+      {/* Header band — preparing notice ↔ lede live in the same grid cell
+          and crossfade. The cell sizes to the taller of the two so the
+          rows underneath don't shift vertically when phase flips. */}
+      <div style={{ padding: "14px 20px 6px" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr",
+          gridTemplateRows: "1fr",
+        }}>
+          <div style={{
+            gridColumn: 1, gridRow: 1,
+            padding: "14px 16px",
+            background: "#eaf2ff",
+            border: "1px solid rgba(0,99,251,0.16)",
+            borderRadius: 14,
+            color: "#1d1d1d",
+            font: "500 14px/1.45 var(--sys-text)",
+            letterSpacing: -0.1,
+            opacity: isPreparing ? 1 : 0,
+            transition: "opacity 380ms cubic-bezier(0.45, 0, 0.25, 1)",
+            pointerEvents: isPreparing ? "auto" : "none",
+          }} role="status" aria-live="polite">
+            {t({
+              en: "Preparing your application! Please do not close the page.",
+              no: "Forbereder søknaden din! Ikke lukk siden.",
+            })}
+          </div>
+          <p className="ar-lede" style={{
+            gridColumn: 1, gridRow: 1,
+            margin: 0,
+            opacity: isPreparing ? 0 : 1,
+            transition: "opacity 420ms cubic-bezier(0.45, 0, 0.25, 1) 100ms",
+            pointerEvents: isPreparing ? "none" : "auto",
+          }}>
+            {t({
+              en: "We've auto-filled your application based on your Job profile. Review and confirm, and we'll send it for you.",
+              no: "Vi har automatisk fylt ut søknaden din basert på Jobbprofilen din. Se gjennom og bekreft, så sender vi for deg.",
+            })}
+          </p>
         </div>
       </div>
+
+      {/* Rows — same JSX shape in both phases. Sub-text picks up the
+          preparing-phase copy automatically; once done, it falls through
+          to the section's final summary. */}
       <div className="ar-rows">
         <SectionRow id="personalia"
-          status={sectionPrep.personalia}
+          status={isPreparing ? sectionPrep.personalia : "done"}
           title={t({ en: "Personal details", no: "Personopplysninger" })}
-          sub={sectionPrep.personalia === "done" ? personaliaSub : prepSub("personalia")} />
+          sub={(isPreparing && sectionPrep.personalia !== "done")
+            ? prepSub("personalia") : personaliaSub}
+          edited={!isPreparing && personaliaEdited} />
         <SectionRow id="vedlegg"
-          status={sectionPrep.vedlegg}
+          status={isPreparing ? sectionPrep.vedlegg : "done"}
           title={t({ en: "Attachments", no: "Vedlegg" })}
-          sub={sectionPrep.vedlegg === "done" ? vedleggSub : prepSub("vedlegg")} />
+          sub={(isPreparing && sectionPrep.vedlegg !== "done")
+            ? prepSub("vedlegg") : vedleggSub}
+          edited={!isPreparing && vedleggEdited} />
         <SectionRow id="questions"
-          status={sectionPrep.questions}
+          status={isPreparing ? sectionPrep.questions : "done"}
           title={t({ en: "Additional questions", no: "Tilleggsspørsmål" })}
-          sub={sectionPrep.questions === "done" ? questionsSub : prepSub("questions")} />
-      </div>
-    </>
-  ) : (
-    <>
-      <div style={{ padding: "12px 20px 4px" }}>
-        <p key="lede-ready" className="ar-lede ar-soft-fade">
-          {t({
-            en: "We've auto-filled your application based on your Job profile. Review and confirm, and we'll send it for you.",
-            no: "Vi har automatisk fylt ut søknaden din basert på Jobbprofilen din. Se gjennom og bekreft, så sender vi for deg.",
-          })}
-        </p>
+          sub={(isPreparing && sectionPrep.questions !== "done")
+            ? prepSub("questions") : questionsSub}
+          edited={!isPreparing && questionsEdited} />
       </div>
 
-      <div className="ar-rows">
-        <SectionRow
-          id="personalia"
-          title={t({ en: "Personal details", no: "Personopplysninger" })}
-          sub={personaliaSub}
-          edited={personaliaEdited} />
-        <SectionRow
-          id="vedlegg"
-          title={t({ en: "Attachments", no: "Vedlegg" })}
-          sub={vedleggSub}
-          edited={vedleggEdited} />
-        <SectionRow
-          id="questions"
-          title={t({ en: "Additional questions", no: "Tilleggsspørsmål" })}
-          sub={questionsSub}
-          edited={questionsEdited} />
-      </div>
-
-      <div className="ar-soft-fade" style={{ padding: "20px 20px 12px", animationDelay: "120ms" }}>
+      {/* Confirm card — fades in at phase=ready but its container reserves
+          space so the rows above don't shift down when it appears. */}
+      <div style={{
+        padding: "20px 20px 12px",
+        opacity: isPreparing ? 0 : 1,
+        transition: "opacity 420ms cubic-bezier(0.45, 0, 0.25, 1) 160ms",
+        pointerEvents: isPreparing ? "none" : "auto",
+      }}>
         <div className="ar-confirm-card">
           <IOSSwitch
             checked={confirmed}
@@ -6502,7 +6953,7 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
               letterSpacing: -0.05,
             }}>{t({ en: "Optional", no: "Valgfri" })}</span>
           </span>
-          {showSourcePills && <span className="ar-rv-source">{t({ en: "From your profile", no: "Fra profilen din" })}</span>}
+          <span className="ar-rv-source">{t({ en: "From your profile", no: "Fra profilen din" })}</span>
           {fields.linkedin.e && <EditedChip />}
         </p>
         {editing === "linkedin" ? (
@@ -6605,10 +7056,7 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
           </button>
         </div>
 
-        {/* In-sheet tabs: Application ↔ Job ad. Identical to MVP.
-            Gated by the `in-sheet-tabs` feature — toggled from the
-            Story Map. */}
-        {showInSheetTabs && (
+        {/* In-sheet tabs: Application ↔ Job ad. Identical to MVP. */}
         <div style={{ padding: "2px 16px 12px" }}>
           <div role="tablist" aria-label={t({ en: "Sheet view", no: "Visning" })}
             style={{
@@ -6657,7 +7105,6 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
             </button>
           </div>
         </div>
-        )}
 
         {/* Body — scrolls. Swaps between Application content and Job ad. */}
         <div className="scroll-area" style={{ flex: 1, overflowY: "auto" }}>
@@ -6673,19 +7120,23 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
           )}
         </div>
 
-        {/* Footer — pinned Send (only on application tab, ready phase) */}
-        {sheetTab === "application" && phase === "ready" && (
-          <div className="ar-soft-fade" style={{
+        {/* Footer — ALWAYS reserved when on the application tab so the
+            scroll area doesn't shrink (and the rows reflow upward) when
+            loading completes. Send button stays disabled+dim until phase
+            is ready and the user has flicked the confirm switch. */}
+        {sheetTab === "application" && (
+          <div style={{
             padding: "12px 16px",
             paddingBottom: `calc(12px + ${homeArea}px)`,
             background: "#fff",
             borderTop: "0.5px solid rgba(0,0,0,0.06)",
             display: "flex", flexDirection: "column", gap: 8,
-            animationDelay: "180ms",
+            opacity: phase === "ready" ? 1 : 0.4,
+            transition: "opacity 400ms cubic-bezier(0.45, 0, 0.25, 1)",
           }}>
             <PrimaryButton
-              onClick={() => { if (confirmed) onSend(); }}
-              disabled={!confirmed}>
+              onClick={() => { if (phase === "ready" && confirmed) onSend(); }}
+              disabled={phase !== "ready" || !confirmed}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <Icon name="send" size={18} color="#fff" stroke={2.2} />
                 {t({ en: "Send application", no: "Send søknad" })}
@@ -6764,6 +7215,405 @@ function AgenticReviewScreen({ job, onClose, onSend, showSourcePills = true, sho
       </div>
     )}
     </>
+  );
+}
+
+// ─── DesktopApplyScene ──────────────────────────────────────────────────────
+// Web · Desktop view for the agentic MVP. Renders a FINN.no job-ad shell
+// (CSS recreation by default; swap in assets/finn-jobad-desktop.png if a
+// real screenshot is dropped in) with a 600px right-anchored Apply drawer
+// over a dimmed backdrop. Drawer auto-opens on mount so the apply review
+// is the first thing the user sees — matching the share's sketch.
+function DesktopApplyScene({ onSend }) {
+  const t = useT();
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
+  const sceneRef = useRef(null);
+  // If the optional finn-jobad-desktop.png is present, set data-bg-image so
+  // the CSS uses it as the background instead of the CSS recreation below.
+  const [hasBgImage, setHasBgImage] = useState(false);
+  useEffect(() => {
+    const img = new Image();
+    img.onload  = () => setHasBgImage(true);
+    img.onerror = () => setHasBgImage(false);
+    img.src = "assets/finn-jobad-desktop.png";
+  }, []);
+
+  return (
+    <div ref={sceneRef} className="desktop-scene" data-bg-image={hasBgImage ? "true" : "false"}>
+      {/* CSS-recreated FINN.no shell — used when no .png is provided. */}
+      {!hasBgImage && (
+        <div className="fn-scroll">
+          <div className="fn-topbar">
+            <div className="logo">
+              <span className="square" />
+              <span className="square alt" />
+            </div>
+            <div className="icons">
+              <button aria-label="Notifications"><Icon name="bell" size={20} stroke={2} /></button>
+              <button aria-label="Post job"><Icon name="plus-circle" size={22} stroke={2} /></button>
+              <button aria-label="Messages"><Icon name="message-square" size={20} stroke={2} /></button>
+              <button aria-label="Profile"><Icon name="user-circle" size={22} stroke={2} /></button>
+            </div>
+          </div>
+
+          <div className="fn-jobad">
+            <div className="fn-crumbs">
+              <a href="#">FINN</a><span>/</span>
+              <a href="#">Jobb</a><span>/</span>
+              <a href="#">Søk</a><span>/</span>
+              <a href="#">Oslo</a><span>/</span>
+              <a href="#">Vinderen</a>
+            </div>
+
+            <div>
+              <div className="fn-actions-row">
+                <div className="left">
+                  <button aria-label="Favourite"><Icon name="bookmark" size={20} stroke={2} /></button>
+                  <button aria-label="Share"><Icon name="share" size={20} stroke={2} /></button>
+                </div>
+                <a className="video" href="#" aria-label="Watch video">
+                  <Icon name="play-circle" size={20} stroke={2} /> Video
+                </a>
+              </div>
+
+              <h1 className="fn-title">Vil du lede designere som former fremtidens politi?</h1>
+              <p className="fn-company">Politiets IT-enhet</p>
+
+              <div className="fn-meta">
+                <div>
+                  <p className="label">Frist</p>
+                  <p className="value">28.01.2026</p>
+                </div>
+                <div>
+                  <p className="label">Ansettelsesform</p>
+                  <p className="value">Fast</p>
+                </div>
+              </div>
+
+              <h2>Fag- og personalleder</h2>
+
+              <h3>Om stillingen</h3>
+              <p>Politiets IT-enhet (PIT) består av over 800 engasjerte medarbeidere som skaper smarte løsninger for politiet. PIT skal understøtte digitalisering av politiet og etaten skal gjennomgå en omfattende produktorientering. Målsetningen er å forbedre etatens tjenester og produkter for å bedre møte behovene til våre brukere. Ved bruk av fremtidsrettet teknologi skal etaten fornye, forenkle og forbedre. Politiets IT-enhet har ansvar for at eksisterende og fremtidige tjenester er i samsvar med lov og forskrift.</p>
+              <p>Nå trenger vi deg som vet at digitalisering handler om mer enn digitale løsninger. Du har et hjerte for fag og folk, liker å lede og veilede folk, og er glad i en skikkelig utfordring. Du er en uredd type som skjønner at vi har litt av en jobb å gjøre, og som heller motiveres enn skremmes av dette. Du tør å feile, utfordrer etablerte sannheter når det trengs og jobber hardt for at vi skal gå i riktig retning. Vi ønsker oss at du har erfaring fra å lede og veilede andre designere.</p>
+              <p>Som personalleder vil du, sammen med lederteamet for design og brukeropplevelse, videreutvikle både fag og mennesker, bidra til økt produktorientering og sikre at politiet leverer godt på samfunnsoppdraget — også i en verden i rask endring.</p>
+
+              <h3>Arbeidsoppgaver</h3>
+              <ul>
+                <li>bidra til at Design & brukeropplevelse er et godt og sterkt fagmiljø for politiet og for de ansatte.</li>
+                <li>ha fag- og personalansvar for en gruppe designere.</li>
+                <li>sikre kvalitet og kompetanseutvikling på tvers av prosjektene.</li>
+                <li>jobbe tett med andre seksjonsledere, produkteiere og fagledere.</li>
+              </ul>
+            </div>
+
+            <aside className="fn-side">
+              <div className="brand-logo">
+                POLITIET
+                <small>POLITIETS IT-ENHET</small>
+              </div>
+
+              <div>
+                <h4>Spørsmål om stillingen</h4>
+                <div className="contact">
+                  <span className="label">Kontaktperson:</span> Emmy Helene Reehorst<br />
+                  <span className="label">Stillingstittel:</span> Fung. Seksjonsleder Design &amp; Brukeropplevelse<br />
+                  <span className="label">Mobil:</span> <a href="#">99 44 73 20</a><br />
+                  <a href="#">Send melding</a>
+                </div>
+                <div className="contact">
+                  <span className="label">Kontaktperson:</span> Ove Dalen<br />
+                  <span className="label">Stillingstittel:</span> Personalleder Design og Brukeropplevelse<br />
+                  <span className="label">Mobil:</span> <a href="#">91 85 91 80</a><br />
+                  <a href="#">Send melding</a>
+                </div>
+              </div>
+
+              <div className="ctas">
+                <button className="cta-primary" onClick={() => setDrawerOpen(true)}>Fast Apply</button>
+                <button className="cta-secondary">Apply directly</button>
+              </div>
+              <p className="fa-caption">Fast apply fills out the application for you. You can review and edit before submitting.</p>
+
+              <div className="links">
+                <a href="#">Bli kjent med Politiets IT-enhet (PIT): Vi bidrar til å løse politiets samfunnsoppdrag med teknologi som virkemiddel</a>
+                <a href="#">Flere stillinger fra Politiets IT-enhet (PIT)</a>
+              </div>
+
+              <button className="cta-secondary" type="button">Følg firma</button>
+              <p className="fa-caption">1789 følger dette firmaet</p>
+            </aside>
+          </div>
+        </div>
+      )}
+
+      {/* When the bg image is present, render a transparent click-target so
+          the drawer can re-open from any of the screenshot's apply CTAs. */}
+      {hasBgImage && !drawerOpen && (
+        <button
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Open Fast Apply"
+          style={{
+            position: "absolute", inset: 0, background: "transparent",
+            border: 0, cursor: "pointer",
+          }} />
+      )}
+
+      {/* Backdrop + drawer */}
+      {drawerOpen && (
+        <>
+          <div className="apply-backdrop" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
+          <ApplyDrawer
+            onClose={() => setDrawerOpen(false)}
+            confirmed={confirmed}
+            onConfirmedChange={setConfirmed}
+            onSend={() => { if (confirmed) onSend?.(); }}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+// ApplyDrawer — the 480px right-anchored drawer that hosts the agentic
+// review content on desktop. Mirrors the AgenticReviewScreen so labels,
+// values, and visuals (.ar-rv field pattern, radio pills, source pills,
+// edited chips) are identical to what the mobile section-sheets show —
+// just stacked inline since desktop has the vertical room.
+function ApplyDrawer({ onClose, confirmed, onConfirmedChange, onSend }) {
+  const t = useT();
+  // Same auto-filled initial state as AgenticReviewScreen so the demo
+  // lands on the exact mobile values.
+  const [fields, setFields] = useState({
+    firstName: { v: "George",                e: false },
+    lastName:  { v: "Town",                  e: false },
+    email:     { v: "georgetownt@gmail.com", e: false },
+    phone:     { v: "98 73 88 21",           e: false },
+    gender:    { v: "Male",                  e: false },
+    linkedin:  { v: "Georgetownlinkedin",    e: false },
+    cv:        { v: "CV_2025.pdf",           e: false },
+    letter:    { v: "Cover_Letter_2025.doc", e: false },
+    qNorsk:    { v: "Yes",                   e: false },
+    qExp:      { v: "10+ years",             e: false },
+  });
+  const [includeLinkedin, setIncludeLinkedin] = useState(true);
+  function update(key, v) {
+    setFields(prev => ({ ...prev, [key]: { v, e: v !== prev[key].v ? true : prev[key].e } }));
+  }
+
+  // Labels are the same as AgenticReviewScreen's LABELS map.
+  const LABELS = {
+    firstName: t({ en: "First name", no: "Fornavn" }),
+    lastName:  t({ en: "Last name",  no: "Etternavn" }),
+    email:     t({ en: "Email",      no: "Epost" }),
+    phone:     t({ en: "Phone number", no: "Telefonnummer" }),
+    gender:    t({ en: "Gender",     no: "Kjønn" }),
+    linkedin:  t({ en: "LinkedIn URL", no: "LinkedIn-lenke" }),
+    cv:        t({ en: "CV",         no: "CV" }),
+    letter:    t({ en: "Cover letter", no: "Søknadsbrev" }),
+    qNorsk:    t({ en: "Do you speak fluent Norwegian?", no: "Behersker du norsk flytende?" }),
+    qExp:      t({ en: "How many years of relevant experience do you have?", no: "Hvor mange års relevant erfaring har du?" }),
+  };
+
+  const blockingFields = !confirmed;
+
+  return (
+    <aside
+      className="apply-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t({ en: "Review your application", no: "Se gjennom søknaden din" })}
+    >
+      <header className="drawer-head">
+        <button className="drawer-back" onClick={onClose}>
+          <Icon name="chevron-left" size={16} stroke={2.4} />
+          {t({ en: "Back to job page", no: "Tilbake til annonsen" })}
+        </button>
+        <h1>{t({ en: "Review your application", no: "Se gjennom søknaden din" })}</h1>
+        <p className="drawer-sub">Fag- og personalleder — Politiets IT-enhet</p>
+        <p className="drawer-lede">{t({
+          en: "We've auto-filled your application based on your Job profile. Review and confirm, and we'll send it for you.",
+          no: "Vi har automatisk fylt ut søknaden din basert på Jobbprofilen din. Se gjennom og bekreft, så sender vi for deg.",
+        })}</p>
+      </header>
+
+      <div className="drawer-body">
+        {/* Personal details — same field set as the mobile Personalia sheet. */}
+        <section className="drawer-section">
+          <p className="drawer-section-title">
+            {t({ en: "Personal details", no: "Personopplysninger" })}
+          </p>
+          <DrawerField label={LABELS.firstName} field={fields.firstName} onChange={(v) => update("firstName", v)} autoComplete="given-name" />
+          <DrawerField label={LABELS.lastName}  field={fields.lastName}  onChange={(v) => update("lastName",  v)} autoComplete="family-name" />
+          <DrawerField label={LABELS.email}     field={fields.email}     onChange={(v) => update("email",     v)} type="email" autoComplete="email" />
+          <DrawerField label={LABELS.phone}     field={fields.phone}     onChange={(v) => update("phone",     v)} type="tel"   autoComplete="tel" />
+          <DrawerRadio label={LABELS.gender}    field={fields.gender}    onChange={(v) => update("gender",    v)}
+            options={[
+              { id: "Male",   label: t({ en: "Male",   no: "Mann"   }) },
+              { id: "Female", label: t({ en: "Female", no: "Kvinne" }) },
+              { id: "Other",  label: t({ en: "Other",  no: "Annet"  }) },
+            ]} />
+          <div className="ar-rv">
+            <p className="ar-rv-heading">
+              <span className="ar-rv-heading-label">{LABELS.linkedin}</span>
+              <span className="ar-rv-source" style={{ background: "#f0f0f3", color: "#6b6b6b" }}>
+                {t({ en: "Not required", no: "Valgfritt" })}
+              </span>
+            </p>
+            <DrawerInput value={fields.linkedin.v} onChange={(v) => update("linkedin", v)} />
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, color: "#1d1d1d", marginTop: 10, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={includeLinkedin}
+                onChange={(e) => setIncludeLinkedin(e.target.checked)}
+                style={{ width: 16, height: 16 }}
+              />
+              {t({ en: "Add this optional information to my application",
+                   no: "Inkluder denne valgfrie informasjonen i søknaden min" })}
+            </label>
+          </div>
+        </section>
+
+        {/* Vedlegg — CV + Cover letter, FileCard-style. */}
+        <section className="drawer-section">
+          <p className="drawer-section-title">
+            {t({ en: "Attachments", no: "Vedlegg" })}
+          </p>
+          <DrawerFile label={LABELS.cv}     file={fields.cv}     icon="file"
+            onSwap={() => update("cv",     "CV_new.pdf")} />
+          <DrawerFile label={LABELS.letter} file={fields.letter} icon="sparkle"
+            onSwap={() => update("letter", "Cover_letter_new.doc")} />
+        </section>
+
+        {/* Tilleggsspørsmål — qNorsk + qExp. */}
+        <section className="drawer-section">
+          <p className="drawer-section-title">
+            {t({ en: "Additional questions", no: "Tilleggsspørsmål" })}
+          </p>
+          <DrawerRadio label={LABELS.qNorsk} field={fields.qNorsk}
+            onChange={(v) => update("qNorsk", v)}
+            options={[
+              { id: "Yes", label: t({ en: "Yes", no: "Ja"  }) },
+              { id: "No",  label: t({ en: "No",  no: "Nei" }) },
+            ]} />
+          <DrawerField label={LABELS.qExp} field={fields.qExp} onChange={(v) => update("qExp", v)} />
+        </section>
+      </div>
+
+      <footer className="drawer-foot">
+        <label style={{ display: "inline-flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#1d1d1d", cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={confirmed}
+            onChange={(e) => onConfirmedChange?.(e.target.checked)}
+            style={{ width: 16, height: 16, marginTop: 2 }}
+          />
+          <span>
+            {t({ en: "I confirm all the information above is correct",
+                 no: "Jeg bekrefter at informasjonen ovenfor er korrekt" })}
+          </span>
+        </label>
+        <button
+          onClick={onSend}
+          disabled={blockingFields}
+          style={{
+            appearance: "none", border: 0,
+            background: blockingFields ? "#e6e6ea" : "#0063fb",
+            color: blockingFields ? "#9a9a9a" : "#fff",
+            cursor: blockingFields ? "not-allowed" : "pointer",
+            padding: "14px 20px", borderRadius: 10,
+            font: "600 16px/1 var(--sys-text)", letterSpacing: -0.1,
+            transition: "background 200ms cubic-bezier(0.45, 0, 0.25, 1), color 200ms",
+          }}
+        >
+          {t({ en: "Send application", no: "Send søknad" })}
+        </button>
+      </footer>
+    </aside>
+  );
+}
+
+// Mobile-style .ar-rv field — heading row + input, with optional edited chip.
+function DrawerField({ label, field, onChange, type = "text", autoComplete }) {
+  return (
+    <div className="ar-rv">
+      <p className="ar-rv-heading">
+        <span className="ar-rv-heading-label">{label}</span>
+        {field.e && <DrawerEditedChip />}
+      </p>
+      <DrawerInput value={field.v} onChange={onChange} type={type} autoComplete={autoComplete} />
+    </div>
+  );
+}
+
+function DrawerInput({ value, onChange, type = "text", autoComplete }) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <input
+      type={type}
+      value={value}
+      autoComplete={autoComplete}
+      onChange={(e) => onChange?.(e.target.value)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      className="ar-rv-input"
+      style={{ borderColor: focused ? "#0063fb" : "transparent" }}
+    />
+  );
+}
+
+// Radio pills — matches the mobile .ar-radio-pills look exactly.
+function DrawerRadio({ label, options, field, onChange }) {
+  return (
+    <div className="ar-rv">
+      <p className="ar-rv-heading">
+        <span className="ar-rv-heading-label">{label}</span>
+        {field.e && <DrawerEditedChip />}
+      </p>
+      <div className="ar-radio-pills" role="radiogroup" aria-label={typeof label === "string" ? label : undefined}>
+        {options.map(o => (
+          <label key={o.id} className={"ar-radio-pill" + (field.v === o.id ? " on" : "")}>
+            <input
+              type="radio"
+              name={typeof label === "string" ? label : "radio"}
+              checked={field.v === o.id}
+              onChange={() => onChange?.(o.id)}
+            />
+            {o.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// File card — mirrors the mobile FileCard (icon disk + filename + Tap-to-change).
+function DrawerFile({ label, file, icon, onSwap }) {
+  const t = useT();
+  return (
+    <div className="ar-rv">
+      <p className="ar-rv-heading">
+        <span className="ar-rv-heading-label">{label}</span>
+        {file.e && <DrawerEditedChip />}
+      </p>
+      <button type="button" className="file-card" onClick={onSwap}>
+        <span className="icon-disk">
+          <Icon name={icon} size={20} color="#0063fb" stroke={2} />
+        </span>
+        <span className="meta">
+          <p className="name">{file.v}</p>
+          <p className="sub">{t({ en: "Tap to change", no: "Trykk for å bytte" })}</p>
+        </span>
+        <Icon name="chevron-right" size={18} color="#0063fb" stroke={2.2} />
+      </button>
+    </div>
+  );
+}
+
+function DrawerEditedChip() {
+  const t = useT();
+  return (
+    <span className="ar-edited">{t({ en: "Edited", no: "Redigert" })}</span>
   );
 }
 
@@ -6894,7 +7744,8 @@ const USER_STATES = [
 const TREE_DATA = {
   business: "Business",
   outcome: {
-    text: "Validate agentic AI for the application step by increasing the conversion rate from the current 30% to ≥ 50%",
+    text: "Validate agentic apply on iOS + Android by lifting application-step conversion from 30% → ≥ 50%. Mobile-first; web held at parity.",
+    meta: "T2 OKR · KR1 — v1.0 in apps by 15.06.26 · KR2 — 50% conversion (web + apps) by 30.06.26",
   },
   problems: [
     {
@@ -6976,26 +7827,37 @@ const TREE_DATA = {
 
 // Flat solutions list for the Impact–Effort view. Scores are first-pass guesses — tune freely.
 // `jira` field links each solution to a JEA ticket. `null` = no ticket yet (flag for the team).
+// `release` tags each solution against the T2 OKR window:
+//   • "1.0-must"      → must ship for the 30.06.26 KR2 conversion target
+//   • "1.2-can-wait"  → meaningful polish, but conversion isn't gated on it
+//   • "post-2.0"      → bigger investment / doesn't fit this OKR cycle
 const SOLUTIONS = [
-  { n: 1,  key: "pa", problem: "Latency · 1.3",          title: "No blocking loader — progressive hydration",          impact: 9, effort: 5, jira: "JEA-1179" },
-  { n: 2,  key: "pa", problem: "Latency · 1.3",          title: "Per-row spinner + status copy on Send",               impact: 6, effort: 2, jira: "JEA-1179" },
-  { n: 3,  key: "pa", problem: "Latency · 1.1",          title: "Pre-fetch form at ad-insertion (infra)",              impact: 8, effort: 8, jira: "JEA-1074" },
-  { n: 13, key: "pa", problem: "Latency · 1.3",          title: "Skeleton shimmer while rows hydrate",                 impact: 4, effort: 1, jira: "JEA-1179" },
+  { n: 1,  key: "pa", problem: "Latency · 1.3",          title: "No blocking loader — progressive hydration",          impact: 9, effort: 5, jira: "JEA-1179", release: "1.0-must"     },
+  { n: 2,  key: "pa", problem: "Latency · 1.3",          title: "Per-row spinner + status copy on Send",               impact: 6, effort: 2, jira: "JEA-1179", release: "1.0-must"     },
+  { n: 3,  key: "pa", problem: "Latency · 1.1",          title: "Pre-fetch form at ad-insertion (infra)",              impact: 8, effort: 8, jira: "JEA-1074", release: "post-2.0"     },
+  { n: 13, key: "pa", problem: "Latency · 1.3",          title: "Skeleton shimmer while rows hydrate",                 impact: 4, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
 
-  { n: 4,  key: "pb", problem: "Trust/Control · 2.1",    title: "Source pills on every row",                            impact: 7, effort: 2, jira: "JEA-1179" },
-  { n: 5,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Rediger' at visual parity with Send",                 impact: 5, effort: 1, jira: "JEA-1179" },
-  { n: 6,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Skriv selv' parity with AI-generated letter",         impact: 6, effort: 2, jira: "JEA-1146" },
-  { n: 7,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Tilpass' is opt-in, not default (Hick's law)",        impact: 7, effort: 1, jira: "JEA-1179" },
-  { n: 8,  key: "pb", problem: "Trust/Control · 2.2",    title: "Persistent role + company header",                     impact: 4, effort: 1, jira: "JEA-1179" },
-  { n: 14, key: "pb", problem: "Trust/Control · 2.2",    title: "In-sheet tabs — re-read the ad without losing draft",  impact: 6, effort: 2, jira: null       },
-  { n: 15, key: "pb", problem: "Trust/Control · 2.3",    title: "Employer questions never AI-prefilled",                impact: 5, effort: 1, jira: "JEA-1179" },
+  { n: 4,  key: "pb", problem: "Trust/Control · 2.1",    title: "Source pills on every row",                            impact: 7, effort: 2, jira: "JEA-1179", release: "1.0-must"     },
+  { n: 5,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Rediger' at visual parity with Send",                 impact: 5, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
+  { n: 6,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Skriv selv' parity with AI-generated letter",         impact: 6, effort: 2, jira: "JEA-1146", release: "1.0-must"     },
+  { n: 7,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Tilpass' is opt-in, not default (Hick's law)",        impact: 7, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
+  { n: 8,  key: "pb", problem: "Trust/Control · 2.2",    title: "Persistent role + company header",                     impact: 4, effort: 1, jira: "JEA-1179", release: "1.2-can-wait" },
+  { n: 14, key: "pb", problem: "Trust/Control · 2.2",    title: "In-sheet tabs — re-read the ad without losing draft",  impact: 6, effort: 2, jira: null       , release: "1.2-can-wait" },
+  { n: 15, key: "pb", problem: "Trust/Control · 2.3",    title: "Employer questions never AI-prefilled",                impact: 5, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
 
-  { n: 9,  key: "pc", problem: "Tech Bugs · 3.2",        title: "'Lagret som kladd' chip in preview sheet",             impact: 6, effort: 2, jira: "JEA-1134" },
-  { n: 10, key: "pc", problem: "Tech Bugs · 3.2",        title: "Footer 'lagres som kladd' reassurance copy",           impact: 3, effort: 1, jira: "JEA-1134" },
-  { n: 16, key: "pc", problem: "Tech Bugs · 3.2",        title: "Activity → Drafts entry point to resume",              impact: 6, effort: 3, jira: "JEA-1081" },
-  { n: 12, key: "pc", problem: "Tech Bugs · 3.3",        title: "Friendly missing-info recovery state",                 impact: 7, effort: 4, jira: "JEA-1179" },
-  { n: 11, key: "pc", problem: "Tech Bugs · 3.4",        title: "CV edit — four explicit fallbacks",                    impact: 8, effort: 5, jira: "JEA-1179" },
+  { n: 9,  key: "pc", problem: "Tech Bugs · 3.2",        title: "'Lagret som kladd' chip in preview sheet",             impact: 6, effort: 2, jira: "JEA-1134", release: "1.2-can-wait" },
+  { n: 10, key: "pc", problem: "Tech Bugs · 3.2",        title: "Footer 'lagres som kladd' reassurance copy",           impact: 3, effort: 1, jira: "JEA-1134", release: "1.2-can-wait" },
+  { n: 16, key: "pc", problem: "Tech Bugs · 3.2",        title: "Activity → Drafts entry point to resume",              impact: 6, effort: 3, jira: "JEA-1081", release: "1.2-can-wait" },
+  { n: 12, key: "pc", problem: "Tech Bugs · 3.3",        title: "Friendly missing-info recovery state",                 impact: 7, effort: 4, jira: "JEA-1179", release: "1.0-must"     },
+  { n: 11, key: "pc", problem: "Tech Bugs · 3.4",        title: "CV edit — four explicit fallbacks",                    impact: 8, effort: 5, jira: "JEA-1179", release: "1.0-must"     },
 ];
+
+// Display labels + colour pills for the release tier. Used by ImpactEffortView.
+const RELEASE_META = {
+  "1.0-must":     { label: "1.0 must",      hint: "Ships for 30.06 KR2", bg: "#0063fb", fg: "#fff"    },
+  "1.2-can-wait": { label: "1.2 can wait",  hint: "Polish, not blocking", bg: "#eef0f5", fg: "#404040" },
+  "post-2.0":     { label: "Post-2.0",      hint: "Outside OKR window",   bg: "#f7e6df", fg: "#8a3a18" },
+};
 
 // ─── Jira linkage ─────────────────────────────────────────────────────────
 const JIRA_BASE = "https://nmp-jira.atlassian.net/browse/";
@@ -7049,9 +7911,9 @@ const STORYMAP = {
                      v1:  [{ story: "Faster model means letter is ready in under 2s.", hyp: "1.2", n: null, jira: "JEA-1113" }],
                      v2:  [] },
     "review":      { mvp: [
-                       { story: "Source pills tell me where each value came from.", hyp: "2.1", n: 4, key: "pb", feature: "source-pills", jira: "JEA-1179" },
+                       { story: "Source pills tell me where each value came from.", hyp: "2.1", n: 4, key: "pb", jira: "JEA-1179" },
                        { story: "Header keeps role + company so I never lose context.", hyp: "2.2", n: 8, key: "pb", jira: "JEA-1179" },
-                       { story: "Flip between Application and Job ad inside the sheet.", hyp: "2.2", n: 14, key: "pb", feature: "in-sheet-tabs", jira: null },
+                       { story: "Flip between Application and Job ad inside the sheet.", hyp: "2.2", n: 14, key: "pb", jira: null },
                      ],
                      v1:  [{ story: "Confidence cue on AI-filled fields.", hyp: "2.1", n: null, jira: null }],
                      v2:  [{ story: "Compare this draft with my last application.", hyp: null, n: null, jira: null }] },
@@ -7062,7 +7924,6 @@ const STORYMAP = {
                      v1:  [{ story: "Tailored CV highlights what matches the listing.", hyp: "2.1", n: null, feature: "tailored-cv", jira: null }],
                      v2:  [{ story: "Batch-tailor for multiple roles at once.", hyp: null, n: null, jira: null }] },
     "edit-letter": { mvp: [
-                       { story: "FINN drafts a cover letter for me from my CV + the job ad.", hyp: "2.1", n: null, feature: "ai-letter", jira: "JEA-1146" },
                        { story: "Tap Tilpass for agentic Q&A — opt-in, not forced.", hyp: "2.2", n: 7, key: "pb", jira: "JEA-1179" },
                        { story: "Choose 'Skriv selv' if I prefer to write it myself.", hyp: "2.2", n: 6, key: "pb", jira: "JEA-1146" },
                      ],
@@ -9156,10 +10017,13 @@ function currentPlatformLabel(p) {
   return p === "ios" ? "iOS" : p === "android" ? "Android" : "Web";
 }
 function currentVersionLabel(v) {
-  return v === "mvp" ? "MVP" :
-         v === "v1"  ? "1.0" :
-         v === "v2"  ? "2.0" :
-         v === "agentic" ? "Agentic" : v;
+  // Roadmap-aligned labels: MVP is agentic-only, 1.0 + 1.2 are the cross-flow
+  // releases, 2.0 is YOLO/Magic Apply. Internal ids stay as they were so the
+  // existing per-version conditionals throughout the prototype keep working.
+  return v === "agentic" ? "MVP" :
+         v === "mvp"     ? "1.0" :
+         v === "v1"      ? "1.2" :
+         v === "v2"      ? "2.0" : v;
 }
 
 // Tiny debouncer for save-on-edit so dragging doesn't hammer the API.
@@ -9541,6 +10405,7 @@ function OpportunityTreeBody({ mode, setMode, business, outcome, problems }) {
           <div className="otree-outcome">
             <div className="label">Desired outcome</div>
             <div className="text">{outcome.text}</div>
+            {outcome.meta && <div className="meta">{outcome.meta}</div>}
           </div>
           <div className="otree-spine" aria-hidden="true" />
           <div className="otree-cols">
@@ -9643,8 +10508,10 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
       {!embedded && (
       <p className="sub">
         Every solution from the opportunity tree, plotted by estimated lift on apply-step conversion (impact)
-        and shipping cost (effort). <strong>Drag any dot</strong> to update its scores; tap the table to focus.
-        Edits persist on this device.
+        and shipping cost (effort). Each one is also tagged against the T2 OKR window —
+        <strong> 1.0 must</strong> ships for 30.06.26, <strong>1.2 can wait</strong> is polish, and
+        <strong> Post-2.0</strong> sits outside this cycle. <strong>Drag any dot</strong> to update its scores;
+        tap the table to focus. Edits persist on this device.
       </p>
       )}
 
@@ -9716,13 +10583,40 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
                   <span>Impact <b>{selected.impact}/10</b></span>
                   <span>Effort <b>{selected.effort}/10</b></span>
                 </div>
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <JiraChip jira={selected.jira} />
+                  {selected.release && (
+                    <span
+                      title={RELEASE_META[selected.release].hint}
+                      style={{
+                        display: "inline-flex", alignItems: "center",
+                        padding: "3px 8px", borderRadius: 9999,
+                        fontSize: 11, fontWeight: 600, letterSpacing: -0.05,
+                        background: RELEASE_META[selected.release].bg,
+                        color:      RELEASE_META[selected.release].fg,
+                      }}>
+                      {RELEASE_META[selected.release].label}
+                    </span>
+                  )}
                 </div>
               </>
             ) : (
               <div className="empty">Hover or tap a dot to see the solution it represents.</div>
             )}
+          </div>
+
+          {/* Release-tier legend — explains the chips that appear next to each
+              solution in the table below. Tiered against the T2 OKR window:
+              1.0-must = ships for 30.06.26; 1.2-can-wait = polish; post-2.0
+              = doesn't fit this cycle. */}
+          <div className="matrix-legend" style={{ marginTop: 12 }}>
+            <h4>Release tier</h4>
+            {Object.entries(RELEASE_META).map(([id, m]) => (
+              <div className="row" key={id} title={m.hint}>
+                <span className="swatch" style={{ background: m.bg, borderRadius: 9999 }} />
+                <span><strong>{m.label}</strong> — {m.hint}</span>
+              </div>
+            ))}
           </div>
         </aside>
       </div>
@@ -9733,19 +10627,47 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
             <th></th>
             <th>Solution</th>
             <th>Source</th>
+            <th>Release</th>
             <th>Jira</th>
             <th className="num">Impact</th>
             <th className="num">Effort</th>
           </tr>
         </thead>
         <tbody>
-          {[...solutions].sort((a, b) => (b.impact - b.effort) - (a.impact - a.effort)).map(s => (
+          {/* Sort by release tier first (1.0-must on top), then by net value
+              (impact − effort). Makes the must-ships easy to scan + the team
+              can see which 1.0-must items still have weak scores. */}
+          {(() => {
+            const tierOrder = { "1.0-must": 0, "1.2-can-wait": 1, "post-2.0": 2 };
+            return [...solutions].sort((a, b) => {
+              const ta = tierOrder[a.release] ?? 9;
+              const tb = tierOrder[b.release] ?? 9;
+              if (ta !== tb) return ta - tb;
+              return (b.impact - b.effort) - (a.impact - a.effort);
+            });
+          })().map(s => (
             <tr key={s.n}
                 onMouseEnter={() => setHoverN(s.n)}
                 onMouseLeave={() => setHoverN(null)}>
               <td><span className={"ref " + s.key}>{s.n}</span></td>
               <td>{s.title}</td>
               <td>{s.problem}</td>
+              <td>
+                {s.release && RELEASE_META[s.release] && (
+                  <span
+                    title={RELEASE_META[s.release].hint}
+                    style={{
+                      display: "inline-flex", alignItems: "center",
+                      padding: "2px 8px", borderRadius: 9999,
+                      fontSize: 11, fontWeight: 600, letterSpacing: -0.05,
+                      background: RELEASE_META[s.release].bg,
+                      color:      RELEASE_META[s.release].fg,
+                      whiteSpace: "nowrap",
+                    }}>
+                    {RELEASE_META[s.release].label}
+                  </span>
+                )}
+              </td>
               <td><JiraChip jira={s.jira} /></td>
               <td className="num">{s.impact}</td>
               <td className="num">{s.effort}</td>
@@ -10565,6 +11487,11 @@ function AppShell({ fullscreen = false }) {
   const [storyVersion, setStoryVersion] = useState("all"); // all | mvp | v1 | v2
   const [version, setVersion] = useState("mvp"); // dev panel toggle: mvp | v1 | v2
   const [platform, setPlatform] = useState("ios"); // ios | android | web (toggle UI hidden for now)
+  // Web sub-view: only relevant when platform === "web". "mobile" keeps the
+  // phone-width responsive layout (FINN.no on a small viewport); "desktop"
+  // breaks out of the iPhone frame and renders the side-drawer over the
+  // full FINN.no desktop job ad — currently scoped to the agentic MVP.
+  const [webMode, setWebMode] = useState("mobile"); // mobile | desktop
   const [lang, setLang] = useState("en"); // en (default) | no
 
   // Editable copies of the strategy data — drag-drop in the Storymap and
@@ -10675,12 +11602,6 @@ function AppShell({ fullscreen = false }) {
   const showJobMatch    = features.has("job-match");
   const showTailoredCV  = features.has("tailored-cv");
   const enableMagicApply = features.has("magic-apply");
-  // New drag-toggleable MVP behaviours. Each gates a specific bit of
-  // prototype UI; story cards in STORYMAP carry the matching `feature:`
-  // key so dragging them between release rows hides/shows the behaviour.
-  const showSourcePills  = features.has("source-pills");
-  const showInSheetTabs  = features.has("in-sheet-tabs");
-  const enableAiLetter   = features.has("ai-letter");
 
   // Pseudonymous "who's editing" name — captured once on first edit and
   // re-used for activity-log attribution. No login, no PII; people just
@@ -10884,9 +11805,16 @@ function AppShell({ fullscreen = false }) {
   }
 
   function startProgressiveLoad() {
+    // Deliberate per-row pacing so each row visibly completes on its own:
+    //   • t=0     — both CV + Letter show the spinner
+    //   • t=950ms — CV lands (skeleton crossfades to "Synced from your profile")
+    //   • t=2400ms — Letter lands (skeleton crossfades to "AI draft · editable")
+    // This is intentionally slower than the previous 400ms / 1700ms cadence —
+    // gives the eye time to follow each row's completion instead of blurring
+    // into one flash.
     setLoadingPhase("loading-cv");
-    setTimeout(() => setLoadingPhase("loading-letter"), 400);
-    setTimeout(() => setLoadingPhase("ready"), 1700);
+    setTimeout(() => setLoadingPhase("loading-letter"), 950);
+    setTimeout(() => setLoadingPhase("ready"), 2400);
   }
 
   function goApply() {
@@ -11053,6 +11981,29 @@ function AppShell({ fullscreen = false }) {
     <div className="layout">
       <LangCtx.Provider value={lang}>
       <div className={"stage" + (inspect ? " inspect-active" : "")} onClickCapture={onStageClick}>
+        {/* Web · Desktop · MVP (Agentic) — break out of the iPhone Device
+            frame and render the FINN.no shell + 600px ApplyDrawer. Other
+            versions on desktop still render the phone frame for now and
+            show a placeholder. */}
+        {platform === "web" && webMode === "desktop" ? (
+          version === "agentic" ? (
+            <DesktopApplyScene onSend={send} />
+          ) : (
+            <div className="desktop-scene" style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexDirection: "column", gap: 10, padding: 24,
+              color: "#6b6b6b", textAlign: "center",
+            }}>
+              <h3 style={{ margin: 0, color: "#1d1d1d", fontSize: 22, letterSpacing: -0.3 }}>
+                Desktop view — coming with MVP (Agentic)
+              </h3>
+              <p style={{ margin: 0, maxWidth: 520, lineHeight: 1.5 }}>
+                Switch the Version dropdown to <strong>MVP (Agentic)</strong> to preview the
+                desktop apply drawer. Easy Apply desktop is queued for a later release.
+              </p>
+            </div>
+          )
+        ) : (
         <Device platform={platform}>
           <div style={{
             position: "absolute", inset: 0,
@@ -11071,8 +12022,6 @@ function AppShell({ fullscreen = false }) {
               magicMode={magicMode}
               magicStep={magicStep}
               showJobMatch={showJobMatch}
-              showSourcePills={showSourcePills}
-              showInSheetTabs={showInSheetTabs}
               onClose={() => { cancelMagic(); setMagicMode(false); setScreen("jobad"); }}
               onSend={send}
               onOpenLetter={() => setOverlay("letter")}
@@ -11096,15 +12045,19 @@ function AppShell({ fullscreen = false }) {
               job={JOB}
               onClose={() => setScreen("jobad")}
               onSend={send}
-              showSourcePills={showSourcePills}
-              showInSheetTabs={showInSheetTabs}
+              // Reuse the Easy Apply CV picker → CVPreviewSheet pipeline.
+              // setCvPickerActive keeps the picker mounted under the preview
+              // so 'Back' returns instantly; setOverlay drives which sheet
+              // is showing. Triggered from FileCard inside the Attachments
+              // section sheet.
+              onOpenCV={() => { setCvPickerActive(true); setOverlay("edit:cv"); }}
+              onOpenLetter={() => setOverlay("letter")}
             />
           )}
           {overlay === "letter" && (
             <CoverLetterSheet
               onClose={() => setOverlay(null)}
               onOpenSelectFile={() => setOverlay("select-letter")}
-              enableAiLetter={enableAiLetter}
             />
           )}
           {overlay === "login" && (
@@ -11173,6 +12126,7 @@ function AppShell({ fullscreen = false }) {
             }}
           />
         </Device>
+        )}
       </div>
       </LangCtx.Provider>
 
@@ -11235,10 +12189,36 @@ function AppShell({ fullscreen = false }) {
               { id: "android", label: "Android", icon: <AndroidGlyph /> },
               { id: "web",     label: "Web",     icon: <GlobeGlyph /> },
             ]} />
+          {/* Web sub-toggle: Mobile (responsive web in phone frame) vs
+              Desktop (full-viewport FINN.no shell with 600px right drawer).
+              Only shown when Platform is Web. */}
+          {platform === "web" && (
+            <Segmented
+              label="Web view"
+              valueLabel={webMode === "desktop" ? "Desktop" : "Mobile"}
+              value={webMode}
+              onChange={setWebMode}
+              options={[
+                { id: "mobile",  label: "Mobile"  },
+                { id: "desktop", label: "Desktop" },
+              ]} />
+          )}
         </div>
 
         <div className="dev-group">
           <p className="dev-group-title">Demo state</p>
+          <Dropdown
+            label="Version"
+            value={version}
+            lang={lang}
+            onChange={setVersion}
+            options={[
+              { id: "agentic", label: "MVP (Agentic)" },
+              { id: "mvp",     label: "1.0 (Agentic and Easy Apply)" },
+              { id: "v1",      label: "1.2 (Agentic and Easy Apply)" },
+              { id: "v2",      label: "2.0 (YOLO mode)" },
+            ]}
+          />
           <Dropdown
             label="User state"
             value={userState}
@@ -11249,28 +12229,6 @@ function AppShell({ fullscreen = false }) {
               if (id === "already-applied") setScreen("jobad");
             }}
             options={USER_STATES}
-          />
-          <Dropdown
-            label="Version"
-            value={version}
-            lang={lang}
-            onChange={setVersion}
-            groups={[
-              {
-                label: "Agentic",
-                options: [
-                  { id: "agentic", label: "MVP" },
-                ],
-              },
-              {
-                label: "Easy apply",
-                options: [
-                  { id: "mvp", label: "MVP" },
-                  { id: "v1",  label: "1.0" },
-                  { id: "v2",  label: "2.0 yolo mode" },
-                ],
-              },
-            ]}
           />
           <div className="controls-group">
             <div
@@ -11424,10 +12382,7 @@ function AppShell({ fullscreen = false }) {
             ? (platform === "ios" ? "iOS" : platform === "android" ? "Android" : "Web")
             : null,
           version: view === "prototype"
-            ? (version === "mvp" ? "MVP" :
-               version === "v1"  ? "1.0" :
-               version === "v2"  ? "2.0" :
-               version === "agentic" ? "Agentic" : version)
+            ? currentVersionLabel(version)
             : null,
         }}
       />
