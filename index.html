@@ -1921,16 +1921,26 @@
   }
   .ar-radio-pill {
     position: relative;
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px;
     background: #f7f7f9;
     border: 1px solid transparent;
     border-radius: 9999px;
-    padding: 10px 18px;
-    font: 500 15px/1 var(--sys-text); letter-spacing: -0.1px;
+    /* Explicit height + box-sizing so font fallback metrics can never blow
+       the pill up into a near-circle (which was happening on GitHub Pages
+       when FINNType failed to load and the system font's intrinsic
+       ascent/descent overrode the `line-height: 1` rule). */
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 18px;
+    font-family: var(--sys-text);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.1px;
     color: var(--ink);
     cursor: pointer;
     transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out);
-    min-height: 40px;
   }
   .ar-radio-pill input {
     position: absolute; top: 0; left: 0;
