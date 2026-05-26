@@ -8750,7 +8750,7 @@ const RELEASE_META = {
 const JIRA_BASE = "https://nmp-jira.atlassian.net/browse/";
 // Last time the JIRA_STATUS map below was reconciled against live Jira.
 // Update this date whenever you ask Claude (or anyone) to re-sync.
-const JIRA_STATUS_SYNCED_AT = "2026-05-19";
+const JIRA_STATUS_SYNCED_AT = "2026-05-26";
 
 // ─── Storymap data (Jeff Patton shape) ───────────────────────────────────
 // Top row: activities — high-level user goals. They span the backbone tasks
@@ -10123,23 +10123,33 @@ v2.0 'Magic Apply' branch:
 }
 
 // Map known JEA ticket statuses to chip styling. Static mapping reflects
-// Jira state at sync time (last fetched from nmp-jira on 2026-05-18).
+// Jira state at sync time (last fetched from nmp-jira on 2026-05-26).
+//
+// Notable since previous sync (2026-05-19):
+//   • JEA-1186 [iOS] Agentic Apply 1.0 — NEW ticket, In Progress
+//     (Samet Berberoglu). The iOS counterpart to JEA-1179 (Android).
+//     iOS is now actively in development, Android still Selected for Dev.
+//   • JEA-1183 — still Backlog. Summary duplicates JEA-1186's
+//     ("[iOS] Agentic Apply 1.0") — likely deprecated, worth confirming
+//     with the team which one is live.
+//   • All other referenced tickets: status unchanged.
 const JIRA_STATUS = {
-  "JEA-500":  { label: "Done",     style: "done" },
-  "JEA-597":  { label: "Done",     style: "done" },
-  "JEA-1081": { label: "Done",     style: "done" },
-  "JEA-575":  { label: "Backlog",  style: "" },
-  "JEA-839":  { label: "Backlog",  style: "" },
-  "JEA-898":  { label: "Backlog",  style: "" },
-  "JEA-1023": { label: "Backlog",  style: "" },
-  "JEA-1074": { label: "Backlog",  style: "" },
-  "JEA-1092": { label: "Backlog",  style: "" },
-  "JEA-1093": { label: "Backlog",  style: "" },
-  "JEA-1113": { label: "Backlog",  style: "" },
-  "JEA-1134": { label: "Backlog",  style: "" },
-  "JEA-1146": { label: "Backlog",  style: "" },
-  "JEA-1179": { label: "Selected", style: "dev" },
-  "JEA-1183": { label: "Backlog",  style: "" },
+  "JEA-500":  { label: "Done",        style: "done" },
+  "JEA-597":  { label: "Done",        style: "done" },
+  "JEA-1081": { label: "Done",        style: "done" },
+  "JEA-575":  { label: "Backlog",     style: "" },
+  "JEA-839":  { label: "Backlog",     style: "" },
+  "JEA-898":  { label: "Backlog",     style: "" },
+  "JEA-1023": { label: "Backlog",     style: "" },
+  "JEA-1074": { label: "Backlog",     style: "" },
+  "JEA-1092": { label: "Backlog",     style: "" },
+  "JEA-1093": { label: "Backlog",     style: "" },
+  "JEA-1113": { label: "Backlog",     style: "" },
+  "JEA-1134": { label: "Backlog",     style: "" },
+  "JEA-1146": { label: "Backlog",     style: "" },
+  "JEA-1179": { label: "Selected",    style: "dev"  },
+  "JEA-1183": { label: "Backlog",     style: "" },
+  "JEA-1186": { label: "In Progress", style: "dev" },
 };
 
 function JiraChip({ jira }) {
@@ -11742,6 +11752,24 @@ function featuresInVersion(stories, version) {
 }
 function deepCloneJSON(o) { return JSON.parse(JSON.stringify(o)); }
 
+// ─── Persistence shape guards ─────────────────────────────────────────────
+// SCHEMA bumps invalidate localStorage automatically, but cloud (Supabase)
+// stores across bumps and can re-poison localStorage if a stale cloud value
+// is adopted on first load. These helpers detect new-shape markers on
+// stored payloads so we can fall back to defaults when the data is stale.
+function storiesAreCurrentShape(data) {
+  if (!data || typeof data !== "object") return false;
+  // The agentic slot was added in SCHEMA 4. Sample a known backbone task.
+  const probe = data["open-ad"];
+  return !!probe && Array.isArray(probe.agentic);
+}
+function solutionsAreCurrentShape(data) {
+  if (!Array.isArray(data) || data.length === 0) return false;
+  // The `release` tier (1.0-must / 1.2-can-wait / post-2.0) was added in
+  // SCHEMA 4. Any item carrying that field means we're on the new shape.
+  return data.some(s => typeof s.release === "string");
+}
+
 // ─── Feedback bridge — copies a Jira-formatted note + opens JEA-1179 ──────
 // Turn a raw Supabase error message into something a designer can act on.
 function friendlyCloudError(raw) {
@@ -12425,7 +12453,13 @@ function AppShell({ fullscreen = false }) {
     try {
       const v = parseInt(localStorage.getItem("vend-storymap-v") || "0", 10);
       const saved = localStorage.getItem("vend-storymap");
-      if (saved && v === SCHEMA) return JSON.parse(saved);
+      if (saved && v === SCHEMA) {
+        const parsed = JSON.parse(saved);
+        // Belt-and-braces: even if SCHEMA matches, validate the actual
+        // shape. localStorage can be re-poisoned by a stale cloud read,
+        // which is what was leaving the MVP (Agentic) row empty.
+        if (storiesAreCurrentShape(parsed)) return parsed;
+      }
     } catch (_) {}
     return deepCloneJSON(STORYMAP.stories);
   });
@@ -12433,7 +12467,10 @@ function AppShell({ fullscreen = false }) {
     try {
       const v = parseInt(localStorage.getItem("vend-solutions-v") || "0", 10);
       const saved = localStorage.getItem("vend-solutions");
-      if (saved && v === SCHEMA) return JSON.parse(saved);
+      if (saved && v === SCHEMA) {
+        const parsed = JSON.parse(saved);
+        if (solutionsAreCurrentShape(parsed)) return parsed;
+      }
     } catch (_) {}
     return SOLUTIONS.map(s => ({ ...s }));
   });
@@ -12458,21 +12495,11 @@ function AppShell({ fullscreen = false }) {
   //
   // Shape check: SCHEMA bumps only invalidate localStorage. Cloud-stored
   // data persists across SCHEMA bumps, so we explicitly check for
-  // current-shape markers before adopting cloud values. If the cloud
-  // copy is the legacy three-slice storymap (no `agentic` key), we
-  // discard it and overwrite with fresh defaults.
-  function storiesAreCurrentShape(data) {
-    if (!data || typeof data !== "object") return false;
-    // Sample a couple of well-known task keys for the new `agentic` slot.
-    const probe = data["open-ad"];
-    return !!probe && Array.isArray(probe.agentic);
-  }
-  function solutionsAreCurrentShape(data) {
-    if (!Array.isArray(data) || data.length === 0) return false;
-    // `release` tier was added in SCHEMA 4. Any item with a release field
-    // means we're on the new shape.
-    return data.some(s => typeof s.release === "string");
-  }
+  // current-shape markers before adopting cloud values. (Helpers
+  // storiesAreCurrentShape / solutionsAreCurrentShape are defined at
+  // module scope so the useState initializer above can call them too —
+  // localStorage can also become stale after a SCHEMA mismatch + bad
+  // cloud overwrite cycle, so we shape-check both layers.)
   useEffect(() => {
     if (!cloudStore.enabled) return;
     let cancelled = false;
