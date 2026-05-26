@@ -40,6 +40,35 @@
     --ease-modal:  cubic-bezier(0.32, 0.72, 0, 1);
     --ease-spring: cubic-bezier(0.34, 1.30, 0.64, 1.05);
     --ease-tap:    cubic-bezier(0.25, 0.1, 0.25, 1);
+
+    /* WARP spacing scale — minimal foundation, inlined so the prototype
+       doesn't depend on colors_and_type.css being on disk. Mirrors the
+       finn.no WARP token names so the gap to a real WARP-component port
+       is just s/var(--w-space-4)/<Box space="4">/g. */
+    --w-space-half: 2px;
+    --w-space-1:    4px;
+    --w-space-2:    8px;
+    --w-space-3:    12px;
+    --w-space-4:    16px;
+    --w-space-5:    20px;
+    --w-space-6:    24px;
+    --w-space-7:    28px;
+    --w-space-8:    32px;
+    --w-space-10:   40px;
+    --w-space-12:   48px;
+    /* WARP radius scale */
+    --w-radius-4:   4px;
+    --w-radius-6:   6px;
+    --w-radius-8:   8px;
+    --w-radius-10:  10px;
+    --w-radius-12:  12px;
+    --w-radius-14:  14px;
+    --w-radius-16:  16px;
+    --w-radius-pill: 9999px;
+    /* WARP "touch target minimum" — iOS HIG 44pt, Material 48dp.
+       Use this for any X / back / icon-only button so accessibility is
+       baked in regardless of platform. */
+    --w-touch-min: 44px;
   }
   /* FINNType web font — inlined here so the prototype doesn't depend on
      colors_and_type.css being present alongside index.html. The fonts/
@@ -222,11 +251,15 @@
   .scroll-area::-webkit-scrollbar { width: 0; }
   .scroll-area { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 
-  /* press feedback — universal iOS feel */
+  /* press feedback — universal iOS feel by default. Android variant
+     (applied via .platform-android scope below) swaps the scale-down for
+     a Material-style radial ripple originating from the tap point. */
   .press {
+    position: relative;
     transition: transform 120ms var(--ease-out), opacity 120ms var(--ease-out),
                 box-shadow 160ms var(--ease-out);
     -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
   }
   .press:active { transform: scale(0.97); opacity: 0.92; }
   .press:focus { outline: none; }
@@ -234,11 +267,91 @@
     outline: none;
     box-shadow: 0 0 0 3px rgba(0,99,251,0.45);
   }
+  /* Material 3 ripple — only active when the prototype is in Android
+     platform mode. iOS keeps the scale-down press; Android gets a radial
+     ripple expanding from the tap location. We use a custom property
+     (--ripple-x, --ripple-y) set inline via the onPointerDown handler in
+     JS so the ripple actually originates from where the user tapped. */
+  @keyframes md3-ripple {
+    0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0.35; }
+    60%  { opacity: 0.18; }
+    100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+  }
+  .platform-android .press:active { transform: none; opacity: 1; }
+  .platform-android .press::after {
+    content: "";
+    position: absolute;
+    left: var(--ripple-x, 50%); top: var(--ripple-y, 50%);
+    width: 140%; padding-bottom: 140%;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  .platform-android .press.is-rippling::after {
+    animation: md3-ripple 520ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
 
   @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeout { from { opacity: 1; } to { opacity: 0; } }
   @keyframes slideup {
     from { transform: translateY(100%); }
     to   { transform: translateY(0); }
+  }
+  /* Sheet exit — slides the bottom sheet back down + fades. Mirrors slideup
+     + fadein. Used in tandem via .sheet-exit on the sheet panel and
+     .backdrop-exit on its dimming layer. */
+  @keyframes slidedown {
+    from { transform: translateY(0);    opacity: 1; }
+    to   { transform: translateY(100%); opacity: 0; }
+  }
+  /* Generic exit utility classes. We use animation (not transition) so the
+     exit always runs from the visible "in" state, regardless of what
+     entrance animation was on the element. */
+  .sheet-exit     { animation: slidedown 320ms cubic-bezier(0.32, 0.72, 0, 1) forwards !important; }
+  .backdrop-exit  { animation: fadeout   240ms cubic-bezier(0.45, 0, 0.25, 1) forwards !important; }
+
+  /* iOS-native push / pop transitions used for *internal* navigation inside
+     a single sheet, so the agentic flow doesn't stack four sheets deep. A
+     pushed page slides in from the right while the page underneath dims
+     and shifts ~30% left; popping reverses. Curve matches UIKit's default
+     push-navigation timing. */
+  @keyframes pagePushIn {
+    from { transform: translate3d(100%, 0, 0); opacity: 0.6; }
+    to   { transform: translate3d(0,    0, 0); opacity: 1;   }
+  }
+  @keyframes pagePushOut {
+    from { transform: translate3d(0,     0, 0); opacity: 1; }
+    to   { transform: translate3d(-30%,  0, 0); opacity: 0.4; }
+  }
+  @keyframes pagePopIn {
+    from { transform: translate3d(-30%, 0, 0); opacity: 0.4; }
+    to   { transform: translate3d(0,    0, 0); opacity: 1;   }
+  }
+  @keyframes pagePopOut {
+    from { transform: translate3d(0,    0, 0); opacity: 1;   }
+    to   { transform: translate3d(100%, 0, 0); opacity: 0.6; }
+  }
+  .page-push-in  { animation: pagePushIn  320ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+  .page-push-out { animation: pagePushOut 320ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+  .page-pop-in   { animation: pagePopIn   320ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+  .page-pop-out  { animation: pagePopOut  320ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+  /* Page-stack container — pages absolutely position on top of each other
+     so they can transition without affecting layout. The wrapper itself
+     fills its parent sheet body. */
+  .page-stack {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+  }
+  .page-stack > .page {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
   }
   /* Soft "drift in" used for tab-swap content and top-nav views. Avoids the
      jump-cut between rows and job ad. ~14px is iOS-feeling without being showy. */
@@ -291,6 +404,11 @@
     55%  { transform: translate(-50%, -50%) scale(1.02); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1);    opacity: 1; }
   }
+  @keyframes popout-centered {
+    from { transform: translate(-50%, -50%) scale(1);    opacity: 1; }
+    to   { transform: translate(-50%, -50%) scale(0.94); opacity: 0; }
+  }
+  .modal-exit { animation: popout-centered 220ms cubic-bezier(0.45, 0, 0.25, 1) forwards !important; }
   @keyframes pulse {
     0%, 100% { transform: scale(1);    opacity: 1; }
     50%      { transform: scale(1.06); opacity: 0.88; }
@@ -411,8 +529,9 @@
   .fn-topbar .icons { display: inline-flex; align-items: center; gap: 18px; color: #1d1d1d; }
   .fn-topbar .icons button {
     appearance: none; border: 0; background: transparent;
-    width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
-    color: #1d1d1d; cursor: pointer; border-radius: 9999px;
+    width: var(--w-touch-min); height: var(--w-touch-min);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #1d1d1d; cursor: pointer; border-radius: var(--w-radius-pill);
   }
   .fn-topbar .icons button:hover { background: #f0f0f3; }
   /* Job-ad content area */
@@ -511,6 +630,11 @@
     from { transform: translate3d(20px, 0, 0); opacity: 0; }
     to   { transform: translate3d(0,    0, 0); opacity: 1; }
   }
+  @keyframes drawerSlideOut {
+    from { transform: translate3d(0,    0, 0); opacity: 1; }
+    to   { transform: translate3d(20px, 0, 0); opacity: 0; }
+  }
+  .drawer-exit { animation: drawerSlideOut 280ms cubic-bezier(0.32, 0.72, 0, 1) forwards !important; }
   .apply-drawer {
     position: absolute;
     top: 0; right: 0; bottom: 0;
@@ -1285,9 +1409,13 @@
     font-size: 10px; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.08em;
   }
-  .sm-rail.mvp .badge { background: #fff3e0; color: #b15600; }
-  .sm-rail.v1  .badge { background: #eaf2ff; color: #0063fb; }
-  .sm-rail.v2  .badge { background: #f1ebff; color: #6f3bd0; }
+  /* Release-row badge colours. agentic = MVP (orange — first ship),
+     mvp = 1.0 (blue), v1 = 1.2 (teal — slight differentiation from 1.0),
+     v2 = 2.0 (purple). */
+  .sm-rail.agentic .badge { background: #fff3e0; color: #b15600; }
+  .sm-rail.mvp     .badge { background: #eaf2ff; color: #0063fb; }
+  .sm-rail.v1      .badge { background: #e3f7f4; color: #0a6e62; }
+  .sm-rail.v2      .badge { background: #f1ebff; color: #6f3bd0; }
   /* Release-slice cells — one per column. Vertical lines come from the right border. */
   .sm-cell {
     background: #fff;
@@ -1316,9 +1444,10 @@
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(0,0,0,0.08);
   }
-  .sm-card.mvp { background: #fff8dc; border-color: #f0deaa; }
-  .sm-card.v1  { background: #eaf2ff; border-color: #d3e3ff; }
-  .sm-card.v2  { background: #f3edff; border-color: #ddd0f4; }
+  .sm-card.agentic { background: #fff8dc; border-color: #f0deaa; }
+  .sm-card.mvp     { background: #eaf2ff; border-color: #d3e3ff; }
+  .sm-card.v1      { background: #e3f7f4; border-color: #b9e4dd; }
+  .sm-card.v2      { background: #f3edff; border-color: #ddd0f4; }
   .sm-card .story { font-size: 12px; color: var(--ink); line-height: 1.4; }
   .sm-card .meta {
     display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
@@ -1906,10 +2035,13 @@
     color: #cc1414;
     font: 500 13px/1.4 var(--sys-text); letter-spacing: -0.05px;
   }
+  /* Edited chip — darkened text (#4d3a00 over #fdedb0) clears WCAG AA at
+     ~8.5:1 contrast. The previous #6b520a + #fdedb0 was ~5:1 which only
+     just passed for the chip's small 11px text. */
   .ar-edited {
     display: inline-flex; align-items: center;
-    padding: 2px 8px; border-radius: 9999px;
-    background: #fdedb0; color: #6b520a;
+    padding: 2px 8px; border-radius: var(--w-radius-pill);
+    background: #fdedb0; color: #4d3a00;
     font: 600 11px/1.3 var(--sys-text); letter-spacing: -0.05px;
     white-space: nowrap;
   }
@@ -3246,6 +3378,67 @@ function haptic(kind = "tap") {
 }
 
 // ===========================================================
+// useAndroidRipple — when platform === "android", any tap on a .press
+// element gets a Material-style radial ripple originating from the touch
+// point. Implementation: pointerdown sets CSS custom properties on the
+// element for the ripple origin, adds .is-rippling to trigger the CSS
+// animation, and removes the class after the keyframe duration so the
+// ripple can re-fire on the next tap.
+// ===========================================================
+function useAndroidRipple(platform) {
+  useEffect(() => {
+    if (platform !== "android") return;
+    document.body.classList.add("platform-android");
+    function onDown(e) {
+      const target = e.target.closest(".press");
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const x = (("touches" in e ? e.touches[0].clientX : e.clientX) - rect.left);
+      const y = (("touches" in e ? e.touches[0].clientY : e.clientY) - rect.top);
+      target.style.setProperty("--ripple-x", x + "px");
+      target.style.setProperty("--ripple-y", y + "px");
+      target.classList.remove("is-rippling");
+      // Force reflow so the animation restarts cleanly when tapping rapidly.
+      void target.offsetWidth;
+      target.classList.add("is-rippling");
+      setTimeout(() => target.classList.remove("is-rippling"), 540);
+    }
+    document.addEventListener("pointerdown", onDown);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.body.classList.remove("platform-android");
+    };
+  }, [platform]);
+}
+
+// ===========================================================
+// useDelayedClose — shared exit-animation hook for sheets, drawers and
+// modal overlays. Returns [exiting, close]. Call close() instead of the
+// parent's onClose: it sets exiting=true so the sheet can swap its
+// .sheet-exit / .backdrop-exit / .drawer-exit class on, then schedules
+// the parent's onClose() after `delay` ms so the exit animation runs to
+// completion before React unmounts the element.
+//
+// Defaults: 320ms (matches the soft iOS-modal curve we use for entrance).
+// ===========================================================
+function useDelayedClose(onClose, delay = 320) {
+  const [exiting, setExiting] = useState(false);
+  const timerRef = useRef(null);
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+  const close = (...args) => {
+    if (exiting) return;
+    setExiting(true);
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      onClose && onClose(...args);
+    }, delay);
+  };
+  return [exiting, close];
+}
+
+// ===========================================================
 // Icon — Lucide-style inline SVG
 // ===========================================================
 function Icon({ name, size = 24, color = "currentColor", stroke = 1.8, fill = "none" }) {
@@ -4250,6 +4443,7 @@ function ApplicationPreviewSheet({
   onSend, onClose, onOpenLetter, onOpenCV, onOpenEdit, onFillMissing, onOpenActivity,
 }) {
   const t = useT();
+  const [exiting, close] = useDelayedClose(onClose, 320);
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
@@ -4343,21 +4537,25 @@ function ApplicationPreviewSheet({
   })) : rows;
 
   return (
-    <div style={{
-      position: "absolute", inset: 0, zIndex: 50,
-      display: "flex", flexDirection: "column",
-      background: "rgba(0,0,0,.30)",
-      animation: "fadein 300ms var(--ease-modal)",
-    }}>
-      <div onClick={onClose} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
-      <div style={{
-        flex: 1, background: "#fff",
-        borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 50,
         display: "flex", flexDirection: "column",
-        boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
-        position: "relative", overflow: "hidden",
-        animation: "slideup 440ms var(--ease-modal)",
+        background: "rgba(0,0,0,.30)",
+        animation: "fadein 300ms var(--ease-modal)",
       }}>
+      <div onClick={close} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
+          position: "relative", overflow: "hidden",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
           <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
         </div>
@@ -4388,10 +4586,10 @@ function ApplicationPreviewSheet({
           </div>
           <button
             className="press"
-            onClick={() => { haptic("tap"); onClose?.(); }}
+            onClick={() => { haptic("tap"); close(); }}
             aria-label={t({ en: "Close", no: "Lukk" })}
             style={{
-              width: 32, height: 32, borderRadius: 9999,
+              width: 44, height: 44, borderRadius: 9999,
               background: "#f0f0f3", border: 0, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0,
@@ -4937,6 +5135,7 @@ Lee Frost`,
 
 function CoverLetterSheet({ onClose, onOpenSelectFile }) {
   const t = useT();
+  const [exiting, close] = useDelayedClose(onClose, 320);
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
@@ -4958,19 +5157,23 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
   }
 
   return (
-    <div style={{
-      position: "absolute", inset: 0, zIndex: 60,
-      background: "rgba(0,0,0,.30)",
-      display: "flex", flexDirection: "column",
-      animation: "fadein 300ms var(--ease-modal)",
-    }}>
-      <div onClick={onClose} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
-      <div style={{
-        flex: 1, background: "#fff",
-        borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 60,
+        background: "rgba(0,0,0,.30)",
         display: "flex", flexDirection: "column",
-        animation: "slideup 440ms var(--ease-modal)",
+        animation: "fadein 300ms var(--ease-modal)",
       }}>
+      <div onClick={close} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
           <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
@@ -4983,7 +5186,7 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
         }}>
           <button
             className="press"
-            onClick={() => { haptic("tap"); onClose?.(); }}
+            onClick={() => { haptic("tap"); close(); }}
             aria-label={t({ en: "Back", no: "Tilbake" })}
             style={{
               width: 36, height: 36, borderRadius: 9999,
@@ -5142,30 +5345,35 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
 // ===========================================================
 function LoginSheet({ onClose, onLogin }) {
   const t = useT();
+  const [exiting, close] = useDelayedClose(onClose, 320);
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
   const backdropH = statusBarH + 16;
   return (
-    <div style={{
-      position: "absolute", inset: 0, zIndex: 70,
-      background: "rgba(0,0,0,.32)",
-      display: "flex", flexDirection: "column",
-      animation: "fadein 300ms var(--ease-modal)",
-    }}>
-      <div onClick={onClose} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
-      <div style={{
-        flex: 1, background: "#fff",
-        borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 70,
+        background: "rgba(0,0,0,.32)",
         display: "flex", flexDirection: "column",
-        animation: "slideup 440ms var(--ease-modal)",
+        animation: "fadein 300ms var(--ease-modal)",
       }}>
+      <div onClick={close} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
           <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 12px" }}>
-          <IconBtn icon="x" color="#1d1d1d" onClick={onClose} label={t({ en: "Close", no: "Lukk" })} />
+          <IconBtn icon="x" color="#1d1d1d" onClick={close} label={t({ en: "Close", no: "Lukk" })} />
         </div>
 
         <div style={{
@@ -5225,6 +5433,7 @@ function LoginSheet({ onClose, onLogin }) {
 // ===========================================================
 function SelectLetterSheet({ onClose, onPick }) {
   const t = useT();
+  const [exiting, close] = useDelayedClose(onClose, 320);
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
@@ -5248,19 +5457,23 @@ function SelectLetterSheet({ onClose, onPick }) {
   }
 
   return (
-    <div style={{
-      position: "absolute", inset: 0, zIndex: 65,
-      background: "rgba(0,0,0,.30)",
-      display: "flex", flexDirection: "column",
-      animation: "fadein 300ms var(--ease-modal)",
-    }}>
-      <div onClick={onClose} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
-      <div style={{
-        flex: 1, background: "#fff",
-        borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 65,
+        background: "rgba(0,0,0,.30)",
         display: "flex", flexDirection: "column",
-        animation: "slideup 440ms var(--ease-modal)",
+        animation: "fadein 300ms var(--ease-modal)",
       }}>
+      <div onClick={close} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
           <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
         </div>
@@ -5269,7 +5482,7 @@ function SelectLetterSheet({ onClose, onPick }) {
         <div style={{ padding: "6px 12px 12px", display: "flex", alignItems: "center", gap: 8 }}>
           <button
             className="press"
-            onClick={() => { haptic("tap"); onClose?.(); }}
+            onClick={() => { haptic("tap"); close(); }}
             aria-label={t({ en: "Back", no: "Tilbake" })}
             style={{
               width: 36, height: 36, borderRadius: 9999,
@@ -5557,6 +5770,22 @@ function CVChips({ items, highlight = [] }) {
 // Going back unmounts only the preview — the picker is already there underneath.
 function CVPreviewSheet({ onClose, onBack, onCommit, initialSource = "profile", uploadMode = false }) {
   const t = useT();
+  // Close fires the same animation whether the user taps Back, Done, or
+  // the dimmed backdrop — onClose unmounts the sheet, onBack returns to
+  // the picker underneath. We pick a delegate per action and route through
+  // the delayed-close hook so the slide-down always plays first.
+  const [exiting, runDelayedClose] = useDelayedClose(() => {
+    if (delegateRef.current) {
+      const fn = delegateRef.current;
+      delegateRef.current = null;
+      fn?.();
+    }
+  }, 320);
+  const delegateRef = useRef(null);
+  function dispatchClose(fn) {
+    delegateRef.current = fn || onClose;
+    runDelayedClose();
+  }
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
@@ -5567,8 +5796,9 @@ function CVPreviewSheet({ onClose, onBack, onCommit, initialSource = "profile", 
     name: "Lee_Frost_CV_2025.pdf", size: "245 KB", ext: "PDF", date: "12 March 2026",
   });
   // Chevron-back returns to the picker; tapping the dimmed backdrop is a full close.
-  const goBack = onBack || onClose;
-  const goCommit = onCommit || onClose;
+  const goBack = () => dispatchClose(onBack || onClose);
+  const goCommit = () => dispatchClose(onCommit || onClose);
+  const goClose = () => dispatchClose(onClose);
   // Human label of the source we're previewing (shown in the header).
   const sourceLabel = source === "uploaded"
     ? t({ en: "Uploaded CV", no: "Opplastet CV" })
@@ -5716,19 +5946,23 @@ function CVPreviewSheet({ onClose, onBack, onCommit, initialSource = "profile", 
   })();
 
   return (
-    <div style={{
-      position: "absolute", inset: 0, zIndex: 72,
-      background: "rgba(0,0,0,.30)",
-      display: "flex", flexDirection: "column",
-      animation: "fadein 300ms var(--ease-modal)",
-    }}>
-      <div onClick={onClose} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
-      <div style={{
-        flex: 1, background: "#fff",
-        borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 72,
+        background: "rgba(0,0,0,.30)",
         display: "flex", flexDirection: "column",
-        animation: "slideup 440ms var(--ease-modal)",
+        animation: "fadein 300ms var(--ease-modal)",
       }}>
+      <div onClick={goClose} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
           <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
@@ -6230,6 +6464,7 @@ function Question({ q, a, from }) {
 
 function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
   const t = useT();
+  const [exiting, close] = useDelayedClose(onClose, 320);
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
@@ -6300,19 +6535,23 @@ function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
   if (!c) return null;
 
   return (
-    <div style={{
-      position: "absolute", inset: 0, zIndex: 65,
-      background: "rgba(0,0,0,.30)",
-      display: "flex", flexDirection: "column",
-      animation: "fadein 300ms var(--ease-modal)",
-    }}>
-      <div onClick={onClose} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
-      <div style={{
-        flex: 1, background: "#fff",
-        borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 65,
+        background: "rgba(0,0,0,.30)",
         display: "flex", flexDirection: "column",
-        animation: "slideup 440ms var(--ease-modal)",
+        animation: "fadein 300ms var(--ease-modal)",
       }}>
+      <div onClick={close} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
           <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
         </div>
@@ -6324,7 +6563,7 @@ function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
             <p style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1d", margin: "0 0 2px", letterSpacing: -0.2, lineHeight: 1.2 }}>{c.title}</p>
             <p style={{ fontSize: 13, color: "#6b6b6b", margin: 0, lineHeight: 1.35 }}>{c.sub}</p>
           </div>
-          <IconBtn icon="x" color="#1d1d1d" onClick={onClose} label={t({ en: "Close", no: "Lukk" })} />
+          <IconBtn icon="x" color="#1d1d1d" onClick={close} label={t({ en: "Close", no: "Lukk" })} />
         </div>
         <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "18px 0 16px" }}>
           {c.body}
@@ -6334,7 +6573,7 @@ function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
           paddingBottom: `calc(12px + ${homeArea}px)`,
           borderTop: "0.5px solid rgba(0,0,0,0.06)",
         }}>
-          <PrimaryButton onClick={onClose}>{t({ en: "Done", no: "Ferdig" })}</PrimaryButton>
+          <PrimaryButton onClick={close}>{t({ en: "Done", no: "Ferdig" })}</PrimaryButton>
         </div>
       </div>
     </div>
@@ -6516,8 +6755,214 @@ function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts",
 // Each field is tappable to edit inline; on edit, a "Redigert" chip
 // appears next to that field's label so reviewers see what the user
 // touched after the agent's draft.
-function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
+
+// Lifted out of AgenticReviewScreen so its function identity stays stable
+// across parent re-renders. When this lived inside AgenticReviewScreen, every
+// re-render (e.g. toggling the confirm switch) created a new function
+// reference, React saw a "different" SectionRow type at the same position
+// and unmounted/remounted it — which made the .ar-check-land entry
+// animation re-fire on every parent render. That's why the ticks flashed.
+function SectionRow({ id, title, sub, edited, status = "done", onTap }) {
   const t = useT();
+  const loading = status === "working";
+  const queued  = status === "queued";
+  const idle    = loading || queued;
+  let leadingIcon;
+  if (loading) {
+    leadingIcon = (
+      <div key="working" className="ar-soft-fade" style={{
+        width: 32, height: 32,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <RiveSpinner size={32} src="assets/finn_ai_spinner_allstates.riv" />
+      </div>
+    );
+  } else if (queued) {
+    leadingIcon = (
+      <div key="queued" className="ar-soft-fade" style={{
+        width: 32, height: 32, borderRadius: 9999,
+        border: "1.5px solid #d4d4d4", background: "#fff",
+      }} />
+    );
+  } else {
+    leadingIcon = (
+      <div key="done" className="ar-check-land" style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        width: 32, height: 32,
+      }}>
+        <Icon name="check-circle" size={28} color="#1f8a3b" stroke={2} />
+      </div>
+    );
+  }
+  return (
+    <div className="ar-row">
+      <button className="ar-row-head press"
+        onClick={() => { if (!idle) { haptic("tap"); onTap?.(id); } }}
+        disabled={idle}
+        aria-haspopup="dialog"
+        aria-busy={loading || undefined}
+        style={{ cursor: idle ? "default" : "pointer" }}>
+        <span className="ar-row-check" aria-hidden="true">
+          {leadingIcon}
+        </span>
+        <span className="ar-row-text">
+          <span className="ar-row-title">
+            {title}
+            {edited && !idle && (
+              <span style={{
+                display: "inline-flex",
+                opacity: 1,
+                transition: "opacity 380ms cubic-bezier(0.45, 0, 0.25, 1)",
+              }}><EditedChip /></span>
+            )}
+          </span>
+          <span className="ar-row-sub">
+            {sub}
+          </span>
+        </span>
+        <span className="ar-row-edit" style={{
+          opacity: idle ? 0 : 1,
+          transition: "opacity 380ms cubic-bezier(0.45, 0, 0.25, 1)",
+          pointerEvents: idle ? "none" : "auto",
+        }}>
+          {t({ en: "Edit", no: "Endre" })}
+          <Icon name="chevron-right" size={16} color="#0063fb" stroke={2.2} />
+        </span>
+      </button>
+    </div>
+  );
+}
+
+// Per-field source explanations surfaced when the user taps a Source pill.
+// Builds trust by making the AI's reasoning legible: "where did this value
+// come from?" Comes up in the agentic flow's ReviewItem and FileCard.
+const SOURCE_EXPLANATIONS = {
+  firstName: { en: "Read from your FINN profile · last edited 12 Mar 2026", no: "Hentet fra FINN-profilen din · sist endret 12. mars 2026" },
+  lastName:  { en: "Read from your FINN profile · last edited 12 Mar 2026", no: "Hentet fra FINN-profilen din · sist endret 12. mars 2026" },
+  email:     { en: "The verified email on your FINN account",                no: "Den verifiserte e-postadressen på FINN-kontoen din" },
+  phone:     { en: "From your FINN profile · verified by SMS",              no: "Fra FINN-profilen · verifisert med SMS" },
+  gender:    { en: "From your Job Profile preferences",                      no: "Fra Jobbprofilen din" },
+  linkedin:  { en: "Linked from your FINN profile · optional in this application", no: "Lenket fra FINN-profilen · valgfritt i denne søknaden" },
+  cv:        { en: "The CV you last uploaded — 12 Mar 2026",                 no: "CV-en du sist lastet opp — 12. mars 2026" },
+  letter:    { en: "Drafted by FINN AI from your profile + this job ad",     no: "Skrevet av FINN AI ut fra profilen din og denne stillingsannonsen" },
+};
+
+// SourcePill — a Source-attribution chip with a tappable "Why this answer?"
+// affordance. Lives at module scope so its `showExplanation` state isn't
+// reset on every parent re-render. Tap toggles a short, single-line
+// explanation underneath; tap again or click elsewhere dismisses.
+function SourcePill({ source, explanation, variant = "ai" }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+  const hasExplain = !!explanation;
+  return (
+    <span ref={wrapRef} style={{ position: "relative", display: "inline-flex" }}>
+      <button
+        type="button"
+        onClick={(e) => { if (!hasExplain) return; e.stopPropagation(); haptic("tap"); setOpen(v => !v); }}
+        className="ar-rv-source"
+        aria-expanded={hasExplain ? open : undefined}
+        aria-haspopup={hasExplain ? "true" : undefined}
+        style={{
+          cursor: hasExplain ? "pointer" : "default",
+          font: "500 11px/1.2 var(--sys-text)", letterSpacing: -0.05,
+          display: "inline-flex", alignItems: "center", gap: 4,
+        }}>
+        {t(source)}
+        {hasExplain && (
+          <span aria-hidden="true" style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            width: 12, height: 12, borderRadius: 9999,
+            border: "1px solid currentColor", fontSize: 9, fontWeight: 700,
+            lineHeight: 1, marginLeft: 1,
+          }}>?</span>
+        )}
+      </button>
+      {open && hasExplain && (
+        <span role="tooltip"
+          style={{
+            position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 5,
+            background: "#1d1d1d", color: "#fff",
+            padding: "8px 12px", borderRadius: 10,
+            fontSize: 12, lineHeight: 1.45, letterSpacing: -0.05,
+            maxWidth: 280, width: "max-content",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+            animation: "fadein 180ms cubic-bezier(0.45, 0, 0.25, 1)",
+          }}>
+          {t(explanation)}
+        </span>
+      )}
+    </span>
+  );
+}
+
+// Yellow "Redigert" chip next to a section title when the user has touched
+// any of its fields. Lifted alongside SectionRow for the same stability reason.
+function EditedChip() {
+  const t = useT();
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      fontSize: 11, fontWeight: 500,
+      padding: "2px 8px", borderRadius: 9999,
+      background: "#fdedb0", color: "#4d3a00",
+      whiteSpace: "nowrap", letterSpacing: -0.05,
+      textTransform: "none",
+    }}>{t({ en: "Edited", no: "Redigert" })}</span>
+  );
+}
+
+function AgenticReviewScreen({ job, onClose, onSend }) {
+  const t = useT();
+  const [exiting, close] = useDelayedClose(onClose, 320);
+  // Independent exit state for the inner section sheet (Personalia /
+  // Vedlegg / Questions) so its slide-down doesn't share timing with the
+  // outer agentic sheet's close.
+  const [sectionSheetExiting, setSectionSheetExiting] = useState(false);
+  const sectionExitTimerRef = useRef(null);
+  useEffect(() => () => {
+    if (sectionExitTimerRef.current) clearTimeout(sectionExitTimerRef.current);
+  }, []);
+  function closeSectionSheet() {
+    if (sectionSheetExiting) return;
+    setSectionSheetExiting(true);
+    sectionExitTimerRef.current = setTimeout(() => {
+      setSectionSheet(null);
+      setSectionSheetExiting(false);
+      // Reset internal navigation so reopening Vedlegg starts on the
+      // main page, not the last page the user was on.
+      setVedleggStack(["main"]);
+      setVedleggDir("push");
+    }, 320);
+  }
+
+  // ─── Internal page-navigation stack for the Vedlegg section sheet ─────
+  // Replaces the previous behaviour of stacking EditSheet → CVPreviewSheet
+  // on top of the section sheet (four-deep modal stack). Now we push
+  // pages *inside* the same sheet — iOS-native UINavigationController
+  // pattern. Pages: main · cv-picker · cv-preview · letter · select-letter
+  const [vedleggStack, setVedleggStack] = useState(["main"]);
+  // Direction of the most-recent navigation, drives push-in / pop-in CSS.
+  const [vedleggDir, setVedleggDir] = useState("push");
+  function pushVedleggPage(page) {
+    setVedleggDir("push");
+    setVedleggStack(s => [...s, page]);
+  }
+  function popVedleggPage() {
+    setVedleggDir("pop");
+    setVedleggStack(s => s.length > 1 ? s.slice(0, -1) : s);
+  }
+  const vedleggPage = vedleggStack[vedleggStack.length - 1];
+  const vedleggCanGoBack = vedleggStack.length > 1;
   const { statusBarH, homeArea } = useMetrics();
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
@@ -6576,22 +7021,26 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
     questions:  "queued",
   });
 
-  // Stage the preparing phase so each section completes one at a time.
-  // ~1.5s per section. Personal details first (it's the fastest — just a
-  // lookup), then Attachments (heavier — actually reading the CV + letter),
-  // then Additional questions (slowest — composing a tailored answer).
+  // Stage the preparing phase — each section ticks off one at a time.
+  // 1s per section, 3s total. The Doherty Threshold (≤400ms feels instant,
+  // ≥1s users start noticing) means we want this as tight as possible
+  // without losing the visible "AI is working" reassurance. A short haptic
+  // tick fires as each section lands so the user feels progress even if
+  // they're not watching the rows.
   useEffect(() => {
-    const t1 = setTimeout(() => setSectionPrep({
-      personalia: "done", vedlegg: "working", questions: "queued",
-    }), 1500);
-    const t2 = setTimeout(() => setSectionPrep({
-      personalia: "done", vedlegg: "done", questions: "working",
-    }), 3000);
+    const t1 = setTimeout(() => {
+      setSectionPrep({ personalia: "done", vedlegg: "working", questions: "queued" });
+      haptic("tap");
+    }, 1000);
+    const t2 = setTimeout(() => {
+      setSectionPrep({ personalia: "done", vedlegg: "done", questions: "working" });
+      haptic("tap");
+    }, 2000);
     const t3 = setTimeout(() => {
       setSectionPrep({ personalia: "done", vedlegg: "done", questions: "done" });
       setPhase("ready");
       haptic("ok");
-    }, 4500);
+    }, 3000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
@@ -6613,21 +7062,8 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
   }
 
   // A small "Edited" / "Redigert" chip — appears next to a field label
-  // when the user has touched the agent's pre-filled value. Same visual
-  // language as MVP's source pills (rounded 9999, 11px / 500). Explicit
-  // textTransform: none so it survives parent labels that uppercase.
-  function EditedChip() {
-    return (
-      <span style={{
-        display: "inline-flex", alignItems: "center",
-        fontSize: 11, fontWeight: 500,
-        padding: "2px 8px", borderRadius: 9999,
-        background: "#fdedb0", color: "#6b520a",
-        whiteSpace: "nowrap", letterSpacing: -0.05,
-        textTransform: "none",
-      }}>{t({ en: "Edited", no: "Redigert" })}</span>
-    );
-  }
+  // EditedChip lives at module scope now (see top of file) so its function
+  // reference is stable across re-renders of AgenticReviewScreen.
 
   // Skeleton block while preparing.
   function Skeleton({ w = "100%", h = 14, mt = 8 }) {
@@ -6711,7 +7147,7 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
           <span className="ar-rv-heading-label">{LABELS[k]}</span>
           {isMissing
             ? <span className="ar-rv-missing">{t({ en: "Missing", no: "Mangler" })}</span>
-            : (src && <span className="ar-rv-source">{t(src)}</span>)}
+            : (src && <SourcePill source={src} explanation={SOURCE_EXPLANATIONS[k]} />)}
           {f.e && !isMissing && <EditedChip />}
         </p>
         {control}
@@ -6724,25 +7160,21 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
     );
   }
 
-  // File rows reuse the same CVOption card the CV / cover-letter picker uses
-  // elsewhere in the app — same icon disk, same chevron, same selection
-  // language. Tapping a card opens the real Easy Apply picker → preview
-  // flow (CV picker → CVPreviewSheet) or the AI Writing Assistant sheet
-  // (Cover letter), routed through the App via onOpenCV / onOpenLetter
-  // callbacks so the overlays stack above this section sheet.
+  // File rows now drill into a sub-page *inside the same sheet* rather than
+  // spawning EditSheet / CoverLetterSheet on top. iOS UINavigationController
+  // pattern: tap → page-push transition inside the existing sheet.
   function FileCard({ k }) {
     const f = fields[k];
     const src = SOURCE_BY_KEY[k];
     const open = () => {
       haptic("tap");
-      if (k === "cv") onOpenCV?.();
-      else onOpenLetter?.();
+      pushVedleggPage(k === "cv" ? "cv-picker" : "letter-picker");
     };
     return (
       <div className="ar-rv">
         <p className="ar-rv-heading">
           <span className="ar-rv-heading-label">{LABELS[k]}</span>
-          {src && <span className="ar-rv-source">{t(src)}</span>}
+          {src && <SourcePill source={src} explanation={SOURCE_EXPLANATIONS[k]} />}
           {f.e && <EditedChip />}
         </p>
         <CVOption
@@ -6772,98 +7204,10 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
                         || t({ en: "No attachments", no: "Ingen vedlegg" });
   const questionsSub  = `${t({ en: "Norwegian", no: "Norsk" })}: ${yesNoDisplay} · ${fields.qExp.v}`;
 
-  function SectionRow({ id, title, sub, edited, status = "done" }) {
-    const loading = status === "working";
-    const queued  = status === "queued";
-    const idle    = loading || queued;
-    // Capture which "leaf" animation to play for the leading icon. Keys
-    // force React to unmount/mount on status change so each variant gets
-    // its arSoftFade / arCheckLand entrance.
-    // Use the same FINN AI Rive spinner as the easy-apply flow when the
-    // section is actively working. Queued stays as the neutral outlined
-    // disc; done lands the check-circle with a clean opacity fade (no
-    // scale overshoot).
-    let leadingIcon;
-    if (loading) {
-      leadingIcon = (
-        <div key="working" className="ar-soft-fade" style={{
-          width: 32, height: 32,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <RiveSpinner size={32} src="assets/finn_ai_spinner_allstates.riv" />
-        </div>
-      );
-    } else if (queued) {
-      leadingIcon = (
-        <div key="queued" className="ar-soft-fade" style={{
-          width: 32, height: 32, borderRadius: 9999,
-          border: "1.5px solid #d4d4d4", background: "#fff",
-        }} />
-      );
-    } else {
-      leadingIcon = (
-        <div key="done" className="ar-check-land" style={{
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          width: 32, height: 32,
-        }}>
-          <Icon name="check-circle" size={28} color="#1f8a3b" stroke={2} />
-        </div>
-      );
-    }
-    return (
-      <div className="ar-row">
-        <button className="ar-row-head press"
-          onClick={() => { if (!idle) { haptic("tap"); setSectionSheet(id); } }}
-          disabled={idle}
-          aria-haspopup="dialog"
-          aria-busy={loading || undefined}
-          style={{
-            cursor: idle ? "default" : "pointer",
-            // Queued rows are visually dimmer via softer text/icon colours,
-            // not via row-wide opacity — opacity transitions made the row's
-            // title and sub-text appear to "flash" the moment the row
-            // started working. Each row is now visually inert except for
-            // its leading icon crossfade and the per-row text content.
-          }}>
-          <span className="ar-row-check" aria-hidden="true">
-            {leadingIcon}
-          </span>
-          <span className="ar-row-text">
-            <span className="ar-row-title">
-              {title}
-              {edited && !idle && (
-                <span style={{
-                  display: "inline-flex",
-                  opacity: 1,
-                  transition: "opacity 380ms cubic-bezier(0.45, 0, 0.25, 1)",
-                }}><EditedChip /></span>
-              )}
-            </span>
-            {/* Sub-line — stable element. Text changes in place without a
-                key-driven remount, so updates in one row don't trigger any
-                visible animation that the eye reads as the whole list
-                flashing. The leading icon crossfade alone signals the row's
-                completion. */}
-            <span className="ar-row-sub">
-              {sub}
-            </span>
-          </span>
-          {/* Edit affordance — always rendered so the row's width stays
-              stable when a section transitions from working/queued → done.
-              Opacity flips with the idle state so it fades in instead of
-              taking layout space on completion. */}
-          <span className="ar-row-edit" style={{
-            opacity: idle ? 0 : 1,
-            transition: "opacity 380ms cubic-bezier(0.45, 0, 0.25, 1)",
-            pointerEvents: idle ? "none" : "auto",
-          }}>
-            {t({ en: "Edit", no: "Endre" })}
-            <Icon name="chevron-right" size={16} color="#0063fb" stroke={2.2} />
-          </span>
-        </button>
-      </div>
-    );
-  }
+  // SectionRow lives at module scope (see top of file). The inner copy used
+  // to redeclare on every parent re-render, which caused React to unmount/
+  // remount it and re-fire the .ar-check-land entry animation every time
+  // the confirm toggle (or any other state inside this component) changed.
 
   // Helper — what sub-line to show for a section during preparing phase.
   // "working" → its dedicated working text. "queued" → generic waiting.
@@ -6934,19 +7278,22 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
           title={t({ en: "Personal details", no: "Personopplysninger" })}
           sub={(isPreparing && sectionPrep.personalia !== "done")
             ? prepSub("personalia") : personaliaSub}
-          edited={!isPreparing && personaliaEdited} />
+          edited={!isPreparing && personaliaEdited}
+          onTap={setSectionSheet} />
         <SectionRow id="vedlegg"
           status={isPreparing ? sectionPrep.vedlegg : "done"}
           title={t({ en: "Attachments", no: "Vedlegg" })}
           sub={(isPreparing && sectionPrep.vedlegg !== "done")
             ? prepSub("vedlegg") : vedleggSub}
-          edited={!isPreparing && vedleggEdited} />
+          edited={!isPreparing && vedleggEdited}
+          onTap={setSectionSheet} />
         <SectionRow id="questions"
           status={isPreparing ? sectionPrep.questions : "done"}
           title={t({ en: "Additional questions", no: "Tilleggsspørsmål" })}
           sub={(isPreparing && sectionPrep.questions !== "done")
             ? prepSub("questions") : questionsSub}
-          edited={!isPreparing && questionsEdited} />
+          edited={!isPreparing && questionsEdited}
+          onTap={setSectionSheet} />
       </div>
 
       {/* Confirm card — fades in at phase=ready but its container reserves
@@ -7050,25 +7397,29 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
 
   return (
     <>
-    <div style={{
-      position: "absolute", inset: 0, zIndex: 50,
-      display: "flex", flexDirection: "column",
-      background: "rgba(0,0,0,.30)",
-      animation: "fadein 300ms var(--ease-modal)",
-    }}>
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 50,
+        display: "flex", flexDirection: "column",
+        background: "rgba(0,0,0,.30)",
+        animation: "fadein 300ms var(--ease-modal)",
+      }}>
       {/* Backdrop — tap to dismiss */}
-      <div onClick={() => { haptic("tap"); onClose?.(); }}
+      <div onClick={() => { haptic("tap"); close(); }}
         style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
 
       {/* Sheet body — slides up */}
-      <div style={{
-        flex: 1, background: "#fff",
-        borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
-        display: "flex", flexDirection: "column",
-        boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
-        position: "relative", overflow: "hidden",
-        animation: "slideup 440ms var(--ease-modal)",
-      }}>
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
+          position: "relative", overflow: "hidden",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
           <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
@@ -7097,10 +7448,10 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
             }}>{job.company}</p>
           </div>
           <button className="press"
-            onClick={() => { haptic("tap"); onClose?.(); }}
+            onClick={() => { haptic("tap"); close(); }}
             aria-label={t({ en: "Close", no: "Lukk" })}
             style={{
-              width: 32, height: 32, borderRadius: 9999,
+              width: 44, height: 44, borderRadius: 9999,
               background: "#f0f0f3", border: 0, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0,
@@ -7205,40 +7556,63 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
         section row above sets `sectionSheet`, which mounts this sheet.
         Closing it returns to the review sheet underneath. */}
     {sectionSheet && (
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 60,
-        display: "flex", flexDirection: "column",
-        background: "rgba(0,0,0,.30)",
-        animation: "fadein 300ms var(--ease-modal)",
-      }}>
-        <div onClick={() => { haptic("tap"); setSectionSheet(null); }}
-          style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
-        <div style={{
-          flex: 1, background: "#fff",
-          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+      <div
+        className={sectionSheetExiting ? "backdrop-exit" : ""}
+        style={{
+          position: "absolute", inset: 0, zIndex: 60,
           display: "flex", flexDirection: "column",
-          boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
-          overflow: "hidden",
-          animation: "slideup 440ms var(--ease-modal)",
+          background: "rgba(0,0,0,.30)",
+          animation: "fadein 300ms var(--ease-modal)",
         }}>
+        <div onClick={() => { haptic("tap"); closeSectionSheet(); }}
+          style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+        <div
+          className={sectionSheetExiting ? "sheet-exit" : ""}
+          style={{
+            flex: 1, background: "#fff",
+            borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+            display: "flex", flexDirection: "column",
+            boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
+            overflow: "hidden",
+            animation: "slideup 440ms var(--ease-modal)",
+          }}>
           {/* Drag handle */}
           <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
             <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
           </div>
-          {/* Title bar */}
+          {/* Title bar — back chevron when navigated into a sub-page of
+              the Vedlegg section (cv-picker, cv-preview, letter, select-
+              letter). Title swaps to the sub-page's name. */}
           <div style={{
             padding: "10px 16px 14px",
             borderBottom: "0.5px solid #ededed",
             display: "flex", alignItems: "center", gap: 12,
           }}>
+            {sectionSheet === "vedlegg" && vedleggCanGoBack && (
+              <button className="press"
+                onClick={() => { haptic("tap"); popVedleggPage(); }}
+                aria-label={t({ en: "Back", no: "Tilbake" })}
+                style={{
+                  width: 44, height: 44, borderRadius: 9999,
+                  background: "#f0f0f3", border: 0, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                <Icon name="chevron-left" size={18} color="#1d1d1d" stroke={2.4} />
+              </button>
+            )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1d", margin: 0,
                 letterSpacing: -0.2, lineHeight: 1.2 }}>
-                {t(SECTION_TITLES[sectionSheet])}
+                {sectionSheet === "vedlegg" && vedleggPage === "cv-picker"
+                  ? t({ en: "CV",            no: "CV" })
+                 : sectionSheet === "vedlegg" && vedleggPage === "letter-picker"
+                  ? t({ en: "Cover letter", no: "Søknadsbrev" })
+                 : t(SECTION_TITLES[sectionSheet])}
               </p>
             </div>
             <button className="press"
-              onClick={() => { haptic("tap"); setSectionSheet(null); }}
+              onClick={() => { haptic("tap"); closeSectionSheet(); }}
               aria-label={t({ en: "Close", no: "Lukk" })}
               style={{
                 width: 32, height: 32, borderRadius: 9999,
@@ -7249,10 +7623,46 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
               <Icon name="x" size={16} color="#1d1d1d" stroke={2.4} />
             </button>
           </div>
-          {/* Body */}
-          <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "20px 20px 24px" }}>
-            {sectionBody}
-          </div>
+          {/* Body — Personalia/Questions render inline; Vedlegg uses an
+              internal page stack so we don't have to stack a second sheet
+              on top. */}
+          {sectionSheet === "vedlegg" ? (
+            <div className="page-stack">
+              <div
+                key={vedleggPage}
+                className={"page " + (vedleggDir === "pop" ? "page-pop-in" : "page-push-in")}
+                style={{ padding: "20px 20px 24px" }}
+              >
+                {vedleggPage === "main" && (
+                  <>
+                    <FileCard k="cv" />
+                    <FileCard k="letter" />
+                  </>
+                )}
+                {/* CV + Cover Letter share the same AttachmentPicker — both
+                    are just files, picked from the user's FINN Job Profile
+                    or freshly uploaded. No AI-drafted letter at MVP. */}
+                {vedleggPage === "cv-picker" && (
+                  <VedleggAttachmentPicker
+                    kind="cv"
+                    currentName={fields.cv.v}
+                    onPick={(name) => { update("cv", name); popVedleggPage(); }}
+                  />
+                )}
+                {vedleggPage === "letter-picker" && (
+                  <VedleggAttachmentPicker
+                    kind="letter"
+                    currentName={fields.letter.v}
+                    onPick={(name) => { update("letter", name); popVedleggPage(); }}
+                  />
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "20px 20px 24px" }}>
+              {sectionBody}
+            </div>
+          )}
           {/* Footer */}
           <div style={{
             padding: "12px 16px",
@@ -7260,7 +7670,7 @@ function AgenticReviewScreen({ job, onClose, onSend, onOpenCV, onOpenLetter }) {
             background: "#fff",
             borderTop: "0.5px solid rgba(0,0,0,0.06)",
           }}>
-            <PrimaryButton onClick={() => { haptic("ok"); setSectionSheet(null); }}>
+            <PrimaryButton onClick={() => { haptic("ok"); closeSectionSheet(); }}>
               {t({ en: "Done", no: "Ferdig" })}
             </PrimaryButton>
           </div>
@@ -7383,10 +7793,36 @@ function DesktopApplyScene({ onSend }) {
               </div>
 
               <div className="ctas">
-                <button className="cta-primary" onClick={() => setDrawerOpen(true)}>Fast Apply</button>
-                <button className="cta-secondary">Apply directly</button>
+                <button className="cta-primary" onClick={() => setDrawerOpen(true)}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    {t({ en: "Fast Apply", no: "Søk nå" })}
+                    {/* Visible signal that THIS ad is wired up to FINN's
+                        agentic apply pipeline (vs sent to an external ATS).
+                        Quietly supports KR3 (paid-ad share, 19% → 30%) by
+                        making the FINN-apply differentiator legible at the
+                        CTA itself — recruiter conversations get easier when
+                        seekers visibly prefer pre-filled. */}
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      padding: "2px 8px", borderRadius: 9999,
+                      background: "rgba(255,255,255,0.18)",
+                      color: "#fff",
+                      font: "600 11px/1.2 var(--sys-text)", letterSpacing: -0.05,
+                      whiteSpace: "nowrap",
+                    }}>
+                      <AILogo size={12} radius={3} />
+                      {t({ en: "Pre-filled", no: "Forhåndsutfylt" })}
+                    </span>
+                  </span>
+                </button>
+                <button className="cta-secondary">{t({ en: "Apply directly", no: "Søk via arbeidsgiver" })}</button>
               </div>
-              <p className="fa-caption">Fast apply fills out the application for you. You can review and edit before submitting.</p>
+              <p className="fa-caption">
+                {t({
+                  en: "Fast Apply pre-fills your application from your FINN Job Profile. Review and edit before sending.",
+                  no: "Søk nå fyller ut søknaden fra Jobbprofilen din. Se gjennom og endre før du sender.",
+                })}
+              </p>
 
               <div className="links">
                 <a href="#">Bli kjent med Politiets IT-enhet (PIT): Vi bidrar til å løse politiets samfunnsoppdrag med teknologi som virkemiddel</a>
@@ -7412,17 +7848,15 @@ function DesktopApplyScene({ onSend }) {
           }} />
       )}
 
-      {/* Backdrop + drawer */}
+      {/* Drawer — owns its own backdrop so the two can share the exit
+          animation state (both fade out together when the user closes). */}
       {drawerOpen && (
-        <>
-          <div className="apply-backdrop" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
-          <ApplyDrawer
-            onClose={() => setDrawerOpen(false)}
-            confirmed={confirmed}
-            onConfirmedChange={setConfirmed}
-            onSend={() => { if (confirmed) onSend?.(); }}
-          />
-        </>
+        <ApplyDrawer
+          onClose={() => setDrawerOpen(false)}
+          confirmed={confirmed}
+          onConfirmedChange={setConfirmed}
+          onSend={() => { if (confirmed) onSend?.(); }}
+        />
       )}
     </div>
   );
@@ -7435,6 +7869,7 @@ function DesktopApplyScene({ onSend }) {
 // just stacked inline since desktop has the vertical room.
 function ApplyDrawer({ onClose, confirmed, onConfirmedChange, onSend }) {
   const t = useT();
+  const [exiting, close] = useDelayedClose(onClose, 280);
   // Same auto-filled initial state as AgenticReviewScreen so the demo
   // lands on the exact mobile values.
   const [fields, setFields] = useState({
@@ -7471,14 +7906,20 @@ function ApplyDrawer({ onClose, confirmed, onConfirmedChange, onSend }) {
   const blockingFields = !confirmed;
 
   return (
+    <>
+      <div
+        className={"apply-backdrop" + (exiting ? " backdrop-exit" : "")}
+        onClick={close}
+        aria-hidden="true"
+      />
     <aside
-      className="apply-drawer"
+      className={"apply-drawer" + (exiting ? " drawer-exit" : "")}
       role="dialog"
       aria-modal="true"
       aria-label={t({ en: "Review your application", no: "Se gjennom søknaden din" })}
     >
       <header className="drawer-head">
-        <button className="drawer-back" onClick={onClose}>
+        <button className="drawer-back" onClick={close}>
           <Icon name="chevron-left" size={16} stroke={2.4} />
           {t({ en: "Back to job page", no: "Tilbake til annonsen" })}
         </button>
@@ -7583,6 +8024,7 @@ function ApplyDrawer({ onClose, confirmed, onConfirmedChange, onSend }) {
         </button>
       </footer>
     </aside>
+    </>
   );
 }
 
@@ -7670,6 +8112,387 @@ function DrawerEditedChip() {
   );
 }
 
+// ─── Vedlegg internal-nav page components ────────────────────────────────
+// Rendered inside the agentic section sheet's page stack so we don't have
+// to layer a second modal sheet on top of the section sheet. iOS UINavigationController-
+// style push/pop, all within one container.
+//
+// The agentic MVP treats CV and Cover Letter as a single class of thing —
+// "attachments." Both use the same VedleggAttachmentPicker below. Each
+// offers: pick from profile files (the user may have multiple) or upload
+// a new file. New uploads get an optional "Save to profile" toggle. No
+// AI-drafted cover letters at MVP; the AI handles personal-details +
+// employer-question prep, the user provides the docs.
+
+// AttachmentPicker — used for both CV (`kind="cv"`) and Cover Letter
+// (`kind="letter"`). Same shape, same affordances; only the labels and
+// the source file list differ.
+function VedleggAttachmentPicker({ kind, currentName, onPick }) {
+  const t = useT();
+  // Mock per-kind profile files. In a real implementation these come from
+  // the user's FINN Job Profile via API. Listed newest first.
+  const profileFiles = kind === "cv"
+    ? [
+        { id: "cv-1", name: "Lee_Frost_CV_2025.pdf",      date: { en: "12 Mar 2026", no: "12. mars 2026" }, size: "245 KB" },
+        { id: "cv-2", name: "Lee_Frost_CV_2024.pdf",      date: { en: "8 Jan 2025",  no: "8. jan 2025"  }, size: "212 KB" },
+        { id: "cv-3", name: "Lee_Frost_CV_engineering.pdf", date: { en: "3 Aug 2024", no: "3. aug 2024"  }, size: "228 KB" },
+      ]
+    : [
+        { id: "cl-1", name: "Cover_letter_2025.doc",      date: { en: "22 Feb 2026", no: "22. feb 2026" }, size: "189 KB" },
+        { id: "cl-2", name: "Cover_letter_2024.doc",      date: { en: "8 Dec 2024",  no: "8. des 2024"  }, size: "312 KB" },
+      ];
+
+  const [uploaded, setUploaded]           = useState(null);
+  const [saveToProfile, setSaveToProfile] = useState(true);
+
+  function simulateUpload() {
+    haptic("tap");
+    const stamp = new Date().toLocaleDateString();
+    setUploaded({
+      name: kind === "cv" ? "Lee_Frost_CV_new.pdf" : "Cover_letter_new.pdf",
+      size: kind === "cv" ? "189 KB" : "168 KB",
+      date: { en: "just now", no: "akkurat nå" },
+    });
+  }
+  function commitUpload() {
+    if (!uploaded) return;
+    haptic("ok");
+    onPick?.(uploaded.name, { savedToProfile: saveToProfile, fresh: true });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      {/* From profile — list of saved files */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <p style={{
+          font: "700 11px/1 var(--sys-text)",
+          textTransform: "uppercase", letterSpacing: "0.08em",
+          color: "#6b6b6b", margin: 0,
+        }}>
+          {t({ en: "From your profile", no: "Fra profilen din" })}
+        </p>
+        {profileFiles.map(f => (
+          <CVOption key={f.id}
+            icon="file"
+            title={f.name}
+            sub={`${t(f.date)} · ${f.size}`}
+            selected={currentName === f.name}
+            showChevron={currentName !== f.name}
+            onClick={() => { haptic("tap"); onPick?.(f.name); }}
+          />
+        ))}
+      </div>
+
+      {/* Or upload new — dropzone or, once a file is staged, a confirm card */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <p style={{
+          font: "700 11px/1 var(--sys-text)",
+          textTransform: "uppercase", letterSpacing: "0.08em",
+          color: "#6b6b6b", margin: 0,
+        }}>
+          {t({ en: "Or upload a new file", no: "Eller last opp ny fil" })}
+        </p>
+        {!uploaded ? (
+          <button
+            className="press"
+            onClick={simulateUpload}
+            style={{
+              padding: "28px 20px",
+              background: "transparent",
+              border: "1.5px dashed rgba(0,99,251,0.35)",
+              borderRadius: 14, color: "#0063fb",
+              cursor: "pointer", fontFamily: "inherit",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+            }}>
+            <Icon name="upload" size={28} color="#0063fb" stroke={2} />
+            <span style={{ font: "600 15px/1 var(--sys-text)", letterSpacing: -0.05 }}>
+              {kind === "cv"
+                ? t({ en: "Upload a new CV",            no: "Last opp ny CV"           })
+                : t({ en: "Upload a new cover letter", no: "Last opp nytt søknadsbrev" })}
+            </span>
+            <span style={{ font: "500 12px/1.4 var(--sys-text)", color: "#6b6b6b" }}>
+              {t({ en: "PDF, DOCX, DOC, RTF · Max 10 MB", no: "PDF, DOCX, DOC, RTF · Maks 10 MB" })}
+            </span>
+          </button>
+        ) : (
+          <div style={{
+            padding: "16px 14px",
+            background: "#f7f7f9", borderRadius: 14,
+            display: "flex", flexDirection: "column", gap: 12,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 10,
+                background: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                flexShrink: 0,
+              }}>
+                <Icon name="file" size={22} color="#0063fb" stroke={2} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  font: "600 15px/1.3 var(--sys-text)", letterSpacing: -0.1,
+                  color: "#1d1d1d", margin: 0,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>{uploaded.name}</p>
+                <p style={{ font: "500 12px/1.4 var(--sys-text)", color: "#6b6b6b", margin: "2px 0 0" }}>
+                  {uploaded.size} · {t({ en: "uploaded", no: "lastet opp" })} {t(uploaded.date)}
+                </p>
+              </div>
+              <button
+                onClick={() => setUploaded(null)}
+                aria-label={t({ en: "Remove file", no: "Fjern fil" })}
+                style={{
+                  width: 32, height: 32, borderRadius: 9999,
+                  background: "#fff", border: 0, cursor: "pointer",
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  color: "#6b6b6b", flexShrink: 0,
+                }}>
+                <Icon name="x" size={14} stroke={2.4} />
+              </button>
+            </div>
+            {/* Save-to-profile toggle — the user just uploaded something
+                new, offer to add it to their FINN Job Profile for next time. */}
+            <label style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 12px",
+              background: "#fff", borderRadius: 10,
+              border: "1px solid #ededed",
+              cursor: "pointer",
+              font: "500 14px/1.35 var(--sys-text)", color: "#1d1d1d",
+              letterSpacing: -0.05,
+            }}>
+              <input
+                type="checkbox"
+                checked={saveToProfile}
+                onChange={(e) => setSaveToProfile(e.target.checked)}
+                style={{ width: 18, height: 18, flexShrink: 0 }}
+              />
+              <span style={{ flex: 1 }}>
+                {t({
+                  en: "Save to my profile for next time",
+                  no: "Lagre i profilen min til neste gang",
+                })}
+              </span>
+            </label>
+            <PrimaryButton onClick={commitUpload}>
+              {kind === "cv"
+                ? t({ en: "Use this CV",            no: "Bruk denne CV-en"      })
+                : t({ en: "Use this cover letter", no: "Bruk dette søknadsbrevet" })}
+            </PrimaryButton>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Legacy components below — kept as no-ops so existing references compile.
+// The unified AttachmentPicker above replaces all four. Safe to delete in
+// a later cleanup pass once we're sure nothing else imports them.
+function VedleggCVPicker({ fields, onChoose }) {
+  const t = useT();
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <CVOption icon="user"
+        titleSuffix={<AILogo size={16} />}
+        title={t({ en: "CV from your profile", no: "CV fra profilen din" })}
+        sub={t({ en: "Recommended — everything we know about you", no: "Anbefalt – alt vi vet om deg" })}
+        showChevron
+        onClick={() => onChoose?.("profile")} />
+      <CVOption icon="wand"
+        title={t({ en: "Tailored CV for this role", no: "Skreddersydd CV for denne jobben" })}
+        sub={t({ en: "We'll surface what matches the listing", no: "Vi fremhever det som matcher utlysningen" })}
+        showChevron
+        onClick={() => onChoose?.("tailored")} />
+      <CVOption icon="file"
+        title={fields.cv.v || "Lee_Frost_CV_2025.pdf"}
+        sub={t({ en: "Uploaded 12 March 2026", no: "Lastet opp 12. mars 2026" })}
+        showChevron
+        onClick={() => onChoose?.("uploaded")} />
+      <CVOption icon="paperclip"
+        title={t({ en: "Upload a new CV", no: "Last opp ny CV" })}
+        sub={t({ en: "PDF or Word · max 10 MB", no: "PDF eller Word · maks 10 MB" })}
+        showChevron
+        onClick={() => onChoose?.("new")} />
+    </div>
+  );
+}
+
+// CV preview — shows the current uploaded file in a card with a replace
+// affordance. Simplified port of CVPreviewSheet's body (uploaded state)
+// since the prototype mostly demonstrates the *flow*, not the preview UI.
+function VedleggCVPreview({ fields, onCommit, onReplace }) {
+  const t = useT();
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{
+        padding: "18px 16px",
+        background: "#f7f7f9", borderRadius: 14,
+        display: "flex", alignItems: "center", gap: 14,
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 14,
+          background: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+          flexShrink: 0,
+        }}>
+          <Icon name="file" size={28} color="#0063fb" stroke={2} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontSize: 15, fontWeight: 700, color: "#1d1d1d",
+            margin: 0, letterSpacing: -0.1, lineHeight: 1.3,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>{fields.cv.v}</p>
+          <p style={{ fontSize: 13, color: "#6b6b6b", margin: "3px 0 0" }}>
+            {t({ en: "245 KB · uploaded 12 March 2026", no: "245 KB · lastet opp 12. mars 2026" })}
+          </p>
+        </div>
+      </div>
+      <p style={{ fontSize: 12, color: "#6b6b6b", margin: "0 4px", lineHeight: 1.5 }}>
+        {t({
+          en: "PDF preview isn't shown in the prototype — the file is attached as-is.",
+          no: "PDF-forhåndsvisning vises ikke i prototypen – filen sendes som den er.",
+        })}
+      </p>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button
+          onClick={onReplace}
+          className="press"
+          style={{
+            flex: 1, padding: "12px 16px", borderRadius: 12,
+            background: "#fff", color: "#0063fb",
+            border: "1px solid rgba(0,99,251,0.4)",
+            font: "600 15px/1 var(--sys-text)", letterSpacing: -0.1,
+            cursor: "pointer",
+            display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+          }}>
+          <Icon name="upload" size={16} stroke={2.2} />
+          {t({ en: "Replace", no: "Bytt fil" })}
+        </button>
+        <button
+          onClick={onCommit}
+          className="press"
+          style={{
+            flex: 1, padding: "12px 16px", borderRadius: 12,
+            background: "#0063fb", color: "#fff", border: 0,
+            font: "600 15px/1 var(--sys-text)", letterSpacing: -0.1,
+            cursor: "pointer",
+          }}>
+          {t({ en: "Use this CV", no: "Bruk denne CV-en" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Cover letter editor — style chips above an editable textarea. Simplified
+// port of CoverLetterSheet's body. Tap "Use a previous letter" to push the
+// select-letter page.
+function VedleggLetterEditor({ letter, onUpdate, onOpenSavedLetters }) {
+  const t = useT();
+  const STYLE_OPTIONS = [
+    { id: "formal",   label: { en: "Formal",   no: "Formell"  }, emoji: "👔" },
+    { id: "casual",   label: { en: "Casual",   no: "Uformell" }, emoji: "👋" },
+    { id: "friendly", label: { en: "Friendly", no: "Vennlig"  }, emoji: "😊" },
+  ];
+  const [style, setStyle] = useState("formal");
+  const [text, setText] = useState(`Hi there,\n\nI'm writing to apply for the role at Politiets IT-enhet. After leading design teams for several years, I'm excited about helping shape Norway's public service tech.\n\nLooking forward to hearing from you,\nGeorge`);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <p style={{
+        margin: 0, padding: "12px 14px",
+        background: "#eaf2ff", borderRadius: 12,
+        font: "500 13px/1.45 var(--sys-text)",
+        color: "#0a3a8a", letterSpacing: -0.05,
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <AILogo size={20} />
+        {t({ en: "AI draft — edit anything", no: "AI-utkast – endre alt du vil" })}
+      </p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {STYLE_OPTIONS.map(o => (
+          <button key={o.id}
+            onClick={() => setStyle(o.id)}
+            className={"ar-radio-pill" + (style === o.id ? " on" : "")}
+            style={{ cursor: "pointer" }}>
+            <span style={{ fontSize: 16 }}>{o.emoji}</span>
+            {t(o.label)}
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={10}
+        style={{
+          width: "100%", boxSizing: "border-box",
+          padding: "14px 16px", borderRadius: 12,
+          border: "1px solid #ededed", outline: 0,
+          background: "#f7f7f9", color: "#1d1d1d",
+          font: "500 15px/1.5 var(--sys-text)", letterSpacing: -0.1,
+          fontFamily: "inherit", resize: "vertical",
+          minHeight: 200,
+        }}
+      />
+      <button
+        onClick={onOpenSavedLetters}
+        className="press"
+        style={{
+          padding: "12px 14px", borderRadius: 12,
+          background: "#fff", color: "#0063fb",
+          border: "1px solid rgba(0,99,251,0.3)",
+          font: "600 14px/1 var(--sys-text)", letterSpacing: -0.05,
+          cursor: "pointer",
+          display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+        }}>
+        <Icon name="file" size={16} stroke={2} />
+        {t({ en: "Use a previous letter", no: "Bruk et tidligere brev" })}
+      </button>
+    </div>
+  );
+}
+
+// Saved-letters picker — list of previously-uploaded letters. Tap one to
+// pop back to the letter editor with that file selected.
+function VedleggSelectLetter({ onPick }) {
+  const t = useT();
+  const FILES = [
+    { id: "cl-1", name: t({ en: "Cover Letter",        no: "Søknadsbrev"        }),
+      date: t({ en: "Feb 22, 2026", no: "22. feb 2026" }), size: "189 KB" },
+    { id: "cl-2", name: t({ en: "Cover Letter — 2026", no: "Søknadsbrev — 2026" }),
+      date: t({ en: "Dec 8, 2025",  no: "8. des 2025"  }), size: "312 KB" },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {FILES.map(f => (
+        <CVOption key={f.id}
+          icon="file"
+          title={f.name}
+          sub={`${f.date} · ${f.size}`}
+          showChevron
+          onClick={() => onPick?.(f.name + ".pdf")} />
+      ))}
+      <button
+        className="press"
+        onClick={() => onPick?.("New_Letter.pdf")}
+        style={{
+          marginTop: 8, padding: "16px 20px",
+          background: "transparent",
+          border: "1.5px dashed rgba(0,99,251,0.35)",
+          borderRadius: 14, color: "#0063fb",
+          font: "600 14px/1 var(--sys-text)", letterSpacing: -0.05,
+          cursor: "pointer",
+          display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+        }}>
+        <Icon name="upload" size={16} stroke={2.2} />
+        {t({ en: "Upload a new letter", no: "Last opp nytt brev" })}
+      </button>
+    </div>
+  );
+}
+
 function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
   const t = useT();
   const platform = usePlatform();
@@ -7744,19 +8567,30 @@ function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
         padding: "12px 16px",
         paddingBottom: `calc(12px + ${homeArea}px)`,
         background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.06)",
-        display: "flex", flexDirection: "column", gap: 8,
+        display: "flex", flexDirection: "column", gap: 10,
       }}>
         <PrimaryButton onClick={onDone}>
-          {t({ en: "Go to Activity", no: "Gå til Aktivitet" })}
+          {t({ en: "Go to My applications", no: "Gå til Mine søknader" })}
         </PrimaryButton>
+        {/* Find similar roles — secondary action with full visual weight
+            (outlined button vs. inline text link). Returning the user to a
+            related search is one of the strongest stickiness moves on a
+            confirmation screen: highest motivation, lowest friction moment
+            to re-engage. Supports the must-win "stickiness in app" battle. */}
         <button
           className="press"
           onClick={() => { haptic("tap"); onReset?.(); }}
           style={{
-            background: "transparent", border: 0, padding: 8,
-            color: "#0063fb", fontFamily: "inherit", fontSize: 15, fontWeight: 600,
-            cursor: "pointer", alignSelf: "center", letterSpacing: -0.1,
-          }}>{t({ en: "Find more jobs", no: "Finn flere jobber" })}</button>
+            display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+            background: "#fff", color: "#0063fb",
+            border: "1px solid rgba(0,99,251,0.4)",
+            padding: "14px 20px", borderRadius: 10,
+            fontFamily: "inherit", fontSize: 16, fontWeight: 600,
+            cursor: "pointer", letterSpacing: -0.1,
+          }}>
+          <Icon name="search" size={18} stroke={2.2} color="#0063fb" />
+          {t({ en: "Find similar roles", no: "Finn lignende stillinger" })}
+        </button>
       </div>
     </div>
   );
@@ -7944,62 +8778,79 @@ const STORYMAP = {
     { id: "resume",      title: "Resume drafts & track" },
   ],
   // Per-task, per-release stories. Empty arrays = no story this release.
+  // Release IDs match the dev-panel version IDs exactly:
+  //   • agentic = MVP (Agentic — agentic flow only, KR1 ship 15.06.26)
+  //   • mvp     = 1.0       (Agentic + Easy Apply alongside)
+  //   • v1      = 1.2       (refinements: Job Match, Tailored CV, etc.)
+  //   • v2      = 2.0       (YOLO / Magic Apply)
   // `jira` field links each story to a JEA ticket. `jira: null` is intentional —
   // means there's no matching ticket and the team should consider creating one.
   stories: {
-    "open-ad":     { mvp: [{ story: "Browse jobs and open one I like.", hyp: null, n: null, jira: null }],
-                     v1:  [{ story: "See a Job Match score on the ad.", hyp: "2.1", n: null, feature: "job-match", jira: null }],
-                     v2:  [{ story: "Save jobs to compare side-by-side later.", hyp: null, n: null, jira: null }] },
-    "decide":      { mvp: [{ story: "Skim role facts in one screen so I can decide fast.", hyp: null, n: null, jira: null }],
-                     v1:  [{ story: "Read 'What is Job Match?' to understand the score.", hyp: "2.1", n: null, feature: "job-match", jira: null }],
-                     v2:  [] },
-    "tap-apply":   { mvp: [{ story: "Tap Apply once — no extra steps to start.", hyp: "1.3", n: null, jira: "JEA-1179" }],
-                     v1:  [{ story: "Form is pre-fetched so the sheet opens immediately.", hyp: "1.1", n: 3, key: "pa", jira: "JEA-1074" }],
-                     v2:  [{ story: "Magic Apply — tap once, FINN tailors and sends for you.", hyp: "2.2", n: null, feature: "magic-apply", jira: null }] },
-    "open-sheet":  { mvp: [
+    "open-ad":     { agentic: [{ story: "Browse jobs and open one I like.", hyp: null, n: null, jira: null }],
+                     mvp:     [],
+                     v1:      [{ story: "See a Job Match score on the ad.", hyp: "2.1", n: null, feature: "job-match", jira: null }],
+                     v2:      [{ story: "Save jobs to compare side-by-side later.", hyp: null, n: null, jira: null }] },
+    "decide":      { agentic: [{ story: "Skim role facts in one screen so I can decide fast.", hyp: null, n: null, jira: null }],
+                     mvp:     [],
+                     v1:      [{ story: "Read 'What is Job Match?' to understand the score.", hyp: "2.1", n: null, feature: "job-match", jira: null }],
+                     v2:      [] },
+    "tap-apply":   { agentic: [{ story: "Tap Apply once — no extra steps to start.", hyp: "1.3", n: null, jira: "JEA-1179" }],
+                     mvp:     [{ story: "Easy Apply path opens the same drawer pattern alongside agentic.", hyp: null, n: null, jira: null }],
+                     v1:      [{ story: "Form is pre-fetched so the sheet opens immediately.", hyp: "1.1", n: 3, key: "pa", jira: "JEA-1074" }],
+                     v2:      [{ story: "Magic Apply — tap once, FINN tailors and sends for you.", hyp: "2.2", n: null, feature: "magic-apply", jira: null }] },
+    "open-sheet":  { agentic: [
                        { story: "Sheet appears instantly — no blocking loader.", hyp: "1.3", n: 1, key: "pa", jira: "JEA-1179" },
                        { story: "Per-row status icons show what's being prepared.", hyp: "1.3", n: 2, key: "pa", jira: "JEA-1179" },
                        { story: "'Lagret som kladd' tells me my progress is safe.", hyp: "3.2", n: 9, key: "pc", jira: "JEA-1134" },
                      ],
-                     v1:  [{ story: "Faster model means letter is ready in under 2s.", hyp: "1.2", n: null, jira: "JEA-1113" }],
-                     v2:  [] },
-    "review":      { mvp: [
+                     mvp:     [],
+                     v1:      [{ story: "Faster model means letter is ready in under 2s.", hyp: "1.2", n: null, jira: "JEA-1113" }],
+                     v2:      [] },
+    "review":      { agentic: [
                        { story: "Source pills tell me where each value came from.", hyp: "2.1", n: 4, key: "pb", jira: "JEA-1179" },
                        { story: "Header keeps role + company so I never lose context.", hyp: "2.2", n: 8, key: "pb", jira: "JEA-1179" },
-                       { story: "Flip between Application and Job ad inside the sheet.", hyp: "2.2", n: 14, key: "pb", jira: null },
                      ],
-                     v1:  [{ story: "Confidence cue on AI-filled fields.", hyp: "2.1", n: null, jira: null }],
-                     v2:  [{ story: "Compare this draft with my last application.", hyp: null, n: null, jira: null }] },
-    "pick-cv":     { mvp: [
+                     mvp:     [
+                       { story: "Flip between Application and Job ad inside the sheet (Easy Apply parity).", hyp: "2.2", n: 14, key: "pb", jira: null },
+                     ],
+                     v1:      [{ story: "Confidence cue on AI-filled fields.", hyp: "2.1", n: null, jira: null }],
+                     v2:      [{ story: "Compare this draft with my last application.", hyp: null, n: null, jira: null }] },
+    "pick-cv":     { agentic: [
                        { story: "Pick which CV to send from a clear picker.", hyp: "3.4", n: 11, key: "pc", jira: "JEA-1179" },
                        { story: "Fall back to profile CV if upload fails.", hyp: "3.4", n: 11, key: "pc", jira: "JEA-1179" },
                      ],
-                     v1:  [{ story: "Tailored CV highlights what matches the listing.", hyp: "2.1", n: null, feature: "tailored-cv", jira: null }],
-                     v2:  [{ story: "Batch-tailor for multiple roles at once.", hyp: null, n: null, jira: null }] },
-    "edit-letter": { mvp: [
+                     mvp:     [],
+                     v1:      [{ story: "Tailored CV highlights what matches the listing.", hyp: "2.1", n: null, feature: "tailored-cv", jira: null }],
+                     v2:      [{ story: "Batch-tailor for multiple roles at once.", hyp: null, n: null, jira: null }] },
+    "edit-letter": { agentic: [
                        { story: "Tap Tilpass for agentic Q&A — opt-in, not forced.", hyp: "2.2", n: 7, key: "pb", jira: "JEA-1179" },
                        { story: "Choose 'Skriv selv' if I prefer to write it myself.", hyp: "2.2", n: 6, key: "pb", jira: "JEA-1146" },
                      ],
-                     v1:  [{ story: "Letter learns voice from past applications.", hyp: "2.1", n: null, jira: null }],
-                     v2:  [{ story: "Generate variants and pick the one I like.", hyp: null, n: null, jira: null }] },
-    "answer-qs":   { mvp: [{ story: "Questions stay user-answered, never AI-prefilled.", hyp: "2.3", n: 15, key: "pb", jira: "JEA-1179" }],
-                     v1:  [{ story: "Clearer copy for video questions to avoid drop-off.", hyp: "3.1", n: null, jira: null }],
-                     v2:  [] },
-    "send":        { mvp: [
+                     mvp:     [],
+                     v1:      [{ story: "Letter learns voice from past applications.", hyp: "2.1", n: null, jira: null }],
+                     v2:      [{ story: "Generate variants and pick the one I like.", hyp: null, n: null, jira: null }] },
+    "answer-qs":   { agentic: [{ story: "Questions stay user-answered, never AI-prefilled.", hyp: "2.3", n: 15, key: "pb", jira: "JEA-1179" }],
+                     mvp:     [],
+                     v1:      [{ story: "Clearer copy for video questions to avoid drop-off.", hyp: "3.1", n: null, jira: null }],
+                     v2:      [] },
+    "send":        { agentic: [
                        { story: "Send is disabled with clear status while drafting.", hyp: "1.3", n: 2, key: "pa", jira: "JEA-1179" },
                        { story: "Friendly missing-info recovery if a field is blank.", hyp: "3.3", n: 12, key: "pc", jira: "JEA-1179" },
                      ],
-                     v1:  [{ story: "Schedule send for a chosen time / weekday.", hyp: null, n: null, jira: null }],
-                     v2:  [{ story: "Auto follow-up nudge after N days of silence.", hyp: null, n: null, jira: null }] },
-    "confirm":     { mvp: [{ story: "Land on a confirmation with a reminder card.", hyp: null, n: null, jira: "JEA-1179" }],
-                     v1:  [{ story: "See status updates — 'viewed', 'shortlisted'.", hyp: null, n: null, jira: null }],
-                     v2:  [{ story: "Schedule interviews directly from the card.", hyp: null, n: null, jira: null }] },
-    "resume":      { mvp: [
+                     mvp:     [],
+                     v1:      [{ story: "Schedule send for a chosen time / weekday.", hyp: null, n: null, jira: null }],
+                     v2:      [{ story: "Auto follow-up nudge after N days of silence.", hyp: null, n: null, jira: null }] },
+    "confirm":     { agentic: [{ story: "Land on a confirmation with a reminder card.", hyp: null, n: null, jira: "JEA-1179" }],
+                     mvp:     [],
+                     v1:      [{ story: "See status updates — 'viewed', 'shortlisted'.", hyp: null, n: null, jira: null }],
+                     v2:      [{ story: "Schedule interviews directly from the card.", hyp: null, n: null, jira: null }] },
+    "resume":      { agentic: [
                        { story: "Drafts live under Activity so I can resume anytime.", hyp: "3.2", n: 16, key: "pc", jira: "JEA-1081" },
                        { story: "Sent list shows each application with the company brand.", hyp: null, n: null, jira: "JEA-1081" },
                      ],
-                     v1:  [{ story: "Resume from any device seamlessly.", hyp: "3.2", n: null, jira: null }],
-                     v2:  [{ story: "Interview reminders sync with my calendar.", hyp: null, n: null, jira: null }] },
+                     mvp:     [],
+                     v1:      [{ story: "Resume from any device seamlessly.", hyp: "3.2", n: null, jira: null }],
+                     v2:      [{ story: "Interview reminders sync with my calendar.", hyp: null, n: null, jira: null }] },
   },
 };
 
@@ -8133,10 +8984,11 @@ function Dropdown({ label, value, onChange, options, groups, lang }) {
 
 function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, onMoveStory, onReset, actorName, ensureActor, onActivity }) {
   const VERSIONS = [
-    { id: "all", label: "All releases" },
-    { id: "mvp", label: "MVP only" },
-    { id: "v1",  label: "1.0 only" },
-    { id: "v2",  label: "2.0 only" },
+    { id: "all",     label: "All releases" },
+    { id: "agentic", label: "MVP (Agentic) only" },
+    { id: "mvp",     label: "1.0 only" },
+    { id: "v1",      label: "1.2 only" },
+    { id: "v2",      label: "2.0 only" },
   ];
   const showRow = (r) => version === "all" || version === r;
   const cols = STORYMAP.backbone.length;
@@ -8198,9 +9050,10 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
     };
   }
   const releases = [
-    { id: "mvp", label: "MVP", now: true },
-    { id: "v1",  label: "1.0", now: false },
-    { id: "v2",  label: "2.0", now: false },
+    { id: "agentic", label: "MVP",  now: true  },
+    { id: "mvp",     label: "1.0",  now: false },
+    { id: "v1",      label: "1.2",  now: false },
+    { id: "v2",      label: "2.0",  now: false },
   ].filter(r => showRow(r.id));
 
   return (
@@ -8219,7 +9072,7 @@ function StorymapView({ version, onVersionChange, stories = STORYMAP.stories, on
         )}
       </div>
       <p className="sub">
-        Activities across the top, backbone tasks underneath, MVP / 1.0 / 2.0 release rows slicing horizontally.
+        Activities across the top, backbone tasks underneath, MVP (Agentic) / 1.0 / 1.2 / 2.0 release rows slicing horizontally.
         <strong> Drag a story card between rows in the same column</strong> — feature stories
         (<em>Job Match, Tailored CV, Magic Apply</em>) rewire the prototype live. Each card carries a
         Jira chip linking to <a href={JIRA_BASE + "JEA-1092"} target="_blank" rel="noopener noreferrer"
@@ -10300,7 +11153,11 @@ function describeEvent(e) {
   }
 }
 function releaseLabel(r) {
-  return r === "mvp" ? "MVP" : r === "v1" ? "1.0" : r === "v2" ? "2.0" : (r || "—");
+  return r === "agentic" ? "MVP"
+       : r === "mvp"     ? "1.0"
+       : r === "v1"      ? "1.2"
+       : r === "v2"      ? "2.0"
+       : (r || "—");
 }
 function truncate(s, n) {
   if (!s) return "(unnamed)";
@@ -10866,12 +11723,16 @@ function App() {
 }
 
 // ─── Helpers: derive feature flags from a (potentially edited) storymap ──
-const RELEASE_ORDER = { mvp: 0, v1: 1, v2: 2 };
+// Ordering for "what features have shipped by version X" rollups. The dev
+// panel version `agentic` ships first (MVP), then `mvp` (1.0), then `v1`
+// (1.2), then `v2` (2.0). featuresInVersion(stories, "v1") returns every
+// `feature` tag from agentic, mvp, and v1 — i.e. everything that's in by 1.2.
+const RELEASE_ORDER = { agentic: 0, mvp: 1, v1: 2, v2: 3 };
 function featuresInVersion(stories, version) {
   const cur = RELEASE_ORDER[version] ?? 0;
   const set = new Set();
   for (const task of Object.values(stories)) {
-    for (const r of ["mvp", "v1", "v2"]) {
+    for (const r of ["agentic", "mvp", "v1", "v2"]) {
       if ((RELEASE_ORDER[r] ?? 0) <= cur) {
         (task[r] || []).forEach(s => { if (s.feature) set.add(s.feature); });
       }
@@ -11546,6 +12407,9 @@ function AppShell({ fullscreen = false }) {
   // full FINN.no desktop job ad — currently scoped to the agentic MVP.
   const [webMode, setWebMode] = useState("mobile"); // mobile | desktop
   const [lang, setLang] = useState("en"); // en (default) | no
+  // Material-3 ripple on .press buttons when platform is Android. No-op on
+  // iOS / Web — iOS keeps its scale-down press feedback.
+  useAndroidRipple(platform);
 
   // Editable copies of the strategy data — drag-drop in the Storymap and
   // Impact-Effort views update these. Persistence is two-tier:
@@ -11554,7 +12418,9 @@ function AppShell({ fullscreen = false }) {
   //                      (only active when SUPABASE_URL + key are set)
   // Bump SCHEMA when the shape changes (jira fields added, etc.) so stale
   // localStorage from older builds is discarded automatically.
-  const SCHEMA = 3;
+  // v4 — added `agentic` slice to STORYMAP.stories (MVP Agentic separated
+  //      from 1.0); added `release` tier field to SOLUTIONS.
+  const SCHEMA = 4;
   const [stories, setStories] = useState(() => {
     try {
       const v = parseInt(localStorage.getItem("vend-storymap-v") || "0", 10);
@@ -11587,8 +12453,26 @@ function AppShell({ fullscreen = false }) {
   const cloudReadyRef = useRef(false);
 
   // Load shared state from cloud on mount. If cloud has data, prefer it
-  // over local. If cloud is empty, seed it with whatever local has (or
-  // defaults), so the very first user effectively initializes the row.
+  // over local. If cloud is empty (or has stale legacy shape), seed it
+  // from defaults.
+  //
+  // Shape check: SCHEMA bumps only invalidate localStorage. Cloud-stored
+  // data persists across SCHEMA bumps, so we explicitly check for
+  // current-shape markers before adopting cloud values. If the cloud
+  // copy is the legacy three-slice storymap (no `agentic` key), we
+  // discard it and overwrite with fresh defaults.
+  function storiesAreCurrentShape(data) {
+    if (!data || typeof data !== "object") return false;
+    // Sample a couple of well-known task keys for the new `agentic` slot.
+    const probe = data["open-ad"];
+    return !!probe && Array.isArray(probe.agentic);
+  }
+  function solutionsAreCurrentShape(data) {
+    if (!Array.isArray(data) || data.length === 0) return false;
+    // `release` tier was added in SCHEMA 4. Any item with a release field
+    // means we're on the new shape.
+    return data.some(s => typeof s.release === "string");
+  }
   useEffect(() => {
     if (!cloudStore.enabled) return;
     let cancelled = false;
@@ -11598,9 +12482,21 @@ function AppShell({ fullscreen = false }) {
         cloudStore.get("matrix"),
       ]);
       if (cancelled) return;
-      if (cloudStories && cloudStories.data) setStories(cloudStories.data);
-      if (cloudSolutions && cloudSolutions.data) setSolutions(cloudSolutions.data);
-      // If cloud was empty, seed it from whatever we have locally (defaults included).
+      // Adopt cloud values only if they're the current shape — otherwise
+      // the local defaults (which already have agentic + release fields)
+      // win, and we re-seed the cloud so the next visitor gets fresh data.
+      if (cloudStories && cloudStories.data && storiesAreCurrentShape(cloudStories.data)) {
+        setStories(cloudStories.data);
+      } else if (cloudStories && cloudStories.data) {
+        // Stale shape — overwrite cloud with fresh defaults.
+        await cloudStore.set("storymap", deepCloneJSON(STORYMAP.stories));
+      }
+      if (cloudSolutions && cloudSolutions.data && solutionsAreCurrentShape(cloudSolutions.data)) {
+        setSolutions(cloudSolutions.data);
+      } else if (cloudSolutions && cloudSolutions.data) {
+        await cloudStore.set("matrix", SOLUTIONS.map(s => ({ ...s })));
+      }
+      // If cloud was completely empty, seed it from whatever we have locally.
       if (!cloudStories) await cloudStore.set("storymap", stories);
       if (!cloudSolutions) await cloudStore.set("matrix", solutions);
       cloudReadyRef.current = true;
@@ -12098,13 +12994,12 @@ function AppShell({ fullscreen = false }) {
               job={JOB}
               onClose={() => setScreen("jobad")}
               onSend={send}
-              // Reuse the Easy Apply CV picker → CVPreviewSheet pipeline.
-              // setCvPickerActive keeps the picker mounted under the preview
-              // so 'Back' returns instantly; setOverlay drives which sheet
-              // is showing. Triggered from FileCard inside the Attachments
-              // section sheet.
-              onOpenCV={() => { setCvPickerActive(true); setOverlay("edit:cv"); }}
-              onOpenLetter={() => setOverlay("letter")}
+              // No onOpenCV/onOpenLetter — the agentic flow now drills into
+              // CV picker/preview and Cover letter/saved-letters via an
+              // internal page stack inside the Vedlegg section sheet. The
+              // App-level EditSheet / CoverLetterSheet / SelectLetterSheet
+              // / CVPreviewSheet overlays are still wired for the Easy
+              // Apply flow only.
             />
           )}
           {overlay === "letter" && (
@@ -12267,8 +13162,8 @@ function AppShell({ fullscreen = false }) {
             onChange={setVersion}
             options={[
               { id: "agentic", label: "MVP (Agentic)" },
-              { id: "mvp",     label: "1.0 (Agentic and Easy Apply)" },
-              { id: "v1",      label: "1.2 (Agentic and Easy Apply)" },
+              { id: "mvp",     label: "1.0 (Easy Apply)" },
+              { id: "v1",      label: "1.2 (Easy Apply)" },
               { id: "v2",      label: "2.0 (YOLO mode)" },
             ]}
           />
