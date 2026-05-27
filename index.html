@@ -1045,6 +1045,215 @@
   .otree-col.cc .otree-sol { background: #effaf2; border-color: #cfe8d6; }
   .otree-col.cc .otree-sol .num { background: #1f8a3b; }
 
+  /* ─── Opportunity-tree editor affordances ─────────────────────────────
+     When `.otree-edit-mode` is on the wrapper, nodes show a hover outline,
+     trash icons, drag handles, and "+ Add" buttons. In view mode every
+     editor chrome is hidden so the tree reads as a snapshot. */
+  .otree-tools {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+    margin: 0 0 14px;
+  }
+  .otree-edit-toggle, .otree-history-btn, .otree-reset-btn {
+    appearance: none; cursor: pointer;
+    font: 600 13px/1 var(--sys-text); letter-spacing: -0.05px;
+    padding: 8px 14px; border-radius: 9999px;
+    border: 1px solid var(--hair); background: #fff; color: var(--ink-mute);
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out);
+  }
+  .otree-edit-toggle:hover, .otree-history-btn:hover, .otree-reset-btn:hover {
+    border-color: var(--finn-blue); color: var(--finn-blue);
+  }
+  .otree-edit-toggle.on {
+    background: var(--finn-blue); border-color: var(--finn-blue); color: #fff;
+  }
+  .otree-edit-toggle.on:hover { background: #0050d4; color: #fff; }
+  .otree-last-edited {
+    display: inline-flex; align-items: center; gap: 6px;
+    font: 500 12px/1.2 var(--sys-text); color: var(--ink-soft);
+    letter-spacing: -0.05px;
+  }
+  .otree-last-edited strong { color: var(--ink-mute); font-weight: 600; }
+  .otree-presence {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-left: auto;
+  }
+  .otree-presence-dot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%;
+    font: 700 10px/1 var(--sys-text); color: #fff;
+    border: 2px solid #fff;
+    margin-left: -8px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  }
+  .otree-presence-dot:first-child { margin-left: 0; }
+
+  /* Editable text — clean span in view mode, gray-bg input in edit mode. */
+  .ot-editable {
+    appearance: none; border: 0; background: transparent;
+    font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit;
+    width: 100%; padding: 0; margin: 0;
+    outline: none; resize: none;
+    font-family: inherit;
+  }
+  .otree-edit-mode .ot-editable {
+    background: rgba(0,99,251,0.06);
+    border-radius: 6px;
+    padding: 4px 8px;
+    transition: background 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
+  }
+  .otree-edit-mode .ot-editable:focus {
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(0,99,251,0.4);
+  }
+  /* The outcome card's editables stay white (the card is already tinted),
+     just gain a clear focus ring. */
+  .otree-outcome .ot-editable { background: rgba(255,255,255,0.5); color: var(--ink); }
+  .otree-outcome .ot-editable:focus { background: #fff; }
+  /* On a coloured problem header, the editables need light-on-dark. */
+  .otree-problem .ot-editable { background: rgba(255,255,255,0.18); color: #fff; }
+  .otree-problem .ot-editable:focus { background: rgba(255,255,255,0.95); color: var(--ink); }
+
+  /* Add-node "+ Add hypothesis / + Add solution" buttons — dashed border. */
+  .ot-add-btn {
+    appearance: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px;
+    width: 100%; padding: 10px 12px;
+    background: transparent;
+    border: 1.5px dashed rgba(0,99,251,0.35);
+    border-radius: 10px;
+    color: var(--finn-blue);
+    font: 600 12px/1 var(--sys-text); letter-spacing: -0.05px;
+    transition: background 120ms var(--ease-out), border-color 120ms var(--ease-out);
+  }
+  .ot-add-btn:hover {
+    background: rgba(0,99,251,0.06);
+    border-color: var(--finn-blue);
+  }
+  .ot-add-btn.in-col { margin-top: 8px; }
+  .ot-add-col-btn {
+    /* The "+ Add opportunity" affordance at the end of the column row. */
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 200px;
+    background: transparent; border: 1.5px dashed rgba(0,99,251,0.3);
+    border-radius: 14px;
+    color: var(--finn-blue);
+    font: 600 14px/1 var(--sys-text); letter-spacing: -0.05px;
+    cursor: pointer; gap: 8px;
+    transition: background 120ms var(--ease-out), border-color 120ms var(--ease-out);
+  }
+  .ot-add-col-btn:hover {
+    background: rgba(0,99,251,0.04);
+    border-color: var(--finn-blue);
+  }
+
+  /* Remove handle — small circle revealed on hover (or always-on in edit
+     mode for keyboard / touch). */
+  .ot-remove {
+    appearance: none; border: 0;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(0,0,0,0.06); color: #6b6b6b;
+    cursor: pointer; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 120ms var(--ease-out), background 120ms var(--ease-out), color 120ms var(--ease-out);
+  }
+  .otree-edit-mode .otree-hyp:hover .ot-remove,
+  .otree-edit-mode .otree-sol:hover .ot-remove,
+  .otree-edit-mode .otree-problem:hover .ot-remove,
+  .otree-edit-mode .otree-col:focus-within .ot-remove {
+    opacity: 1;
+  }
+  .ot-remove:hover {
+    background: #fadddd; color: #cc1414;
+  }
+  /* On the dark problem header — invert. */
+  .otree-problem .ot-remove {
+    background: rgba(255,255,255,0.18); color: #fff;
+  }
+  .otree-problem .ot-remove:hover { background: rgba(255,255,255,0.32); color: #fff; }
+
+  /* Drag handle — six-dot icon to the left of each node, visible in edit
+     mode. The whole node is the drag source; the handle just signals it. */
+  .ot-drag-handle {
+    width: 16px; height: 16px;
+    display: none;
+    align-items: center; justify-content: center;
+    color: rgba(0,0,0,0.25);
+    cursor: grab;
+    flex-shrink: 0;
+  }
+  .otree-edit-mode .ot-drag-handle { display: inline-flex; }
+  .ot-drag-handle:active { cursor: grabbing; }
+  .otree-problem .ot-drag-handle { color: rgba(255,255,255,0.6); }
+  .ot-dragging {
+    opacity: 0.5;
+  }
+  .ot-drop-target {
+    box-shadow: 0 0 0 2px var(--finn-blue);
+    border-radius: 12px;
+  }
+
+  /* Tree history sheet — uses the same dim-backdrop + slide-up pattern as
+     the other modals so it feels native. */
+  .ot-history-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.35);
+    display: flex; align-items: flex-end; justify-content: center;
+    animation: fadein 240ms var(--ease-modal);
+  }
+  .ot-history-sheet {
+    width: 100%; max-width: 640px;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    max-height: 70vh;
+    display: flex; flex-direction: column;
+    animation: slideup 360ms var(--ease-modal);
+  }
+  .ot-history-sheet header {
+    padding: 18px 22px 14px;
+    border-bottom: 0.5px solid var(--hair);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ot-history-sheet header h3 {
+    margin: 0; font: 700 17px/1.2 var(--sys-text); letter-spacing: -0.2px;
+  }
+  .ot-history-sheet header .sub {
+    font: 500 12px/1.4 var(--sys-text); color: var(--ink-soft); margin: 2px 0 0;
+  }
+  .ot-history-list {
+    flex: 1; overflow-y: auto;
+    padding: 8px 0 12px;
+  }
+  .ot-history-empty {
+    padding: 32px 22px; text-align: center;
+    font: 500 13px/1.5 var(--sys-text); color: var(--ink-soft);
+  }
+  .ot-history-row {
+    padding: 12px 22px;
+    display: flex; align-items: flex-start; gap: 12px;
+    border-bottom: 0.5px solid #f4f4f7;
+  }
+  .ot-history-row:last-child { border-bottom: 0; }
+  .ot-history-row .who {
+    flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font: 700 11px/1 var(--sys-text); color: #fff;
+  }
+  .ot-history-row .what {
+    flex: 1; min-width: 0;
+    font: 500 13px/1.45 var(--sys-text); color: var(--ink);
+  }
+  .ot-history-row .when {
+    flex-shrink: 0;
+    font: 500 11px/1.2 var(--sys-text); color: var(--ink-soft);
+  }
+  .ot-history-row strong { color: var(--ink); font-weight: 600; }
+  .ot-history-row em { color: var(--ink-mute); font-style: normal; font-weight: 500; }
+
   /* ─── Impact-Effort matrix ─── */
   .matrix-wrap {
     display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px;
@@ -1233,6 +1442,61 @@
     60% { transform: translateX(-3px); }
     80% { transform: translateX(2px); }
   }
+  /* Google sign-in button — used inside the pwgate-card layout. Matches
+     Google's branding guidance (white card, soft 1px border, monochrome
+     G to the left of the label, hover lifts shadow). */
+  .gsi-btn {
+    appearance: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 12px;
+    width: 100%; padding: 14px 18px;
+    background: #fff; color: #1f1f1f;
+    border: 1px solid #d2d4d8;
+    border-radius: 10px;
+    font: 600 15px/1 var(--sys-text); letter-spacing: -0.1px;
+    transition: box-shadow 160ms var(--ease-out), border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+  }
+  .gsi-btn:hover {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06);
+    border-color: #b8bbc1;
+  }
+  .gsi-btn:active { background: #f7f7f9; }
+
+  /* Auth pill at the foot of the dev panel — small avatar + name + sign out. */
+  .dev-auth {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid #2e2e2e;
+  }
+  .dev-auth-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .dev-auth-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #0063fb; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font: 700 12px/1 var(--sys-text);
+    flex-shrink: 0;
+  }
+  .dev-auth-meta { flex: 1; min-width: 0; }
+  .dev-auth-name {
+    margin: 0; font: 600 12px/1.2 var(--sys-text);
+    color: #ededed; letter-spacing: -0.05px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .dev-auth-email {
+    margin: 2px 0 0; font: 500 11px/1.2 var(--sys-text);
+    color: #8a8a8a; letter-spacing: -0.05px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .dev-auth-out {
+    appearance: none; cursor: pointer;
+    background: transparent; border: 0; padding: 4px 6px;
+    font: 600 11px/1 var(--sys-text); color: #6b6b6b;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+  .dev-auth-out:hover { color: #ededed; }
+
   /* First-use discovery hint on the inactive in-sheet tab. Runs once. */
   @keyframes tabHint {
     0%   { transform: translateY(0); color: #6b6b6b; }
@@ -3469,6 +3733,13 @@ function Icon({ name, size = 24, color = "currentColor", stroke = 1.8, fill = "n
     "lock":          "M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zM7 11V7a5 5 0 0 1 10 0v4",
     "upload":        "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
     "file-doc":      "M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M9 13h6M9 17h6",
+    "plus":          "M12 5v14M5 12h14",
+    "plus-circle":   "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 8v8M8 12h8",
+    "search":        "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM21 21l-4.35-4.35",
+    "bell":          "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+    "message-square":"M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z",
+    "user-circle":   "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM5.5 19.5a7 7 0 0 1 13 0M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+    "play-circle":   "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM10 8l6 4-6 4V8z",
   };
   const d = paths[name];
   if (!d) return null;
@@ -10451,13 +10722,13 @@ function AcceptanceSheet({ open, story, taskId, sid, onClose, actorName, ensureA
 
 function TopNav({ view, onChange, openCounts = {}, onOpenFeedback }) {
   // Tab id → context.view label used in comment rows, so we can pick the
-  // right count from the open-comments-by-view map.
-  // Impact–Effort folded into the Opportunity-tree page as a sub-tab.
-  // We still receive comments tagged "Impact–Effort" — those roll up to
-  // the Opportunity-tree tab's count via the bumpedCounts step below.
+  // right count from the open-comments-by-view map. Impact–Effort is a
+  // top-level peer of the opportunity tree again (was folded in May 2026,
+  // unfolded after we made the tree editable so it has its own real estate).
   const tabs = [
     { id: "prototype", label: "Prototype",        ctxView: "Prototype" },
-    { id: "tree",      label: "Opportunity tree", ctxView: "Opportunity tree", absorb: ["Impact–Effort"] },
+    { id: "tree",      label: "Opportunity tree", ctxView: "Opportunity tree" },
+    { id: "matrix",    label: "Impact–Effort",    ctxView: "Impact–Effort" },
     { id: "storymap",  label: "Storymap",         ctxView: "Storymap" },
     { id: "handoff",   label: "Handoff",          ctxView: "Handoff" },
   ];
@@ -10614,10 +10885,21 @@ const cloudStore = (() => {
   let client;
   try {
     client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false },
+      auth: {
+        // Persist + auto-refresh the Google sign-in session so people
+        // don't have to authenticate on every tab/refresh.
+        persistSession: true,
+        autoRefreshToken: true,
+        // Supabase OAuth returns to the prototype with the access token
+        // in the URL hash; this flag tells the client to parse it on load.
+        detectSessionInUrl: true,
+      },
       global: {
-        // RLS policies require this header on every read/write —
-        // keeps drive-by bots out even though the anon key is public.
+        // RLS policies require this header on every read/write — keeps
+        // drive-by bots out even though the anon key is public. (RLS
+        // policies also check the authenticated user's email domain
+        // against the @finn.no / @m10s.io / @vend.com allowlist; see
+        // SECURITY.md for the SQL.)
         headers: { "x-team-token": TEAM_TOKEN },
       },
     });
@@ -11231,140 +11513,528 @@ function OpportunitySubTabs({ current, onChange }) {
   );
 }
 
-function OpportunityTreeView({ solutions, onMoveSolution, onResetMatrix } = {}) {
-  const { business, outcome, problems } = TREE_DATA;
-  const [mode, setMode] = useState("snapshot"); // "snapshot" (default) | "miro"
-  // Sub-tab: "tree" (this page) | "matrix" (Impact–Effort, folded in May 2026).
-  // Lives in localStorage so a designer's preference survives reloads.
-  const [subTab, setSubTab] = useState(() => {
-    try { return localStorage.getItem("vend.opportunitySubTab") || "tree"; }
-    catch { return "tree"; }
-  });
-  function changeSubTab(next) {
-    setSubTab(next);
-    try { localStorage.setItem("vend.opportunitySubTab", next); } catch {}
-  }
-  // Both sub-tabs share one header — h1, description, sub-tab strip, and
-  // (when relevant) the matrix Reset button live in the same DOM slot so
-  // the strip never jumps between modes. Only the panel below swaps.
-  const showMatrix = subTab === "matrix";
+function OpportunityTreeView({ tree, onEditTree, onResetTree, actorName } = {}) {
+  // Tree comes from App-level state (cloud-synced). Fall back to the static
+  // TREE_DATA only if the App didn't pass it (e.g. legacy callers).
+  const treeData = tree || TREE_DATA;
+  const { business, outcome, problems } = treeData;
   return (
     <section className="surface" aria-label="Opportunity tree">
       <div className="otree-header">
         <h1 style={{ margin: 0 }}>Opportunity tree</h1>
-        {showMatrix && solutions && onResetMatrix && (
-          <button onClick={onResetMatrix} className="otree-reset">
-            Reset positions
-          </button>
-        )}
       </div>
       <p className="sub">
-        {showMatrix
-          ? <>Every solution from the tree, plotted by estimated lift on apply-step conversion (impact)
-              and shipping cost (effort). <strong>Drag any dot</strong> to update its scores.
-              Edits sync to the team.</>
-          : <>Curated snapshot below — fast to scan, links to the prototype's solution numbers.
-              The team's <strong>Miro board</strong> is the working source of truth and lives
-              behind the toggle on the right.</>}
+        The team-edited strategy spine — outcome at the top, problem branches, hypotheses, solutions.
+        Tap <strong>Edit tree</strong> to add or rephrase anything; edits sync to the team via Supabase
+        and show up in the history. Impact–Effort scoring lives on its own page now.
       </p>
-
-      <OpportunitySubTabs current={subTab} onChange={changeSubTab} />
-
-      {showMatrix ? (
-        solutions ? (
-          <ImpactEffortView
-            embedded
-            solutions={solutions}
-            onMoveSolution={onMoveSolution}
-            onReset={onResetMatrix}
-          />
-        ) : (
-          <p className="sub">Matrix data isn't wired through yet.</p>
-        )
-      ) : (
-        <OpportunityTreeBody mode={mode} setMode={setMode} business={business} outcome={outcome} problems={problems} />
-      )}
+      <OpportunityTreeBody
+        business={business} outcome={outcome} problems={problems}
+        lastEdited={treeData.lastEdited}
+        onEditTree={onEditTree}
+        onResetTree={onResetTree}
+        actorName={actorName}
+      />
     </section>
   );
 }
 
-// Inner body for the Tree sub-tab — extracted so the parent can keep one
-// stable header while the panel content swaps based on the active sub-tab.
-function OpportunityTreeBody({ mode, setMode, business, outcome, problems }) {
+// Inner body for the Tree view. Owns the edit-mode toggle and all the
+// editable affordances. No Miro toggle / iframe — the team's authoritative
+// tree now lives *here* (cloud-synced via Supabase); Miro stays an
+// orthogonal sketching tool the team can use however they like.
+function OpportunityTreeBody({ business, outcome, problems, lastEdited, onEditTree, onResetTree, actorName }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const editable = !!onEditTree;
+
+  // Drag state for HTML5 drag-reorder. `dragRef` is the moving node's
+  // address (kind + index path); `dropTarget` is the hovered drop slot.
+  const dragRef = useRef(null);
+  const [dropTarget, setDropTarget] = useState(null);
+
+  function startDrag(kind, path) {
+    return (e) => {
+      if (!isEditing) return;
+      dragRef.current = { kind, path };
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setData("text/plain", "ot-" + kind); } catch (_) {}
+    };
+  }
+  function overDrag(kind, path) {
+    return (e) => {
+      if (!isEditing || !dragRef.current) return;
+      if (dragRef.current.kind !== kind) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setDropTarget({ kind, path });
+    };
+  }
+  function endDrag() {
+    dragRef.current = null;
+    setDropTarget(null);
+  }
+  function dropOn(kind, path) {
+    return (e) => {
+      e.preventDefault();
+      const src = dragRef.current;
+      endDrag();
+      if (!src || src.kind !== kind) return;
+      onEditTree(draft => {
+        if (kind === "problem") {
+          const arr = draft.problems;
+          const [moved] = arr.splice(src.path[0], 1);
+          arr.splice(path[0], 0, moved);
+        } else if (kind === "hypothesis") {
+          if (src.path[0] !== path[0]) return draft;
+          const arr = draft.problems[path[0]].hypotheses;
+          const [moved] = arr.splice(src.path[1], 1);
+          arr.splice(path[1], 0, moved);
+        } else if (kind === "solution") {
+          if (src.path[0] !== path[0] || src.path[1] !== path[1]) return draft;
+          const arr = draft.problems[path[0]].hypotheses[path[1]].solutions;
+          const [moved] = arr.splice(src.path[2], 1);
+          arr.splice(path[2], 0, moved);
+        }
+        return draft;
+      }, { action: "edit-tree", detail: { op: "reorder", kind } });
+    };
+  }
+
   return (
     <>
-      <div className="miro-meta">
-        <span className="source-pill" style={{
-          background: mode === "miro" ? "#f7e7c4" : "#eaf2ff",
-          color: mode === "miro" ? "#6b4a00" : "#0063fb",
-          borderColor: mode === "miro" ? "#ecd58f" : "#dceafe",
-        }}>
-          {mode === "miro" ? "Live source · Miro" : "Snapshot · curated"}
-        </span>
-        <div className="miro-actions">
-          <button onClick={() => setMode(mode === "snapshot" ? "miro" : "snapshot")}>
-            {mode === "snapshot" ? "Show live Miro board" : "Back to snapshot"}
-          </button>
-          <a className="primary" href={MIRO_BOARD_URL} target="_blank" rel="noopener noreferrer">
-            Open in Miro ↗
-          </a>
-        </div>
-      </div>
+      {/* Tools row — edit toggle, last-edited stamp, history button,
+          optional reset (when editing). Lives above the tree so it
+          doesn't compete with the outcome card's visual weight. */}
+      {editable && (
+            <div className="otree-tools">
+              <button
+                className={"otree-edit-toggle press" + (isEditing ? " on" : "")}
+                onClick={() => setIsEditing(v => !v)}>
+                <Icon name={isEditing ? "check" : "edit"} size={14} stroke={2.2} color={isEditing ? "#fff" : "currentColor"} />
+                {isEditing ? "Done editing" : "Edit tree"}
+              </button>
+              {isEditing && onResetTree && (
+                <button className="otree-reset-btn press" onClick={onResetTree}
+                  title="Discard team edits and restore the original tree">
+                  Reset to defaults
+                </button>
+              )}
+              <button className="otree-history-btn press" onClick={() => setHistoryOpen(true)}>
+                <Icon name="clock" size={14} stroke={2.2} color="currentColor" />
+                History
+              </button>
+              {lastEdited && lastEdited.who && (
+                <span className="otree-last-edited">
+                  Last edited by <strong>{lastEdited.who}</strong> · {relativeTime(lastEdited.when)}
+                </span>
+              )}
+              <TreePresenceDots actorName={actorName} isEditing={isEditing} />
+            </div>
+          )}
 
-      {mode === "miro" ? (
-        <div className="miro-wrap">
-          <iframe
-            src={MIRO_EMBED_URL}
-            title="Opportunity tree — Miro board"
-            allow="fullscreen; clipboard-read; clipboard-write"
-            allowFullScreen
-          />
-        </div>
-      ) : (
-        <>
-          <div className="otree-outcome">
-            <div className="label">Desired outcome</div>
-            <div className="text">{outcome.text}</div>
-            {outcome.meta && <div className="meta">{outcome.meta}</div>}
-          </div>
-          <div className="otree-spine" aria-hidden="true" />
-          <div className="otree-cols">
-            {problems.map(p => (
-              <div key={p.id} className={"otree-col c" + p.key.slice(1)}>
-                <div className={"otree-problem " + p.key}>
-                  <span className="badge">Opportunity #{p.id}</span>
-                  <span className="title">{p.title}</span>
-                  <span className="pct">{p.pct}</span>
+          <div className={"otree-tree-root" + (isEditing ? " otree-edit-mode" : "")}>
+            <div className="otree-outcome">
+              <div className="label">Desired outcome</div>
+              <div className="text">
+                <EditableText
+                  value={outcome.text}
+                  multiline
+                  editing={isEditing}
+                  onCommit={(v) => onEditTree && onEditTree(d => { d.outcome.text = v; },
+                    { action: "edit-tree", detail: { op: "edit-outcome" } })}
+                />
+              </div>
+              {(outcome.meta || isEditing) && (
+                <div className="meta">
+                  <EditableText
+                    value={outcome.meta || ""}
+                    placeholder="OKR context / KR refs (optional)"
+                    editing={isEditing}
+                    onCommit={(v) => onEditTree && onEditTree(d => { d.outcome.meta = v; },
+                      { action: "edit-tree", detail: { op: "edit-outcome-meta" } })}
+                  />
                 </div>
-                {p.hypotheses.map(h => (
-                  <div key={h.id} className={"otree-hyp" + (h.needs ? " needs" : "")}>
-                    <div className="hyp-head">
-                      <span className="htag">Hypothesis {h.id}</span>
-                      {h.needs && <span className="hneeds" title="Needs validation / open questions">Needs validation</span>}
+              )}
+            </div>
+            <div className="otree-spine" aria-hidden="true" />
+            <div className="otree-cols">
+              {problems.map((p, pi) => {
+                const isDragging = dragRef.current && dragRef.current.kind === "problem" && dragRef.current.path[0] === pi;
+                const isProblemDropTarget = dropTarget && dropTarget.kind === "problem" && dropTarget.path[0] === pi;
+                return (
+                  <div key={p.id}
+                    className={"otree-col c" + p.key.slice(1)
+                      + (isDragging ? " ot-dragging" : "")
+                      + (isProblemDropTarget ? " ot-drop-target" : "")}
+                    draggable={isEditing}
+                    onDragStart={startDrag("problem", [pi])}
+                    onDragOver={overDrag("problem", [pi])}
+                    onDrop={dropOn("problem", [pi])}
+                    onDragEnd={endDrag}>
+                    <div className={"otree-problem " + p.key} style={isEditing ? { position: "relative" } : null}>
+                      <span className="badge">
+                        <span className="ot-drag-handle" aria-hidden="true">⠿</span>
+                        Opportunity #{pi + 1}
+                      </span>
+                      <EditableText
+                        value={p.title}
+                        editing={isEditing}
+                        className="title"
+                        onCommit={(v) => onEditTree(d => { d.problems[pi].title = v; },
+                          { action: "edit-tree", detail: { op: "edit-problem-title", title: v } })}
+                      />
+                      <EditableText
+                        value={p.pct}
+                        editing={isEditing}
+                        className="pct"
+                        placeholder="e.g. 30% drop out because…"
+                        onCommit={(v) => onEditTree(d => { d.problems[pi].pct = v; },
+                          { action: "edit-tree", detail: { op: "edit-problem-pct" } })}
+                      />
+                      {isEditing && (
+                        <button className="ot-remove" aria-label="Remove opportunity"
+                          style={{ position: "absolute", top: 8, right: 8 }}
+                          onClick={() => {
+                            if (!window.confirm(`Remove opportunity "${p.title}"?`)) return;
+                            onEditTree(d => { d.problems.splice(pi, 1); },
+                              { action: "edit-tree", detail: { op: "remove-problem", title: p.title } });
+                          }}>
+                          <Icon name="x" size={12} stroke={2.4} color="currentColor" />
+                        </button>
+                      )}
                     </div>
-                    <div className="htext">{h.text}</div>
-                    {h.note && <div className="hnote">{h.note}</div>}
-                    {h.solutions.length > 0 ? (
-                      <div className="otree-sols">
-                        {h.solutions.map(s => (
-                          <div key={s.n} className="otree-sol">
-                            <span className="num">{s.n}</span>
-                            <span>{s.text}</span>
+                    {p.hypotheses.map((h, hi) => {
+                      const isHypDragging = dragRef.current && dragRef.current.kind === "hypothesis" && dragRef.current.path[0] === pi && dragRef.current.path[1] === hi;
+                      const isHypDrop = dropTarget && dropTarget.kind === "hypothesis" && dropTarget.path[0] === pi && dropTarget.path[1] === hi;
+                      return (
+                        <div key={h.id}
+                          className={"otree-hyp" + (h.needs ? " needs" : "")
+                            + (isHypDragging ? " ot-dragging" : "")
+                            + (isHypDrop ? " ot-drop-target" : "")}
+                          draggable={isEditing}
+                          onDragStart={startDrag("hypothesis", [pi, hi])}
+                          onDragOver={overDrag("hypothesis", [pi, hi])}
+                          onDrop={dropOn("hypothesis", [pi, hi])}
+                          onDragEnd={endDrag}
+                          style={isEditing ? { position: "relative" } : null}>
+                          <div className="hyp-head">
+                            <span className="ot-drag-handle" aria-hidden="true">⠿</span>
+                            <span className="htag">Hypothesis {pi + 1}.{hi + 1}</span>
+                            {h.needs && <span className="hneeds" title="Needs validation / open questions">Needs validation</span>}
+                            {isEditing && (
+                              <button className="ot-remove" aria-label="Remove hypothesis"
+                                style={{ marginLeft: "auto" }}
+                                onClick={() => {
+                                  if (!window.confirm("Remove this hypothesis?")) return;
+                                  onEditTree(d => { d.problems[pi].hypotheses.splice(hi, 1); },
+                                    { action: "edit-tree", detail: { op: "remove-hypothesis" } });
+                                }}>
+                                <Icon name="x" size={12} stroke={2.4} color="currentColor" />
+                              </button>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="otree-empty">No prototype solution yet.</div>
+                          <EditableText
+                            value={h.text}
+                            editing={isEditing}
+                            multiline
+                            className="htext"
+                            placeholder="If we…, then…"
+                            onCommit={(v) => onEditTree(d => { d.problems[pi].hypotheses[hi].text = v; },
+                              { action: "edit-tree", detail: { op: "edit-hypothesis" } })}
+                          />
+                          {(h.note || isEditing) && (
+                            <EditableText
+                              value={h.note || ""}
+                              editing={isEditing}
+                              multiline
+                              className="hnote"
+                              placeholder="Open questions / notes (optional)"
+                              onCommit={(v) => onEditTree(d => { d.problems[pi].hypotheses[hi].note = v || undefined; },
+                                { action: "edit-tree", detail: { op: "edit-hypothesis-note" } })}
+                            />
+                          )}
+                          {h.solutions.length > 0 ? (
+                            <div className="otree-sols">
+                              {h.solutions.map((s, si) => {
+                                const isSolDragging = dragRef.current && dragRef.current.kind === "solution"
+                                  && dragRef.current.path[0] === pi && dragRef.current.path[1] === hi && dragRef.current.path[2] === si;
+                                const isSolDrop = dropTarget && dropTarget.kind === "solution"
+                                  && dropTarget.path[0] === pi && dropTarget.path[1] === hi && dropTarget.path[2] === si;
+                                return (
+                                  <div key={s.n != null ? s.n : si}
+                                    className={"otree-sol"
+                                      + (isSolDragging ? " ot-dragging" : "")
+                                      + (isSolDrop ? " ot-drop-target" : "")}
+                                    draggable={isEditing}
+                                    onDragStart={startDrag("solution", [pi, hi, si])}
+                                    onDragOver={overDrag("solution", [pi, hi, si])}
+                                    onDrop={dropOn("solution", [pi, hi, si])}
+                                    onDragEnd={endDrag}
+                                    style={isEditing ? { position: "relative", paddingRight: 30 } : null}>
+                                    <span className="ot-drag-handle" aria-hidden="true">⠿</span>
+                                    <span className="num">{s.n != null ? s.n : "•"}</span>
+                                    <EditableText
+                                      value={s.text}
+                                      editing={isEditing}
+                                      multiline
+                                      placeholder="A specific design / build that exercises this hypothesis"
+                                      onCommit={(v) => onEditTree(d => { d.problems[pi].hypotheses[hi].solutions[si].text = v; },
+                                        { action: "edit-tree", detail: { op: "edit-solution" } })}
+                                    />
+                                    {isEditing && (
+                                      <button className="ot-remove" aria-label="Remove solution"
+                                        style={{ position: "absolute", top: 6, right: 6 }}
+                                        onClick={() => {
+                                          if (!window.confirm("Remove this solution?")) return;
+                                          onEditTree(d => { d.problems[pi].hypotheses[hi].solutions.splice(si, 1); },
+                                            { action: "edit-tree", detail: { op: "remove-solution" } });
+                                        }}>
+                                        <Icon name="x" size={12} stroke={2.4} color="currentColor" />
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (!isEditing && (
+                            <div className="otree-empty">No prototype solution yet.</div>
+                          ))}
+                          {isEditing && (
+                            <button className="ot-add-btn" style={{ marginTop: 8 }}
+                              onClick={() => onEditTree(d => {
+                                d.problems[pi].hypotheses[hi].solutions.push({
+                                  n: null, text: "New solution — describe what we'd build to exercise this hypothesis.",
+                                });
+                              }, { action: "edit-tree", detail: { op: "add-solution" } })}>
+                              <Icon name="plus" size={12} stroke={2.4} color="currentColor" />
+                              Add solution
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {isEditing && (
+                      <button className="ot-add-btn in-col"
+                        onClick={() => onEditTree(d => {
+                          const next = d.problems[pi].hypotheses;
+                          next.push({
+                            id: freshId("h"),
+                            text: "If we…, then…",
+                            solutions: [],
+                          });
+                        }, { action: "edit-tree", detail: { op: "add-hypothesis" } })}>
+                        <Icon name="plus" size={12} stroke={2.4} color="currentColor" />
+                        Add hypothesis
+                      </button>
                     )}
                   </div>
-                ))}
-              </div>
-            ))}
+                );
+              })}
+              {isEditing && (
+                <button className="ot-add-col-btn"
+                  onClick={() => onEditTree(d => {
+                    // Default new opportunities to the green/tech key (pc) — gentle
+                    // visual cue that it's a placeholder ready to be reclassified.
+                    d.problems.push({
+                      id: freshId("p"),
+                      key: "pc",
+                      title: "New opportunity",
+                      pct: "Add the size / qualitative description of the problem",
+                      hypotheses: [],
+                    });
+                  }, { action: "edit-tree", detail: { op: "add-problem" } })}>
+                  <Icon name="plus" size={20} stroke={2.4} color="currentColor" />
+                  Add opportunity
+                </button>
+              )}
+            </div>
           </div>
-        </>
+      {historyOpen && (
+        <TreeHistorySheet onClose={() => setHistoryOpen(false)} />
       )}
     </>
   );
+}
+
+// ─── Editable text — inline-editable when the parent passes editing=true.
+// In view mode it renders as a plain span; in edit mode it becomes a
+// textarea (multiline) or text input. Commits via onBlur + Enter (single-
+// line) or Cmd/Ctrl+Enter (multiline). Empty strings become the placeholder.
+function EditableText({ value, onCommit, editing, multiline, placeholder, className }) {
+  const [draft, setDraft] = useState(value);
+  // Reset the draft whenever the upstream value changes (e.g. cloud sync
+  // brought in a remote edit, or another field reset the tree).
+  useEffect(() => { setDraft(value); }, [value]);
+
+  if (!editing) {
+    return <span className={className}>{value || (placeholder ? <em style={{ opacity: 0.5 }}>{placeholder}</em> : null)}</span>;
+  }
+
+  const commit = () => {
+    if (draft === value) return;
+    onCommit && onCommit(draft.trim());
+  };
+
+  const onKey = (e) => {
+    if (multiline) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        e.currentTarget.blur();
+      }
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.blur();
+    } else if (e.key === "Escape") {
+      setDraft(value);
+      e.currentTarget.blur();
+    }
+  };
+
+  const Tag = multiline ? "textarea" : "input";
+  return (
+    <Tag
+      className={"ot-editable " + (className || "")}
+      value={draft}
+      placeholder={placeholder || ""}
+      rows={multiline ? Math.max(2, Math.min(8, (draft || "").split("\n").length + 1)) : undefined}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={onKey}
+    />
+  );
+}
+
+// ─── Presence dots — show who else has the tree open right now. Real-time
+// presence over Supabase Realtime would be richer, but for the prototype's
+// purposes we approximate "currently editing" by reading recent tree-edit
+// activity-log events (anyone who edited in the last 90s is "active").
+function TreePresenceDots({ actorName, isEditing }) {
+  const [active, setActive] = useState([]);
+  useEffect(() => {
+    if (!cloudStore.enabled) return;
+    let cancelled = false;
+    async function pull() {
+      try {
+        const cutoff = Date.now() - 90 * 1000;
+        const events = await cloudStore.getEvents(30);
+        if (cancelled) return;
+        // Unique actors who touched the tree in the last 90s, excluding
+        // the current user (their own dot would be redundant).
+        const set = new Map();
+        (events || []).forEach(ev => {
+          if (!ev || typeof ev.action !== "string") return;
+          if (!ev.action.includes("tree")) return;
+          if (!ev.actor) return;
+          const t = ev.created_at ? new Date(ev.created_at).getTime() : 0;
+          if (t < cutoff) return;
+          set.set(ev.actor, ev.actor);
+        });
+        if (actorName) set.delete(actorName);
+        setActive(Array.from(set.keys()));
+      } catch (_) {}
+    }
+    pull();
+    const t = setInterval(pull, 15000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [actorName, isEditing]);
+  if (active.length === 0) return null;
+  return (
+    <span className="otree-presence" title={active.join(", ") + " also editing recently"}>
+      {active.slice(0, 4).map((name, i) => {
+        // Stable colour per name from a hash so the same person reads the
+        // same dot colour across sessions.
+        const hue = (name.split("").reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7) % 360 + 360) % 360;
+        return (
+          <span key={name} className="otree-presence-dot"
+            style={{ background: `hsl(${hue} 65% 45%)`, zIndex: 10 - i }}>
+            {name.slice(0, 1).toUpperCase()}
+          </span>
+        );
+      })}
+      {active.length > 4 && (
+        <span className="otree-presence-dot" style={{ background: "#9a9a9a" }}>+{active.length - 4}</span>
+      )}
+    </span>
+  );
+}
+
+// ─── Tree history sheet — shows tree-edit activity from the cloud feed.
+function TreeHistorySheet({ onClose }) {
+  const [events, setEvents] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!cloudStore.enabled) { setEvents([]); return; }
+        const rows = await cloudStore.getEvents(80);
+        if (cancelled) return;
+        const treeRows = (rows || []).filter(e => e && typeof e.action === "string" && e.action.includes("tree"));
+        setEvents(treeRows);
+      } catch (_) { setEvents([]); }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  return (
+    <div className="ot-history-backdrop" onClick={onClose}>
+      <div className="ot-history-sheet" onClick={(e) => e.stopPropagation()}>
+        <header>
+          <div>
+            <h3>Tree edit history</h3>
+            <p className="sub">Every change anyone makes to the opportunity tree — newest first.</p>
+          </div>
+          <button className="otree-reset-btn" onClick={onClose}>Close</button>
+        </header>
+        <div className="ot-history-list">
+          {events === null && <div className="ot-history-empty">Loading…</div>}
+          {events && events.length === 0 && (
+            <div className="ot-history-empty">No tree edits yet. Be the first.</div>
+          )}
+          {events && events.map((ev, i) => {
+            const hue = (ev.actor || "?").split("").reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+            const realHue = (hue % 360 + 360) % 360;
+            return (
+              <div key={i} className="ot-history-row">
+                <span className="who" style={{ background: `hsl(${realHue} 65% 45%)` }}>
+                  {(ev.actor || "?").slice(0, 1).toUpperCase()}
+                </span>
+                <span className="what">
+                  <strong>{ev.actor || "Someone"}</strong>
+                  {" "}<em>{treeEventLabel(ev)}</em>
+                </span>
+                <span className="when">{relativeTime(ev.created_at || ev.createdAt || ev.when)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function treeEventLabel(ev) {
+  const op = ev.detail && ev.detail.op;
+  switch (op) {
+    case "edit-outcome":          return "edited the desired outcome";
+    case "edit-outcome-meta":     return "edited the outcome's OKR context";
+    case "edit-problem-title":    return "renamed an opportunity";
+    case "edit-problem-pct":      return "updated an opportunity's evidence line";
+    case "edit-hypothesis":       return "edited a hypothesis";
+    case "edit-hypothesis-note":  return "noted open questions on a hypothesis";
+    case "edit-solution":         return "edited a solution";
+    case "add-problem":           return "added a new opportunity";
+    case "add-hypothesis":        return "added a hypothesis";
+    case "add-solution":          return "added a solution";
+    case "remove-problem":        return `removed opportunity "${(ev.detail && ev.detail.title) || ""}"`;
+    case "remove-hypothesis":     return "removed a hypothesis";
+    case "remove-solution":       return "removed a solution";
+    case "reorder":               return `reordered ${(ev.detail && ev.detail.kind) || "items"}`;
+    default:
+      if (ev.action === "reset-tree") return "reset the tree to defaults";
+      return "edited the tree";
+  }
 }
 
 function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embedded }) {
@@ -11641,47 +12311,154 @@ function ConfettiBurst({ count = 32, spread = 180, gravity = 220, palette }) {
   );
 }
 
-// ─── Password gate ─────────────────────────────────────────────────────────
-// Client-side only — anyone with web-dev know-how can view source and read
-// the password. Fine for casual share-with-team gating, not for real secrets.
-// We'll layer real auth back on when free-tier email rate limits aren't in
-// the way of testing.
-const APP_PASSWORD = "simba";
-function PasswordGate({ onUnlock }) {
-  const [pw, setPw] = useState("");
-  const [err, setErr] = useState(false);
-  function submit(e) {
-    e.preventDefault();
-    if (pw.trim().toLowerCase() === APP_PASSWORD) {
-      haptic("ok");
-      try { sessionStorage.setItem("vend-unlocked", "1"); } catch (_) {}
-      onUnlock();
-    } else {
-      haptic("err");
-      setErr(true);
+// ─── Google sign-in gate ───────────────────────────────────────────────────
+// Replaces the client-side password gate with Supabase Auth + Google OAuth.
+// Domain allowlist enforced both here (defence-in-depth UX) and in Supabase
+// RLS policies (the real boundary). See SECURITY.md for setup + SQL.
+const ALLOWED_DOMAINS = ["finn.no", "m10s.io", "vend.com"];
+
+// Plain helper — used both by the gate and by RLS-failure recovery paths.
+function emailDomain(email) {
+  if (!email || typeof email !== "string") return "";
+  const at = email.lastIndexOf("@");
+  return at < 0 ? "" : email.slice(at + 1).toLowerCase();
+}
+function isAllowedDomain(email) {
+  return ALLOWED_DOMAINS.includes(emailDomain(email));
+}
+
+// useAuth — single source of truth for "who is signed in?" Returns
+// { status, user, signInWithGoogle, signOut }.
+//   status: "loading" → waiting for Supabase to rehydrate session on mount
+//           "signed-out" → no session, show the gate
+//           "wrong-domain" → signed in but the email isn't in ALLOWED_DOMAINS
+//           "signed-in" → fully authenticated team member
+function useAuth() {
+  const [status, setStatus] = useState(cloudStore.enabled ? "loading" : "signed-out");
+  const [user, setUser]     = useState(null);
+  const supabase = cloudStore.client || null;
+
+  // On mount: rehydrate any persisted session and subscribe to changes.
+  useEffect(() => {
+    if (!supabase) { setStatus("signed-out"); return; }
+    let unsub = null;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (cancelled) return;
+        applySession(session);
+      } catch (_) { setStatus("signed-out"); }
+      // Subscribe to live auth changes (sign-in, sign-out, token refresh).
+      const sub = supabase.auth.onAuthStateChange((_event, session) => {
+        applySession(session);
+      });
+      unsub = () => { try { sub.data.subscription.unsubscribe(); } catch (_) {} };
+    })();
+    return () => { cancelled = true; if (unsub) unsub(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function applySession(session) {
+    if (!session || !session.user) {
+      setUser(null);
+      setStatus("signed-out");
+      return;
+    }
+    const u = session.user;
+    if (!isAllowedDomain(u.email)) {
+      setUser(u);
+      setStatus("wrong-domain");
+      return;
+    }
+    setUser(u);
+    setStatus("signed-in");
+  }
+
+  async function signInWithGoogle() {
+    if (!supabase) return;
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          // hd is a soft hint to Google's chooser — picks the first allowed
+          // domain so most users skip the account picker. The real domain
+          // check happens after the redirect, on every email.
+          queryParams: { hd: ALLOWED_DOMAINS[0], prompt: "select_account" },
+          redirectTo: window.location.origin + window.location.pathname,
+        },
+      });
+    } catch (e) {
+      console.warn("[auth] signInWithOAuth failed:", e);
     }
   }
+  async function signOut() {
+    if (!supabase) {
+      setUser(null);
+      setStatus("signed-out");
+      return;
+    }
+    try { await supabase.auth.signOut(); } catch (_) {}
+    setUser(null);
+    setStatus("signed-out");
+  }
+  return { status, user, signInWithGoogle, signOut };
+}
+
+// GoogleSignInGate — the full-screen sign-in card. Same visual rhythm
+// as the old PasswordGate so the surrounding chrome doesn't need
+// restyling. Two states: signed-out (sign-in button) and wrong-domain
+// (apologetic message + sign-out).
+function GoogleSignInGate({ status, onSignIn, onSignOut, user }) {
+  const wrongDomain = status === "wrong-domain";
   return (
     <div className="pwgate">
       <div className="pwgate-card">
         <h1>Vend · User Connect</h1>
-        <p className="pwgate-sub">Internal preview. Enter the password to continue.</p>
-        <form onSubmit={submit}>
-          <input
-            type="password"
-            placeholder="Password"
-            value={pw}
-            autoFocus
-            autoComplete="current-password"
-            className={err ? "err" : ""}
-            onChange={(e) => { setPw(e.target.value); if (err) setErr(false); }}
-          />
-          {err && <p className="pwgate-err">Wrong password. Try again.</p>}
-          <button type="submit">Enter</button>
-        </form>
-        <p className="pwgate-foot">Ask Lee for access.</p>
+        {!wrongDomain && (
+          <>
+            <p className="pwgate-sub">
+              Internal preview. Sign in with your Google account to continue.
+            </p>
+            <button type="button" className="gsi-btn press" onClick={onSignIn}>
+              <GoogleGlyph />
+              <span>Sign in with Google</span>
+            </button>
+            <p className="pwgate-foot">
+              Only <strong>@finn.no</strong>, <strong>@m10s.io</strong>, and <strong>@vend.com</strong> accounts have access.
+              Ask Lee if you need to be added.
+            </p>
+          </>
+        )}
+        {wrongDomain && (
+          <>
+            <p className="pwgate-sub" style={{ color: "#cc1414" }}>
+              The account <strong>{user && user.email}</strong> isn't on the access list.
+            </p>
+            <p className="pwgate-foot">
+              This prototype is only available to <strong>@finn.no</strong>,
+              {" "}<strong>@m10s.io</strong>, and <strong>@vend.com</strong> accounts.
+              Sign out and try a different Google account.
+            </p>
+            <button type="button" className="gsi-btn press" onClick={onSignOut}>
+              <span>Sign out</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
+  );
+}
+
+function GoogleGlyph() {
+  // Google's monochrome "G" — minimal SVG, recognisable enough.
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+      <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
+      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+    </svg>
   );
 }
 
@@ -11721,15 +12498,40 @@ function App() {
       document.documentElement.classList.remove("fs-mode");
     }
   }, [fullscreen]);
-  // Fullscreen mode (scanned via QR) bypasses the password gate so phones
-  // can drop straight into the prototype without re-entering it each time.
+  // Fullscreen mode (scanned via QR) bypasses the auth gate so phones can
+  // drop straight into the prototype without signing in — the prototype's
+  // demo screens use no team data, so there's nothing to protect; the gate
+  // exists for the strategy / team views, not the demo.
   if (fullscreen) return <AppShell fullscreen />;
-  const [unlocked, setUnlocked] = useState(() => {
-    try { return sessionStorage.getItem("vend-unlocked") === "1"; }
-    catch (_) { return false; }
-  });
-  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
-  return <AppShell />;
+
+  const auth = useAuth();
+
+  // If cloud auth isn't configured (SUPABASE_URL missing), fall through to
+  // the prototype without a gate so a contributor cloning the repo and
+  // running it locally without secrets still sees the app.
+  if (!cloudStore.enabled) return <AppShell />;
+
+  if (auth.status === "loading") {
+    return (
+      <div className="pwgate">
+        <div className="pwgate-card">
+          <h1>Vend · User Connect</h1>
+          <p className="pwgate-sub">Checking your session…</p>
+        </div>
+      </div>
+    );
+  }
+  if (auth.status === "signed-out" || auth.status === "wrong-domain") {
+    return (
+      <GoogleSignInGate
+        status={auth.status}
+        user={auth.user}
+        onSignIn={auth.signInWithGoogle}
+        onSignOut={auth.signOut}
+      />
+    );
+  }
+  return <AppShell authUser={auth.user} onSignOut={auth.signOut} />;
 }
 
 // ─── Helpers: derive feature flags from a (potentially edited) storymap ──
@@ -11768,6 +12570,19 @@ function solutionsAreCurrentShape(data) {
   // The `release` tier (1.0-must / 1.2-can-wait / post-2.0) was added in
   // SCHEMA 4. Any item carrying that field means we're on the new shape.
   return data.some(s => typeof s.release === "string");
+}
+function treeIsCurrentShape(data) {
+  // SCHEMA 5 — opportunity tree is now editable team state.
+  // Shape: { business, outcome: {text, meta}, problems: [...], lastEdited?: {who, when} }
+  if (!data || typeof data !== "object") return false;
+  if (!data.outcome || typeof data.outcome.text !== "string") return false;
+  if (!Array.isArray(data.problems)) return false;
+  return true;
+}
+// Stable ID generator for newly-created tree nodes — sortable + readable.
+// Used when a PM adds a hypothesis or solution; needs to never collide.
+function freshId(prefix) {
+  return prefix + "-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 9999).toString(36);
 }
 
 // ─── Feedback bridge — copies a Jira-formatted note + opens JEA-1179 ──────
@@ -12295,7 +13110,7 @@ function FeedbackBridge({ context, onClose }) {
   );
 }
 
-function AppShell({ fullscreen = false }) {
+function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   const isMobile = useIsMobile();
   const [mobSheet, setMobSheet] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -12448,7 +13263,9 @@ function AppShell({ fullscreen = false }) {
   // localStorage from older builds is discarded automatically.
   // v4 — added `agentic` slice to STORYMAP.stories (MVP Agentic separated
   //      from 1.0); added `release` tier field to SOLUTIONS.
-  const SCHEMA = 4;
+  // v5 — opportunity tree is now editable team state (cloud-synced),
+  //      shape: { business, outcome, problems, lastEdited }.
+  const SCHEMA = 5;
   const [stories, setStories] = useState(() => {
     try {
       const v = parseInt(localStorage.getItem("vend-storymap-v") || "0", 10);
@@ -12473,6 +13290,20 @@ function AppShell({ fullscreen = false }) {
       }
     } catch (_) {}
     return SOLUTIONS.map(s => ({ ...s }));
+  });
+  // Opportunity tree — now editable team state, persists across sessions
+  // and syncs to Supabase. `lastEdited` is appended on every mutation so
+  // the header can render "Last edited by X · Y ago".
+  const [tree, setTree] = useState(() => {
+    try {
+      const v = parseInt(localStorage.getItem("vend-tree-v") || "0", 10);
+      const saved = localStorage.getItem("vend-tree");
+      if (saved && v === SCHEMA) {
+        const parsed = JSON.parse(saved);
+        if (treeIsCurrentShape(parsed)) return parsed;
+      }
+    } catch (_) {}
+    return deepCloneJSON(TREE_DATA);
   });
 
   // Cloud sync status — shown in the dev panel + on the matrix/storymap.
@@ -12523,9 +13354,18 @@ function AppShell({ fullscreen = false }) {
       } else if (cloudSolutions && cloudSolutions.data) {
         await cloudStore.set("matrix", SOLUTIONS.map(s => ({ ...s })));
       }
+      // Opportunity tree — same legacy-shape guard.
+      const cloudTree = await cloudStore.get("tree");
+      if (cancelled) return;
+      if (cloudTree && cloudTree.data && treeIsCurrentShape(cloudTree.data)) {
+        setTree(cloudTree.data);
+      } else if (cloudTree && cloudTree.data) {
+        await cloudStore.set("tree", deepCloneJSON(TREE_DATA));
+      }
       // If cloud was completely empty, seed it from whatever we have locally.
       if (!cloudStories) await cloudStore.set("storymap", stories);
       if (!cloudSolutions) await cloudStore.set("matrix", solutions);
+      if (!cloudTree) await cloudStore.set("tree", tree);
       cloudReadyRef.current = true;
       setCloudStatus("synced");
       setCloudLastSyncedAt(new Date());
@@ -12554,6 +13394,18 @@ function AppShell({ fullscreen = false }) {
       if (ok) setCloudLastSyncedAt(new Date());
     }, 600)
   ).current;
+  // Tree saves debounce at 400ms — a touch tighter than the storymap's 600ms
+  // because text edits land character-by-character and we want the "saving…"
+  // → "synced" indicator to feel snappy.
+  const saveTreeToCloud = useRef(
+    debounce(async (next) => {
+      if (!cloudStore.enabled || !cloudReadyRef.current) return;
+      setCloudStatus("saving");
+      const ok = await cloudStore.set("tree", next);
+      setCloudStatus(ok ? "synced" : "error");
+      if (ok) setCloudLastSyncedAt(new Date());
+    }, 400)
+  ).current;
 
   // Persist storymap on change — local immediate, cloud debounced.
   useEffect(() => {
@@ -12563,6 +13415,15 @@ function AppShell({ fullscreen = false }) {
     } catch (_) {}
     saveStoriesToCloud(stories);
   }, [stories, saveStoriesToCloud]);
+
+  // Persist tree on change — local immediate, cloud debounced.
+  useEffect(() => {
+    try {
+      localStorage.setItem("vend-tree", JSON.stringify(tree));
+      localStorage.setItem("vend-tree-v", String(SCHEMA));
+    } catch (_) {}
+    saveTreeToCloud(tree);
+  }, [tree, saveTreeToCloud]);
 
   // Persist matrix on change — local immediate, cloud debounced.
   useEffect(() => {
@@ -12579,12 +13440,30 @@ function AppShell({ fullscreen = false }) {
   const showTailoredCV  = features.has("tailored-cv");
   const enableMagicApply = features.has("magic-apply");
 
-  // Pseudonymous "who's editing" name — captured once on first edit and
-  // re-used for activity-log attribution. No login, no PII; people just
-  // type their name. Stored in localStorage.
+  // "Who's editing" name — captured once and re-used for activity-log
+  // attribution. With Google sign-in we seed this automatically from the
+  // signed-in profile (display name → first name), so most users never
+  // see the NamePrompt modal. localStorage stays as the cache layer.
   const [actorName, setActorName] = useState(() => {
     try { return localStorage.getItem("vend-actor") || ""; } catch (_) { return ""; }
   });
+  // Seed from the authenticated Google profile the first time we see a
+  // signed-in user. Prefer the display name's first token (cleaner for
+  // attribution chips) and fall back to the local part of the email.
+  useEffect(() => {
+    if (actorName || !authUser) return;
+    const meta = authUser.user_metadata || {};
+    const fullName = meta.full_name || meta.name || meta.given_name || "";
+    let candidate = (fullName.split(" ")[0] || "").trim();
+    if (!candidate) {
+      const email = authUser.email || "";
+      candidate = email.split("@")[0] || "";
+    }
+    candidate = candidate.slice(0, 40);
+    if (!candidate) return;
+    setActorName(candidate);
+    try { localStorage.setItem("vend-actor", candidate); } catch (_) {}
+  }, [authUser, actorName]);
   const [namePromptOpen, setNamePromptOpen] = useState(false);
   const pendingActionRef = useRef(null);
   function ensureActor(thenRun) {
@@ -12667,6 +13546,43 @@ function AppShell({ fullscreen = false }) {
       if (cloudStore.enabled) {
         cloudStore.set("matrix", fresh);
         cloudStore.logEvent({ action: "reset-matrix", actor: who });
+      }
+    });
+  }
+
+  // editTree — the universal mutator for opportunity-tree edits. Takes a
+  // pure mutator function that receives a deep-cloned draft of the tree
+  // and returns the new tree, plus an event descriptor for the activity
+  // feed ({ action, detail }). ensureActor prompts for a name on first
+  // edit so the activity log can attribute the change.
+  function editTree(mutator, event) {
+    ensureActor((who) => {
+      setTree(prev => {
+        const draft = deepCloneJSON(prev);
+        const next = mutator(draft) || draft;
+        // Tag the edit with author + timestamp so the header pill can
+        // render "Last edited by Lee · 2 min ago" without us having to
+        // dig through the activity log.
+        next.lastEdited = { who, when: new Date().toISOString() };
+        return next;
+      });
+      if (event && cloudStore.enabled) {
+        cloudStore.logEvent({
+          action: event.action || "edit-tree",
+          actor: who,
+          detail: event.detail || {},
+        });
+      }
+    });
+  }
+  function resetTree() {
+    ensureActor((who) => {
+      const fresh = deepCloneJSON(TREE_DATA);
+      setTree(fresh);
+      try { localStorage.removeItem("vend-tree"); } catch (_) {}
+      if (cloudStore.enabled) {
+        cloudStore.set("tree", fresh);
+        cloudStore.logEvent({ action: "reset-tree", actor: who });
       }
     });
   }
@@ -12903,6 +13819,23 @@ function AppShell({ fullscreen = false }) {
             solutions={solutions}
             onMoveSolution={moveSolution}
             onResetMatrix={resetMatrix}
+            tree={tree}
+            onEditTree={editTree}
+            onResetTree={resetTree}
+            actorName={actorName}
+          />
+        </div>
+      )}
+      {view === "matrix" && (
+        <div key="matrix-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
+          <div className="view-toolbar">
+            <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
+            <ActivityFeed enabled={cloudStore.enabled} actorName={actorName} />
+          </div>
+          <ImpactEffortView
+            solutions={solutions}
+            onMoveSolution={moveSolution}
+            onReset={resetMatrix}
           />
         </div>
       )}
@@ -13290,6 +14223,23 @@ function AppShell({ fullscreen = false }) {
         <p className="hint" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #2e2e2e" }}>
           For engineers: open the <strong>Handoff</strong> tab for site map, tokens, motion timings, and platform mapping.
         </p>
+        {authUser && onSignOut && (
+          <div className="dev-auth">
+            <div className="dev-auth-row">
+              <div className="dev-auth-avatar" aria-hidden="true">
+                {((authUser.user_metadata && (authUser.user_metadata.full_name || authUser.user_metadata.name)) || authUser.email || "?")
+                  .slice(0, 1).toUpperCase()}
+              </div>
+              <div className="dev-auth-meta">
+                <p className="dev-auth-name">
+                  {(authUser.user_metadata && (authUser.user_metadata.full_name || authUser.user_metadata.name)) || authUser.email}
+                </p>
+                <p className="dev-auth-email">{authUser.email}</p>
+              </div>
+              <button className="dev-auth-out" onClick={onSignOut}>Sign out</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
       )}
@@ -13342,6 +14292,7 @@ function AppShell({ fullscreen = false }) {
           view:
             view === "prototype" ? "Prototype" :
             view === "tree"      ? "Opportunity tree" :
+            view === "matrix"    ? "Impact–Effort" :
             view === "storymap"  ? "Storymap" :
             view === "handoff"   ? "Handoff" : view,
           screen:
