@@ -331,6 +331,71 @@
     pointer-events: none;
     transform: translate(-50%, -50%) scale(0);
   }
+  /* ─── Material 3 Filled TextField (Android only) ──────────────────────
+     M3 spec: 56dp height, 4dp top corners + flat bottom, surface-variant
+     fill, 1dp bottom border (on-surface-variant inactive → 2dp primary on
+     focus). Body Large text (16sp / Regular). Padding 16dp horizontal.
+     Scoped to .platform-android so iOS / Web inputs stay untouched. */
+  .platform-android .ar-rv-input,
+  .platform-android .ar-rv-answer {
+    border-radius: 4px 4px 0 0;
+    border: none;
+    border-bottom: 1px solid #79747e;       /* on-surface-variant */
+    background: #f3edf7;                     /* surface-variant */
+    color: #1d1d1d;
+    caret-color: #0063fb;
+    font: 400 16px/1.5 var(--sys-text);
+    letter-spacing: 0.15px;
+    padding: 14px 16px;
+    min-height: 56px;
+    box-sizing: border-box;
+    transition: border-color 120ms var(--ease-out),
+                background    120ms var(--ease-out);
+  }
+  .platform-android .ar-rv-answer:hover { background: #ece6f0; }
+  .platform-android .ar-rv-input:focus,
+  .platform-android .ar-rv-input:focus-visible {
+    border-bottom: 2px solid #0063fb;
+    /* Compensate for the extra 1px so total field height stays at 56dp. */
+    padding-bottom: 13px;
+    outline: 0;
+  }
+
+  /* M3 Snackbar — inverse-surface near-black bar, Body Medium text, 4dp
+     radius. Scoped to platform-android so iOS / Web "fb-toast" style
+     stays. Applied via .fb-toast class so existing toast emissions work
+     unchanged on Android. */
+  .platform-android .fb-toast {
+    background: #313033;           /* M3 inverse-surface */
+    color: #f4eff4;                /* M3 inverse-on-surface */
+    border-radius: 4px;
+    padding: 14px 16px;
+    font: 400 14px/1.45 'Roboto Flex', Roboto, var(--sys-text);
+    letter-spacing: 0.25px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.30), 0 2px 6px 2px rgba(0,0,0,0.15);
+    /* M3 snackbar lives bottom-center, 8dp from bottom — not top. */
+    top: auto;
+    bottom: 16px;
+  }
+  .platform-android .egg-toast {
+    background: #313033;
+    color: #f4eff4;
+    border-radius: 4px;
+    font: 500 14px/1.45 'Roboto Flex', Roboto, var(--sys-text);
+    letter-spacing: 0.25px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.30), 0 2px 6px 2px rgba(0,0,0,0.15);
+  }
+
+  /* M3 Bottom Sheet handle position — 22dp from top is the M3 spec; the
+     handle itself (32×4dp) is already platform-aware via SheetDragHandle.
+     This adjusts the wrapper spacing on Android so the handle floats at
+     the right distance from the top edge of the sheet. */
+  .platform-android .sheet > div:first-child,
+  .platform-android [class*="sheet"] > div:first-child {
+    /* Intentionally not applied — too broad. Per-sheet spacing remains
+       in component code; leaving this hook here for future use. */
+  }
+
   .platform-android .press.is-rippling::after {
     animation: md3-ripple 520ms cubic-bezier(0.4, 0, 0.2, 1) both;
   }
@@ -4407,8 +4472,19 @@ const PLATFORM_FONTS = {
 };
 const PLATFORM_RADII = {
   ios:     { button: 14,  sheet: 18, card: 14 },
-  android: { button: 100, sheet: 28, card: 16 },
+  // Material 3 shape tokens — Medium 12dp for cards, Extra Large 28dp for
+  // bottom sheets, Full for buttons (pill).
+  android: { button: 9999, sheet: 28, card: 12 },
   web:     { button: 8,   sheet: 16, card: 8 },
+};
+
+// Material 3 elevation system — shadow values for each level. M3 also
+// expects a tonal overlay (primary tint mixed into surface) but for a
+// prototype the shadow values alone read correctly.
+const M3_ELEV = {
+  level1: "0 1px 2px rgba(0,0,0,0.30), 0 1px 3px 1px rgba(0,0,0,0.15)", // cards
+  level2: "0 1px 2px rgba(0,0,0,0.30), 0 2px 6px 2px rgba(0,0,0,0.15)", // top app bar (scrolled), menus
+  level3: "0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.30)", // FAB, bottom sheet
 };
 
 // ===========================================================
@@ -4508,7 +4584,7 @@ function AndroidDevice({ children }) {
         justifyContent: "space-between", padding: "8px 18px 0", zIndex: 90,
         pointerEvents: "none",
       }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: "#000", letterSpacing: 0 }}>9:41</div>
+        <div style={{ fontSize: 14, fontWeight: 400, color: "#000", letterSpacing: 0 }}>9:41</div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {/* signal — Material full triangle */}
           <svg width="16" height="11" viewBox="0 0 16 11" fill="#000"><path d="M0 11L16 11L16 0Z"/></svg>
@@ -5356,17 +5432,20 @@ const HOME_AREA = 34;
 function NavBar({ title, onBack, onClose, trailing }) {
   const { statusBarH } = useMetrics();
   const platform = usePlatform();
-  // Platform-correct header height & title style
+  // Platform-correct header height & title style.
+  // Material 3 Small Top App Bar: 64dp container (we go 56dp because the
+  // status bar already eats 36dp on Android, keeping total chrome ≈ 92dp
+  // which matches Pixel reference). on-surface text colour for the back
+  // arrow. No resting shadow per M3 — the small hairline below provides
+  // separation without simulating elevation we don't actually have.
   const rowH       = platform === "android" ? 56 : 44;
   const backColor  = platform === "android" ? "#1d1d1d" : "#0063fb";
   const backStroke = platform === "android" ? 2.2 : 2.5;
-  // For iOS/Web the title is absolutely centered with safe clearance from both ends.
-  // For Android it is left-aligned at 56dp from start (after the back button).
   return (
     <div style={{
       paddingTop: statusBarH, background: "#fff",
-      borderBottom: platform === "android" ? "none" : "0.5px solid rgba(0,0,0,0.08)",
-      boxShadow: platform === "android" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+      borderBottom: platform === "android" ? "1px solid rgba(0,0,0,0.06)" : "0.5px solid rgba(0,0,0,0.08)",
+      boxShadow: "none",
       flexShrink: 0, position: "relative", zIndex: 2,
     }}>
       <div style={{
@@ -5386,12 +5465,15 @@ function NavBar({ title, onBack, onClose, trailing }) {
         </button>
 
         {platform === "android" ? (
-          /* Material 3 small top app bar — left-aligned 22sp title */
+          /* Material 3 Small Top App Bar — left-aligned Title Large
+             (22sp / 28sp line-height / Regular 400). Padding 16dp leading
+             puts the title at the M3-recommended distance from the
+             navigation icon. */
           <div style={{
             flex: 1, minWidth: 0,
-            fontSize: 22, fontWeight: 500, color: "#000",
-            letterSpacing: -0.1, lineHeight: "28px",
-            padding: "0 4px",
+            fontSize: 22, fontWeight: 400, color: "#1d1d1d",
+            letterSpacing: 0, lineHeight: "28px",
+            padding: "0 0 0 12px",
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           }}>{title}</div>
         ) : (
@@ -5449,16 +5531,29 @@ function CompanyLogo({ size = 56, radius = 12, initials = "PU", color = "#0063fb
 
 function PrimaryButton({ children, onClick, disabled, variant = "primary" }) {
   const platform = usePlatform();
+  const isAndroid = platform === "android";
   const radius = PLATFORM_RADII[platform].button;
-  const styles = {
-    primary:   { bg: "#0063fb", color: "#fff", border: "1px solid #0063fb" },
-    secondary: { bg: "#fff", color: "#0063fb", border: "1px solid rgba(0,99,251,0.5)" },
-  };
+  const styles = isAndroid
+    ? {
+        // Material 3 Filled button: primary background, on-primary text,
+        // no border, no shadow (filled buttons have zero elevation in M3).
+        primary:   { bg: "#0063fb", color: "#fff", border: "none" },
+        // Material 3 Filled Tonal button: primary-container background.
+        secondary: { bg: "#d4e4ff", color: "#001c42", border: "none" },
+      }
+    : {
+        primary:   { bg: "#0063fb", color: "#fff", border: "1px solid #0063fb" },
+        secondary: { bg: "#fff", color: "#0063fb", border: "1px solid rgba(0,99,251,0.5)" },
+      };
   const s = styles[variant];
-  // Platform-tuned text scale: Material/web slightly tighter than iOS
-  const fontSize = platform === "ios" ? 17 : 15;
-  const fontWeight = platform === "android" ? 500 : 600;
-  const padding = platform === "android" ? "12px 24px" : "14px 24px";
+  // Material 3 button text is Label Large: 14sp / Medium 500 / 0.1px tracking.
+  // iOS uses Body / 17sp / Semibold 600 / -0.2 tracking.
+  const fontSize    = isAndroid ? 14 : platform === "ios" ? 17 : 15;
+  const fontWeight  = isAndroid ? 500 : 600;
+  // M3 buttons are 40dp tall with 24dp horizontal padding. Vertical
+  // padding produces a 48dp touch target. iOS/web stay slightly taller.
+  const padding     = isAndroid ? "10px 24px" : "14px 24px";
+  const letterSpacing = isAndroid ? 0.1 : platform === "ios" ? -0.2 : 0.05;
   return (
     <button
       className="press"
@@ -5468,42 +5563,61 @@ function PrimaryButton({ children, onClick, disabled, variant = "primary" }) {
         width: "100%", padding, borderRadius: radius,
         background: s.bg, color: s.color, border: s.border,
         fontFamily: "inherit", fontSize, fontWeight,
+        minHeight: isAndroid ? 48 : undefined,  // 48dp touch target
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
-        // Smooth the disabled→enabled flip so the button doesn't pop in
-        // brightness the moment loading finishes.
         transition: "opacity 320ms cubic-bezier(0.4, 0, 0.2, 1), background 200ms var(--ease-out), color 200ms var(--ease-out)",
-        letterSpacing: platform === "ios" ? -0.2 : 0.05,
-        boxShadow: platform === "android" && variant === "primary"
-          ? "0 1px 2px rgba(0,0,0,0.08), 0 2px 4px rgba(0,99,251,0.16)" : "none",
+        letterSpacing,
+        boxShadow: "none",
       }}>{children}</button>
   );
 }
 
-function IconBtn({ icon, color = "#0063fb", onClick, label }) {
+function IconBtn({ icon, color, onClick, label }) {
+  const platform = usePlatform();
+  // Material 3 standard icon button: 48dp touch target with 24dp glyph.
+  // iOS/Web stays at 44dp / 22dp glyph.
+  const isAndroid = platform === "android";
+  const size      = isAndroid ? 48 : 44;
+  const glyph     = isAndroid ? 24 : 22;
+  const stroke    = isAndroid ? 2.2 : 2;
+  const tint      = color || (isAndroid ? "#1d1d1d" : "#0063fb");
   return (
     <button
       className="press"
       onClick={() => { haptic("tap"); onClick?.(); }}
       aria-label={label}
       style={{
-        width: 44, height: 44, border: 0, background: "transparent", cursor: "pointer",
+        width: size, height: size, border: 0, background: "transparent", cursor: "pointer",
+        borderRadius: isAndroid ? 9999 : 0,
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-      <Icon name={icon} size={22} color={color} stroke={2} />
+      <Icon name={icon} size={glyph} color={tint} stroke={stroke} />
     </button>
   );
 }
 
 function Chip({ icon, children }) {
+  const platform = usePlatform();
+  const isAndroid = platform === "android";
+  // Material 3 Assist Chip: 32dp height, 8dp corner radius, 1dp outline,
+  // transparent background, Label Large (14sp / 500). on-surface-variant
+  // for text + icon. iOS / Web keep the pill style.
   return (
-    <span style={{
+    <span style={isAndroid ? {
+      display: "inline-flex", alignItems: "center", gap: 8,
+      height: 32, padding: "0 12px", borderRadius: 8,
+      background: "transparent",
+      border: "1px solid #79747e",      /* M3 outline */
+      color: "#1d1d1d",                  /* on-surface */
+      fontSize: 14, fontWeight: 500, letterSpacing: 0.1,
+    } : {
       display: "inline-flex", alignItems: "center", gap: 6,
       padding: "6px 12px", borderRadius: 9999,
       background: "#f0f0f3", color: "#404040",
       fontSize: 13, fontWeight: 500,
     }}>
-      {icon && <Icon name={icon} size={14} color="#404040" stroke={2} />}
+      {icon && <Icon name={icon} size={isAndroid ? 18 : 14} color={isAndroid ? "#1d1d1d" : "#404040"} stroke={2} />}
       {children}
     </span>
   );
@@ -5515,6 +5629,21 @@ function Fact({ label, children }) {
       <p style={{ fontSize: 12, color: "#6b6b6b", margin: "0 0 2px" }}>{label}</p>
       <p style={{ fontSize: 15, fontWeight: 600, color: "#1d1d1d", margin: 0 }}>{children}</p>
     </div>
+  );
+}
+
+// Sheet drag-handle — platform-aware. iOS / web: 40×5px soft grey pill.
+// Android (Material 3): 32×4dp on-surface-variant pill, 8dp from top.
+function SheetDragHandle() {
+  const platform = usePlatform();
+  const isAndroid = platform === "android";
+  return (
+    <div style={{
+      width: isAndroid ? 32 : 40,
+      height: isAndroid ? 4 : 5,
+      borderRadius: 9999,
+      background: isAndroid ? "#79747e" : "#d4d4d4",
+    }} />
   );
 }
 
@@ -5552,9 +5681,13 @@ function JobAdContent({ job, embedded = false }) {
 
       <div style={{
         margin: "0 16px 20px", padding: 16, borderRadius: cardR,
-        background: "#f7f7f9", display: "grid", gap: 16,
+        // Material 3 Filled card on Android: surface-variant background,
+        // no shadow. Removes the previous "filled + shadow" hybrid which
+        // is not a M3 card variant.
+        background: platform === "android" ? "#f3edf7" : "#f7f7f9",
+        display: "grid", gap: 16,
         gridTemplateColumns: "1fr 1fr",
-        boxShadow: platform === "android" ? "0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06)" : "none",
+        boxShadow: "none",
       }}>
         <Fact label={t({ en: "Deadline", no: "Frist" })}>
           {t({ en: "26 May 2026", no: "26. mai 2026" })}
@@ -5659,7 +5792,9 @@ function JobDetailScreen({ job, onApply, onBack, userState }) {
           </div>
         </div>
       ) : isAndroid ? (
-        /* Material 3: Extended FAB at bottom-right */
+        /* Material 3 Extended FAB — 56dp tall, 16dp corner radius, Level 3
+           elevation, Label Large (14sp / 500 / 0.1 tracking). Padding:
+           16dp leading, 20dp trailing (M3 spec). Icon: 24dp, on-primary. */
         <button
           className="press"
           onClick={() => { haptic("tap"); onApply?.(); }}
@@ -5667,19 +5802,16 @@ function JobDetailScreen({ job, onApply, onBack, userState }) {
             position: "absolute", right: 16,
             bottom: `calc(16px + ${homeArea}px)`,
             zIndex: 3,
-            display: "inline-flex", alignItems: "center", gap: 10,
-            height: 56, padding: "0 22px 0 18px",
+            display: "inline-flex", alignItems: "center", gap: 12,
+            height: 56, padding: "0 20px 0 16px",
             background: "#0063fb", color: "#fff", border: 0,
             borderRadius: 16,
-            fontFamily: "inherit", fontSize: 15, fontWeight: 500,
+            fontFamily: "inherit", fontSize: 14, fontWeight: 500,
             letterSpacing: 0.1,
-            boxShadow:
-              "0 1px 3px 0 rgba(0,0,0,0.30)," +
-              "0 4px 8px 3px rgba(0,0,0,0.15)," +
-              "0 6px 14px rgba(0,99,251,0.28)",
+            boxShadow: M3_ELEV.level3,
             cursor: "pointer",
           }}>
-          <Icon name="send" size={20} color="#fff" stroke={2.2} />
+          <Icon name="send" size={24} color="#fff" stroke={2.2} />
           {t({ en: "Apply", no: "Søk" })}
         </button>
       ) : (
@@ -5862,7 +5994,7 @@ function ApplicationPreviewSheet({
           animation: "slideup 440ms var(--ease-modal)",
         }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
-          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          <SheetDragHandle />
         </div>
 
         {/* Header — logo, title block, close. All vertically centered. */}
@@ -6481,7 +6613,7 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
         }}>
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
-          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          <SheetDragHandle />
         </div>
 
         {/* Header — back chip on left, title centered, spacer on right for symmetry */}
@@ -6674,7 +6806,7 @@ function LoginSheet({ onClose, onLogin }) {
           animation: "slideup 440ms var(--ease-modal)",
         }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
-          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          <SheetDragHandle />
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 12px" }}>
@@ -6780,7 +6912,7 @@ function SelectLetterSheet({ onClose, onPick }) {
           animation: "slideup 440ms var(--ease-modal)",
         }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
-          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          <SheetDragHandle />
         </div>
 
         {/* Header */}
@@ -7270,7 +7402,7 @@ function CVPreviewSheet({ onClose, onBack, onCommit, initialSource = "profile", 
         }}>
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
-          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          <SheetDragHandle />
         </div>
 
         {/* Header — back to picker · centred source label · spacer */}
@@ -7396,7 +7528,7 @@ function TailorSheet({ onDone, onClose }) {
         animation: "slideup 440ms var(--ease-modal)",
       }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
-          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          <SheetDragHandle />
         </div>
 
         <div style={{ padding: "8px 8px 8px 16px", display: "flex", alignItems: "center", gap: 12 }}>
@@ -7858,7 +7990,7 @@ function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
           animation: "slideup 440ms var(--ease-modal)",
         }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
-          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          <SheetDragHandle />
         </div>
         <div style={{
           padding: "10px 8px 16px 20px", borderBottom: "0.5px solid #ededed",
@@ -7898,9 +8030,12 @@ function ActivityCard({ job, statusPill, statusColor, statusBg, time, onClick })
       style={{
         display: "flex", alignItems: "center", gap: 14, width: "100%",
         padding: "14px 14px 14px 12px", borderRadius: cardR,
-        background: "#fff", border: "1px solid #ededed",
+        background: "#fff",
+        // M3 Outlined card on Android (1dp outline, no shadow);
+        // iOS / web keep the soft border-only treatment.
+        border: platform === "android" ? "1px solid #79747e" : "1px solid #ededed",
         cursor: "pointer", textAlign: "left", fontFamily: "inherit",
-        boxShadow: platform === "android" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+        boxShadow: "none",
         transition: "background 120ms var(--ease-out), border-color 120ms var(--ease-out)",
       }}>
       <CompanyLogo size={44} radius={10} initials={job.initials} color={job.brandColor} logo={job.logo} />
@@ -8727,7 +8862,7 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
         }}>
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
-          <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+          <SheetDragHandle />
         </div>
 
         {/* Header — logo + "Applying as" + job title / company + close */}
@@ -8883,7 +9018,7 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
           }}>
           {/* Drag handle */}
           <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
-            <div style={{ width: 40, height: 5, borderRadius: 9999, background: "#d4d4d4" }} />
+            <SheetDragHandle />
           </div>
           {/* Title bar — back chevron when navigated into a sub-page of
               the Vedlegg section (cv-picker, cv-preview, letter, select-
@@ -9841,9 +9976,10 @@ function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
 
         <div style={{
           width: "100%", padding: 14, borderRadius: cardR,
-          background: "#f7f7f9",
+          // Material 3 Filled card on Android — no shadow, surface-variant fill.
+          background: platform === "android" ? "#f3edf7" : "#f7f7f9",
           display: "flex", alignItems: "center", gap: 12, marginTop: 4,
-          boxShadow: platform === "android" ? "0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06)" : "none",
+          boxShadow: "none",
         }}>
           <CompanyLogo size={44} radius={Math.min(cardR - 4, 12)} initials={job.initials} color={job.brandColor} logo={job.logo} />
           <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
@@ -10634,29 +10770,39 @@ const HANDOFF = {
 };
 
 function HandoffView() {
-  // Default landing tab is "What's new" so anyone returning to the site
-  // sees what changed since they last looked.
-  const [section, setSection] = useState("whatsnew");
+  // Four tabs only — dropped What's new / A11y / Backend, and folded
+  // Platform into Components, Motion into Tokens, and Instrumentation
+  // into Metrics. Each tab now tells a complete story end-to-end.
+  const [section, setSection] = useState("sitemap");
+
+  // Small dividing rule between sections that are now stacked on a
+  // single tab. Keeps the merged content scannable.
+  const Divider = ({ label }) => (
+    <div style={{ margin: "44px 0 18px", display: "flex", alignItems: "center", gap: 14 }}>
+      <span style={{ flex: 1, height: 1, background: "var(--hair)" }} />
+      <span style={{
+        fontSize: 11, fontWeight: 700, color: "#6b6b6b",
+        letterSpacing: 0.12, textTransform: "uppercase",
+      }}>{label}</span>
+      <span style={{ flex: 1, height: 1, background: "var(--hair)" }} />
+    </div>
+  );
+
   return (
     <section className="surface" aria-label="Developer handoff">
       <h1>Developer handoff</h1>
       <p className="sub">
-        What's changed lately, plus the live specs and patterns for engineers picking up this
-        prototype. Tokens map to FINN's WARP design system; the same components have iOS,
-        Android, and Web equivalents documented per row.
+        Live specs and patterns for engineers picking up this prototype.
+        Tokens map to FINN's WARP design system; each component shows its
+        iOS, Android, and Web variants in the same row.
       </p>
 
       <div className="ho-tabs" role="tablist">
         {[
-          { id: "whatsnew",       label: "What's new" },
-          { id: "sitemap",        label: "Site map" },
-          { id: "tokens",         label: "Design tokens" },
-          { id: "components",     label: "Components" },
-          { id: "platform",       label: "Platform map" },
-          { id: "motion",         label: "Motion" },
-          { id: "a11y",           label: "A11y" },
-          { id: "backend",        label: "Backend contracts" },
-          { id: "instrumentation",label: "Instrumentation" },
+          { id: "sitemap",    label: "Site map" },
+          { id: "tokens",     label: "Tokens" },
+          { id: "components", label: "Components" },
+          { id: "metrics",    label: "Metrics" },
         ].map(t => (
           <button key={t.id} role="tab" aria-selected={section === t.id}
             className={section === t.id ? "active" : ""}
@@ -10664,16 +10810,230 @@ function HandoffView() {
         ))}
       </div>
 
-      {section === "whatsnew"       && <HandoffWhatsNew />}
-      {section === "sitemap"        && <HandoffSitemap />}
-      {section === "tokens"         && <HandoffTokens />}
-      {section === "components"     && <HandoffComponents />}
-      {section === "platform"       && <HandoffPlatform />}
-      {section === "motion"         && <HandoffMotion />}
-      {section === "a11y"           && <HandoffA11y />}
-      {section === "backend"        && <HandoffBackend />}
-      {section === "instrumentation"&& <HandoffInstrumentation />}
+      {section === "sitemap" && <HandoffSitemap />}
+
+      {section === "tokens" && (
+        <>
+          <HandoffTokens />
+          <Divider label="Motion — easings & durations" />
+          <HandoffMotion />
+        </>
+      )}
+
+      {section === "components" && (
+        <>
+          <HandoffComponents />
+          <Divider label="Platform variants — iOS · Android · Web" />
+          <HandoffPlatform />
+        </>
+      )}
+
+      {section === "metrics" && (
+        <>
+          <HandoffMetrics />
+          <Divider label="Instrumentation — events to fire" />
+          <HandoffInstrumentation />
+        </>
+      )}
     </section>
+  );
+}
+
+// ─── Metrics — live funnel from Amplitude (Apr 10 – May 28, 2026) ─────
+// Numbers sourced from Amplitude exports on 2026-05-28. Update the
+// constants below when you pull a fresh export. Funnel reads:
+//   ad view → apply-click → form load → form review → confirmation.
+const METRICS_DATA = {
+  asOf: "2026-05-28",
+  range: "Apr 10 – May 28, 2026",
+  amplitudeUrl: "https://app.eu.amplitude.com/analytics/vend/dashboard/e-x62e6gmr",
+  // Funnel volume — Agentic apply, all users, total over period.
+  funnel: [
+    { id: "view",    label: "View Apply CTA",  count: 44533, target: null },
+    { id: "click",   label: "Click Apply",      count:  7854, target: null }, // ≈18% CTR via UIElement event
+    { id: "load",    label: "Form loaded",      count:  7898, target: null },
+    { id: "review",  label: "Reach review",     count:  5193, target: null },
+    { id: "confirm", label: "Confirmation",     count:  2485, target: null },
+  ],
+  // Step-over-step conversion vs MVP targets.
+  steps: [
+    { label: "View → Click (CTR)",         current: 0.131, target: 0.18, note: "Agentic already beats ATS (~9%) and Easy Apply (~10%)" },
+    { label: "Click → Form load",          current: 0.954, target: 0.97, note: "Tiny drop — most clicks reach the form" },
+    { label: "Form load → Review",         current: 0.658, target: 0.80, note: "Where the agent pre-fills and the seeker reviews" },
+    { label: "Review → Confirmation",      current: 0.478, target: 0.70, note: "Biggest leverage — Send button friction" },
+    { label: "View → Confirmation (E2E)",  current: 0.055, target: 0.10, note: "Doubling end-to-end is the MVP outcome metric" },
+  ],
+  // Cross-flow CTR comparison.
+  ctr: [
+    { label: "ATS ads (external)", value: 0.090, tone: "neutral" },
+    { label: "Easy Apply (current)", value: 0.103, tone: "neutral" },
+    { label: "Agentic apply (current)", value: 0.131, tone: "good" },
+    { label: "Agentic apply (MVP target)", value: 0.180, tone: "target" },
+  ],
+};
+
+function HandoffMetrics() {
+  const d = METRICS_DATA;
+  const maxFunnel = d.funnel[0].count;
+  const maxCtr    = Math.max(...d.ctr.map(c => c.value));
+  const fmt = (n) => n.toLocaleString("en-US");
+  const pct = (n) => (n * 100).toFixed(1) + "%";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 36, paddingTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.3 }}>Agentic apply — live funnel</h2>
+          <p style={{ margin: "6px 0 0", color: "#6b6b6b", fontSize: 13 }}>
+            {d.range} · Source: <a href={d.amplitudeUrl} target="_blank" rel="noopener" style={{ color: "var(--finn-blue)" }}>Amplitude</a> · As of {d.asOf}
+          </p>
+        </div>
+        <div style={{ fontSize: 12, color: "#6b6b6b", textAlign: "right" }}>
+          {fmt(d.funnel[0].count)} ad views · {fmt(d.funnel[4].count)} confirmations<br/>
+          End-to-end conversion: <strong style={{ color: "#1d1d1d" }}>{pct(d.funnel[4].count / d.funnel[0].count)}</strong>
+        </div>
+      </div>
+
+      {/* ── Funnel ───────────────────────────────────────────────────── */}
+      <section>
+        <h3 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 700, color: "#1d1d1d", letterSpacing: -0.2 }}>
+          Funnel — Ad view to confirmation
+        </h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {d.funnel.map((step, i) => {
+            const width = (step.count / maxFunnel) * 100;
+            const conv = i === 0 ? 1 : step.count / d.funnel[0].count;
+            return (
+              <div key={step.id} style={{
+                display: "grid",
+                gridTemplateColumns: "160px 1fr 80px 64px",
+                alignItems: "center",
+                gap: 12,
+                fontSize: 13,
+              }}>
+                <span style={{ color: "#1d1d1d", fontWeight: 600 }}>{step.label}</span>
+                <div style={{ position: "relative", height: 28, background: "#f5f5f7", borderRadius: 6, overflow: "hidden" }}>
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    width: width + "%",
+                    background: "linear-gradient(90deg, #0063fb 0%, #4a8bff 100%)",
+                    borderRadius: 6,
+                    transition: "width 600ms cubic-bezier(.2,.9,.3,1)",
+                  }} />
+                </div>
+                <span style={{ color: "#6b6b6b", fontVariantNumeric: "tabular-nums", textAlign: "right" }}>
+                  {fmt(step.count)}
+                </span>
+                <span style={{
+                  color: i === 0 ? "#6b6b6b" : (conv > 0.5 ? "#1f8a3b" : conv > 0.15 ? "#c47a00" : "#b8403a"),
+                  fontWeight: 600,
+                  fontVariantNumeric: "tabular-nums",
+                  textAlign: "right",
+                }}>
+                  {i === 0 ? "100%" : pct(conv)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── Step-over-step vs targets ────────────────────────────────── */}
+      <section>
+        <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, color: "#1d1d1d", letterSpacing: -0.2 }}>
+          Conversion at each step
+        </h3>
+        <p style={{ margin: "0 0 14px", color: "#6b6b6b", fontSize: 13 }}>
+          Where each design decision should focus. The "Review → Confirmation" gap is the biggest single lever.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {d.steps.map(s => {
+            const widthCur = (s.current / 1) * 100;
+            const widthTar = (s.target  / 1) * 100;
+            const gap = s.target - s.current;
+            return (
+              <div key={s.label} style={{ border: "1px solid var(--hair)", borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
+                  <strong style={{ fontSize: 14, color: "#1d1d1d" }}>{s.label}</strong>
+                  <span style={{ fontSize: 12, color: "#6b6b6b", fontVariantNumeric: "tabular-nums" }}>
+                    <span style={{ color: "#1d1d1d", fontWeight: 600 }}>{pct(s.current)}</span>
+                    {" → "}
+                    <span style={{ color: "#0063fb", fontWeight: 600 }}>{pct(s.target)}</span>
+                    {gap > 0 && <span style={{ color: "#1f8a3b", marginLeft: 6 }}>+{pct(gap)}</span>}
+                  </span>
+                </div>
+                <div style={{ position: "relative", height: 10, background: "#f5f5f7", borderRadius: 5, overflow: "hidden" }}>
+                  {/* Target bar — light blue background */}
+                  <div style={{
+                    position: "absolute", left: 0, top: 0, bottom: 0,
+                    width: widthTar + "%",
+                    background: "#eaf2ff",
+                    borderRadius: 5,
+                  }} />
+                  {/* Current bar — solid blue overlay */}
+                  <div style={{
+                    position: "absolute", left: 0, top: 0, bottom: 0,
+                    width: widthCur + "%",
+                    background: "#0063fb",
+                    borderRadius: 5,
+                    transition: "width 600ms cubic-bezier(.2,.9,.3,1)",
+                  }} />
+                </div>
+                <p style={{ margin: "8px 0 0", color: "#6b6b6b", fontSize: 12 }}>{s.note}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── CTR comparison ──────────────────────────────────────────── */}
+      <section>
+        <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, color: "#1d1d1d", letterSpacing: -0.2 }}>
+          Click-through rate — Agentic vs alternatives
+        </h3>
+        <p style={{ margin: "0 0 14px", color: "#6b6b6b", fontSize: 13 }}>
+          Agentic already beats ATS and Easy Apply at the click step. The MVP target widens the gap.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {d.ctr.map(c => {
+            const width = (c.value / maxCtr) * 100;
+            const bg = c.tone === "target" ? "#eaf2ff"
+                     : c.tone === "good"   ? "#0063fb"
+                     : "#cccccf";
+            const border = c.tone === "target" ? "1.5px dashed #0063fb" : "none";
+            return (
+              <div key={c.label} style={{
+                display: "grid",
+                gridTemplateColumns: "200px 1fr 64px",
+                alignItems: "center",
+                gap: 12,
+                fontSize: 13,
+              }}>
+                <span style={{ color: "#1d1d1d", fontWeight: 500 }}>{c.label}</span>
+                <div style={{ position: "relative", height: 24, background: "#f5f5f7", borderRadius: 6, overflow: "hidden" }}>
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    width: width + "%",
+                    background: bg,
+                    border, boxSizing: "border-box",
+                    borderRadius: 6,
+                  }} />
+                </div>
+                <span style={{ color: "#1d1d1d", fontWeight: 600, fontVariantNumeric: "tabular-nums", textAlign: "right" }}>
+                  {pct(c.value)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <p style={{ margin: 0, fontSize: 12, color: "#6b6b6b", borderTop: "1px solid var(--hair)", paddingTop: 14 }}>
+        <strong>Reading the funnel:</strong> only 5.5% of people who see the Agentic apply CTA finish an application today.
+        The two stages that matter most are <em>Review → Confirmation</em> (47.8% today; MVP target 70%) and the upstream <em>Form load → Review</em> (65.8% today; target 80%).
+        Doubling end-to-end conversion is the MVP outcome — see the Opportunity Tree for the linked solutions.
+      </p>
+    </div>
   );
 }
 
