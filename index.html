@@ -8,10 +8,52 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0063fb">
 <title>Vend · User Connect — Easy + Agentic apply prototype</title>
-<link rel="stylesheet" href="colors_and_type.css">
+<!-- Inline empty favicon so the browser stops requesting /favicon.ico
+     and logging a 404 in the console. Replace with a real .ico if a
+     branded tab icon is needed later. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8B%3C/text%3E%3C/svg%3E">
+<!-- (colors_and_type.css used to live here, but every font and colour
+     it provided is now inlined directly below. Dropping the link kills
+     the 404 in the console.) -->
+<script>
+  // Silence Babel-standalone's two cosmetic notices — the "in-browser
+  // Babel transformer" warning and the "code generator has deoptimised
+  // … exceeds max of 500KB" message. Both are purely informational
+  // (Babel still works fine) and just add noise to the console for
+  // people viewing the prototype. They're emitted via different
+  // console methods at different times, so we patch all three.
+  (function() {
+    const KEY_FRAGMENTS = [
+      "[BABEL]",
+      "in-browser Babel transformer",
+      "deoptimised",
+      "deoptimized",
+    ];
+    function isBabelNoise(args) {
+      const first = args[0];
+      if (typeof first !== "string") return false;
+      for (let i = 0; i < KEY_FRAGMENTS.length; i++) {
+        if (first.indexOf(KEY_FRAGMENTS[i]) !== -1) return true;
+      }
+      return false;
+    }
+    const origWarn  = console.warn;
+    const origError = console.error;
+    const origLog   = console.log;
+    console.warn  = function(...args) { if (!isBabelNoise(args)) origWarn .apply(console, args); };
+    console.error = function(...args) { if (!isBabelNoise(args)) origError.apply(console, args); };
+    console.log   = function(...args) { if (!isBabelNoise(args)) origLog  .apply(console, args); };
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Flex:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Google's <model-viewer> for the 3D iPhone hero on the Job Ad screen.
+     Loads a .glb model with built-in orbit controls, zoom, and auto-rotate. -->
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+<!-- html2canvas captures the rendered JobAdContent React tree into a PNG
+     we can apply as a texture to the iPhone's screen face material. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
     --finn-blue: #0063fb;
@@ -1496,6 +1538,415 @@
     flex-shrink: 0;
   }
   .dev-auth-out:hover { color: #ededed; }
+
+  /* ─── 3D iPhone hero — Job Ad intro on iOS ───────────────────────────
+     Real glTF model rendered via Google's <model-viewer>. Sits in the
+     same slot as the regular Device frame, with a small CTA below to
+     enter the interactive prototype. */
+  /* Hero is exactly the same dimensions as the regular Device frame
+     (390 × 844), so switching between the 3D iPhone and the interactive
+     prototype keeps the phone in the same on-screen position and size.
+     Skip + CTA float over the model so they don't steal any space. */
+  .phone3d-hero {
+    position: relative;
+    width: 390px; height: 844px;
+    box-sizing: border-box;
+  }
+  .phone3d-hero model-viewer {
+    width: 100%; height: 100%;
+    background: transparent;
+    --poster-color: transparent;
+    display: block;
+  }
+  /* Job Ad overlay — a 2D card positioned over the 3D model's screen
+     face. Looks correct head-on; when the user spins the model it stays
+     in place (2D doesn't follow 3D). Position values are tuned for a
+     typical iPhone GLB at the default camera angle. If your model puts
+     the screen elsewhere, nudge top/left/right/bottom below. */
+  .phone3d-hero-screen {
+    position: absolute;
+    /* Tuned to sit inside the bezel of a head-on iPhone view. Adjust
+       these four values if the overlay doesn't line up with the model
+       screen face on your particular .glb. */
+    top: 80px;
+    bottom: 80px;
+    left: 70px;
+    right: 70px;
+    background: #fff;
+    border-radius: 32px;
+    overflow: hidden;
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.14);
+    transition: opacity 320ms ease-out;
+  }
+  /* When the user is dragging the model, fade the overlay so the
+     2D-on-3D mismatch is less jarring while the phone tumbles. */
+  .phone3d-hero.rotating .phone3d-hero-screen {
+    opacity: 0;
+  }
+  /* Floating CTA pinned to the bottom centre of the hero. */
+  .phone3d-hero-cta {
+    position: absolute;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    appearance: none; cursor: pointer;
+    background: var(--finn-blue);
+    color: #fff;
+    border: 0;
+    border-radius: 9999px;
+    padding: 14px 26px;
+    font: 700 15px/1 var(--sys-text);
+    letter-spacing: -0.1px;
+    box-shadow: 0 8px 22px rgba(0,99,251,0.40);
+    transition: transform 140ms ease-out, box-shadow 140ms ease-out;
+    white-space: nowrap;
+  }
+  .phone3d-hero-cta:hover {
+    transform: translateX(-50%) translateY(-1px);
+    box-shadow: 0 12px 28px rgba(0,99,251,0.46);
+  }
+  .phone3d-hero-cta:active { transform: translateX(-50%); }
+  /* Skip escape hatch — floats top-right of the hero. */
+  .phone3d-hero-skip {
+    position: absolute;
+    top: 14px; right: 14px;
+    z-index: 10;
+    appearance: none; cursor: pointer;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0,0,0,0.08);
+    color: #404040;
+    padding: 7px 12px;
+    border-radius: 9999px;
+    font: 600 11px/1 var(--sys-text);
+    letter-spacing: 0.04em;
+    transition: background 140ms;
+  }
+  .phone3d-hero-skip:hover { background: rgba(255,255,255,1); }
+  /* Tiny floating helper hint pinned top-left so the gesture is discoverable. */
+  .phone3d-hero-hint {
+    position: absolute;
+    top: 18px; left: 16px;
+    z-index: 10;
+    font: 500 10px/1 var(--sys-text);
+    color: rgba(0,0,0,0.45);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  /* Loading / fallback state when the .glb file isn't found yet */
+  .phone3d-hero-missing {
+    width: 100%; height: 760px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+    color: #6b6b6b;
+    text-align: center;
+    padding: 24px;
+    border: 1px dashed #cccccf;
+    border-radius: 24px;
+    background: #fafafa;
+  }
+  .phone3d-hero-missing strong { color: #1d1d1d; font-size: 15px; }
+  .phone3d-hero-missing code {
+    background: #ededed; padding: 2px 6px; border-radius: 4px;
+    font-size: 12px;
+  }
+
+  /* ─── Phone 3D stage — iOS Job Ad screen only ────────────────────────
+     A "drag the area around the phone" gesture spins the iPhone as a 3D
+     solid. The front face is the live device. The back panel and four
+     side strips give the phone real depth so it reads as an object, not
+     a card flip. Releases ease back to flat after a beat. */
+  .phone3d-stage {
+    /* Larger than the phone so there's a drag area in the empty space
+       around the device. Padding values picked to give the cursor real
+       room to grab without pushing the dev panel layout around. */
+    position: relative;
+    width: 510px; height: 924px;
+    padding: 40px 60px;
+    box-sizing: border-box;
+    perspective: 2400px;
+    perspective-origin: 50% 38%;
+    touch-action: none;       /* eat browser scroll while dragging */
+    cursor: grab;
+  }
+  .phone3d-stage.grabbing { cursor: grabbing; }
+  .phone3d-shell {
+    /* Absolutely positioned inside the padded stage so the device sits
+       exactly centred (40px from top, 60px from left). */
+    position: absolute;
+    top: 40px; left: 60px;
+    width: 390px; height: 844px;
+    transform-style: preserve-3d;
+    will-change: transform;
+    cursor: default;          /* don't let the grab cursor leak onto the phone */
+  }
+  .phone3d-shell.snap {
+    transition: transform 700ms cubic-bezier(.2,.95,.3,1.05);
+  }
+  .phone3d-face {
+    position: absolute;
+    top: 0; left: 0;
+    backface-visibility: hidden;
+  }
+  /* iPhone proportions: real iPhone 15 is ~7.8mm thick at ~71.6mm wide
+     → ~11% depth-to-width. At 390px wide we'd want ~43px thick. We go
+     44px so half-depth = 22px (clean integer for side strips). */
+  /* Front holds the live IOSDevice, lifted 22px forward. */
+  .phone3d-front {
+    width: 390px; height: 844px;
+    transform: translateZ(22px);
+  }
+  /* Screen glare — a diagonal sweep of soft white across the front glass,
+     sitting one pixel forward of the device. Almost invisible when flat
+     and the prototype is in use; becomes a clear glassy reflection as
+     soon as the phone is tilted. The shell adds the `.tilted` class
+     whenever rotation is non-zero so the glare lights up. */
+  .phone3d-glare {
+    position: absolute;
+    top: 0; left: 0;
+    width: 390px; height: 844px;
+    border-radius: 55px;
+    transform: translateZ(0.5px);   /* sit just in front of the screen */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 360ms ease-out;
+    background:
+      /* Bright diagonal smear, top-left to bottom-right */
+      linear-gradient(132deg,
+        transparent 18%,
+        rgba(255,255,255,0.16) 32%,
+        rgba(255,255,255,0.03) 46%,
+        transparent 55%),
+      /* Smaller secondary highlight */
+      linear-gradient(132deg,
+        transparent 62%,
+        rgba(255,255,255,0.08) 72%,
+        transparent 80%);
+    mix-blend-mode: screen;
+  }
+  .phone3d-shell.tilted .phone3d-glare { opacity: 1; }
+  /* Back panel: brushed-glass slab in titanium grey, with a vignette and
+     a hairline along the top edge so it catches light when spun. The
+     border-radius matches the front face exactly so the silhouette reads
+     as one continuous object. */
+  .phone3d-back {
+    width: 390px; height: 844px;
+    transform: rotateY(180deg) translateZ(22px);
+    background:
+      /* Top-left highlight, like sun hitting a corner */
+      radial-gradient(60% 40% at 22% 12%, rgba(255,255,255,0.08) 0%, transparent 65%),
+      /* Soft body gradient */
+      radial-gradient(130% 80% at 50% 18%, #2e2e33 0%, #1c1c1f 42%, #0e0e11 100%);
+    border-radius: 55px;       /* matches the bumped IOSDevice front for a clean silhouette */
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.05),
+      inset 0 0 100px rgba(0,0,0,0.40);
+  }
+  .phone3d-back::before {
+    /* Hairline highlight along the top edge — catches simulated light */
+    content: "";
+    position: absolute; left: 36px; right: 36px; top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  }
+  .phone3d-back::after {
+    /* Sub-surface satin shimmer running diagonally — gives the glass
+       a hint of life when the phone is rotated. */
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg,
+      transparent 30%,
+      rgba(255,255,255,0.025) 50%,
+      transparent 70%);
+    pointer-events: none;
+  }
+  /* Camera plateau: a raised module with three lenses + flash. The bump
+     sits 6px forward of the back panel via translateZ for real depth
+     when tilted. */
+  .phone3d-camera {
+    position: absolute;
+    top: 32px; left: 32px;
+    width: 124px; height: 124px;
+    border-radius: 34px;
+    background: linear-gradient(160deg, #26262a 0%, #131318 100%);
+    transform: translateZ(6px);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.06),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 4px 14px rgba(0,0,0,0.45),
+      0 1px 0 rgba(255,255,255,0.03);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+  .phone3d-lens {
+    border-radius: 9999px;
+    background:
+      /* Bright catchlight */
+      radial-gradient(circle at 35% 28%, rgba(255,255,255,0.35) 0%, transparent 22%),
+      /* Lens internals */
+      radial-gradient(circle at 50% 50%, #6a6a72 0%, #2a2a2e 35%, #0a0a0c 75%);
+    box-shadow:
+      inset 0 0 0 2px #1a1a1d,
+      inset 0 0 8px rgba(0,0,0,0.75),
+      inset 0 0 0 5px rgba(255,255,255,0.02),
+      0 1px 0 rgba(255,255,255,0.06);
+    position: relative;
+  }
+  .phone3d-lens::after {
+    content: "";
+    position: absolute;
+    top: 18%; left: 22%; width: 22%; height: 16%;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.28);
+    filter: blur(1.5px);
+  }
+  .phone3d-flash {
+    border-radius: 9999px;
+    background:
+      radial-gradient(circle at 35% 30%, #f4f4f6 0%, #a8a8ad 40%, #50505a 80%, #1a1a1d 100%);
+    align-self: center;
+    justify-self: center;
+    width: 18px; height: 18px;
+    box-shadow:
+      inset 0 0 0 1.5px #2a2a2e,
+      0 1px 2px rgba(0,0,0,0.5);
+  }
+  .phone3d-lidar {
+    border-radius: 9999px;
+    background: radial-gradient(circle, #1c2a3a 0%, #0a0e14 80%);
+    align-self: center;
+    justify-self: center;
+    width: 14px; height: 14px;
+  }
+  /* Apple-style logo, centred on the back panel. Rendered as an inline
+     SVG with a brushed-chrome gradient (white → light grey → mid grey)
+     to feel like a polished, slightly recessed metal inlay. */
+  .phone3d-back-logo {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 88px; height: 108px;
+    opacity: 0.95;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(0 1px 0 rgba(255,255,255,0.06))
+            drop-shadow(0 -1px 0 rgba(0,0,0,0.4));
+  }
+  .phone3d-back-logo svg { width: 100%; height: 100%; display: block; }
+  /* Subtle "iPhone" wordmark below the logo — almost imperceptible, the
+     way it is on a real device when light catches it. */
+  .phone3d-back-wordmark {
+    position: absolute;
+    top: 64%; left: 50%;
+    transform: translate(-50%, 0);
+    font: 500 11px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    color: rgba(255,255,255,0.10);
+    letter-spacing: 0.1em;
+    text-transform: none;
+    pointer-events: none;
+    user-select: none;
+  }
+  /* MagSafe ring — a faint circle around the logo, almost imperceptible
+     unless light catches it. */
+  .phone3d-back-magsafe {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 168px; height: 168px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255,255,255,0.025);
+    pointer-events: none;
+  }
+  /* Four side strips form the titanium "band" wrapping the phone.
+     Brushed-titanium gradient with a top/bottom sheen so it catches
+     simulated light. */
+  .phone3d-side {
+    background:
+      /* Top + bottom sheen catching simulated light */
+      linear-gradient(180deg,
+        rgba(255,255,255,0.10) 0%,
+        transparent 8%,
+        transparent 92%,
+        rgba(255,255,255,0.06) 100%),
+      /* Brushed titanium body */
+      linear-gradient(180deg, #4a4a4d 0%, #2a2a2d 30%, #1a1a1d 50%, #2a2a2d 70%, #4a4a4d 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  /* Standard cube-face pattern: each face is positioned so its centre
+     coincides with the shell centre, then rotated to its orientation
+     and translated outward by half the perpendicular dimension. */
+  /* Side strips are flat rectangles — the iPhone's signature corner
+     curves come from the front and back faces wrapping around. The
+     overrides below bump those faces to iPhone 15 Pro–style 55px so
+     the silhouette reads as a real device. */
+  .phone3d-side-r {
+    width: 44px; height: 844px;
+    top: 0; left: 173px;           /* (390 - 44) / 2 */
+    transform: rotateY(90deg) translateZ(195px);   /* half of W = 390/2 */
+  }
+  .phone3d-side-l {
+    width: 44px; height: 844px;
+    top: 0; left: 173px;
+    transform: rotateY(-90deg) translateZ(195px);
+  }
+  .phone3d-side-t {
+    width: 390px; height: 44px;
+    top: 400px; left: 0;           /* (844 - 44) / 2 */
+    transform: rotateX(90deg) translateZ(422px);   /* half of H = 844/2 */
+  }
+  .phone3d-side-b {
+    width: 390px; height: 44px;
+    top: 400px; left: 0;
+    transform: rotateX(-90deg) translateZ(422px);
+  }
+  /* When the IOSDevice sits inside the 3D shell, bump its corner radius
+     to iPhone 15 Pro proportions so the front silhouette reads as a
+     proper rounded-rectangle. This override only kicks in inside the
+     3D stage — the regular 2D iPhone view keeps its existing 47px. */
+  .phone3d-front .device-bezel {
+    border-radius: 55px !important;
+  }
+  /* Side hardware buttons — small accents on the titanium band so it
+     reads as a real device, not a blank slab. Action button + volume
+     pair on the left, side button on the right. */
+  .phone3d-btn {
+    position: absolute;
+    background: linear-gradient(180deg, #4a4a4d 0%, #1a1a1d 100%);
+    border-radius: 2px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.10),
+      0 1px 2px rgba(0,0,0,0.4);
+  }
+  .phone3d-btn-action  { top: 16%; left: 6px; width: 5px; height: 30px; }
+  .phone3d-btn-volup   { top: 24%; left: 6px; width: 5px; height: 60px; }
+  .phone3d-btn-voldown { top: 34%; left: 6px; width: 5px; height: 60px; }
+  .phone3d-btn-side    { top: 18%; right: 6px; width: 5px; height: 84px; }
+  .phone3d-hint {
+    position: absolute;
+    bottom: 12px; left: 50%;       /* sits inside the lower padding band */
+    transform: translateX(-50%);
+    font: 500 12px/1 var(--sys-text);
+    color: #6b6b6b;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 0.7;
+    animation: phone3dHintFade 6000ms ease-out forwards;
+  }
+  @keyframes phone3dHintFade {
+    0%   { opacity: 0; transform: translate(-50%, 4px); }
+    10%  { opacity: 0.7; transform: translate(-50%, 0); }
+    85%  { opacity: 0.7; }
+    100% { opacity: 0; }
+  }
 
   /* First-use discovery hint on the inactive in-sheet tab. Runs once. */
   @keyframes tabHint {
@@ -3621,8 +4072,10 @@
 <body>
 <div id="root"></div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<!-- Production React builds: smaller payload, no "Download the React
+     DevTools" message in the console, faster runtime. -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <!-- Explicit UMD path — without /rive.js, unpkg may serve the ESM build
      which never registers `window.rive` and silently fails. -->
@@ -4210,6 +4663,587 @@ function Device({ platform, children }) {
   if (platform === "android") return <AndroidDevice>{inner}</AndroidDevice>;
   if (platform === "web")     return <WebFrame>{inner}</WebFrame>;
   return <IOSDevice>{inner}</IOSDevice>;
+}
+
+// ===========================================================
+// Phone3DHero — real glTF iPhone via Google's <model-viewer>
+// ===========================================================
+// Shown on the Job Ad screen (iOS only) as a spinnable hero. The user
+// drags to orbit and pinches/scrolls to zoom — all handled by
+// model-viewer. The CTA below dismisses the hero and reveals the
+// regular interactive prototype underneath.
+//
+// Requires a .glb iPhone model at `assets/iphone.glb`. If the file is
+// missing, a small inline placeholder explains where to put it so the
+// page doesn't break.
+function Phone3DHero({ onEnter }) {
+  const [modelMissing, setModelMissing] = useState(false);
+  const [rotating, setRotating] = useState(false);
+  const [textured, setTextured] = useState(false);
+  // Material picker: list of all material names on the model + which one
+  // is currently being treated as the screen. Persisted to localStorage
+  // so once the user picks the right material, it sticks across reloads.
+  const [materialNames, setMaterialNames] = useState([]);
+  const [pickedName, setPickedName] = useState(() => {
+    try { return localStorage.getItem("phone3d-screen-material") || ""; }
+    catch { return ""; }
+  });
+  const viewerRef = useRef(null);
+  const sourceRef = useRef(null);
+  const textureCacheRef = useRef(null);
+  const rotateTimerRef = useRef(null);
+
+  // Texture transform state — controls how the captured JobAd PNG sits
+  // on the model's screen face. Persisted to localStorage so once the
+  // user finds the right combo it sticks. Defaults assume the typical
+  // iPhone GLB orientation (most need a 90° rotation and clamping).
+  const [rotation, setRotation] = useState(() => {
+    try { return parseInt(localStorage.getItem("phone3d-tex-rot") || "270", 10); }
+    catch { return 270; }
+  });
+  const [flipX, setFlipX] = useState(() => {
+    try { return localStorage.getItem("phone3d-tex-flipx") === "1"; }
+    catch { return false; }
+  });
+  const [flipY, setFlipY] = useState(() => {
+    try { return localStorage.getItem("phone3d-tex-flipy") === "1"; }
+    catch { return false; }
+  });
+  // Pan offset (px) — how far to shift the Job Ad within the texture
+  // canvas. Used to compensate for off-centre UV mapping on the model.
+  const [offsetX, setOffsetX] = useState(() => {
+    try { return parseInt(localStorage.getItem("phone3d-tex-offx") || "0", 10); }
+    catch { return 0; }
+  });
+  const [offsetY, setOffsetY] = useState(() => {
+    try { return parseInt(localStorage.getItem("phone3d-tex-offy") || "0", 10); }
+    catch { return 0; }
+  });
+
+  const CLAMP_TO_EDGE = 33071;
+
+  // Take a source canvas, return a new canvas with rotation/flip/pan
+  // applied to the actual pixels. We do this in 2D canvas rather than
+  // relying on texture-sampler tricks because not every glTF supports
+  // the KHR_texture_transform extension that model-viewer's
+  // setRotation/setScale depend on — those silently no-op without it.
+  function transformCanvas(src, rotDeg, fx, fy, offX, offY) {
+    const swap = rotDeg === 90 || rotDeg === 270;
+    const w = swap ? src.height : src.width;
+    const h = swap ? src.width  : src.height;
+    const out = document.createElement("canvas");
+    out.width = w; out.height = h;
+    const ctx = out.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.save();
+    // Offset is applied to the *final image* — so panning the source
+    // texture (in screen-face space) feels natural regardless of the
+    // current rotation.
+    ctx.translate(w / 2 + (offX || 0), h / 2 + (offY || 0));
+    ctx.rotate((rotDeg * Math.PI) / 180);
+    ctx.scale(fx ? -1 : 1, fy ? -1 : 1);
+    ctx.drawImage(src, -src.width / 2, -src.height / 2);
+    ctx.restore();
+    return out;
+  }
+
+  async function applyToMaterial(materialName, opts = {}) {
+    const el = viewerRef.current;
+    if (!el || !el.model) return;
+    const material = el.model.materials.find(m => m.name === materialName);
+    if (!material) {
+      console.warn(`[Phone3DHero] No material named "${materialName}".`);
+      return;
+    }
+    const rot = opts.rotation ?? rotation;
+    const fx  = opts.flipX ?? flipX;
+    const fy  = opts.flipY ?? flipY;
+    const ox  = opts.offsetX ?? offsetX;
+    const oy  = opts.offsetY ?? offsetY;
+    try {
+      // Capture the source canvas once; reuse on every transform tweak.
+      if (!textureCacheRef.current) {
+        if (!window.html2canvas) {
+          console.warn("[Phone3DHero] html2canvas not loaded.");
+          return;
+        }
+        await new Promise(r => setTimeout(r, 200));
+        textureCacheRef.current = await window.html2canvas(sourceRef.current, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+          useCORS: true,
+          logging: false,
+        });
+      }
+      // Rotate / flip / pan the pixels in a fresh canvas so the texture
+      // is already oriented correctly when we hand it to model-viewer.
+      const oriented = transformCanvas(textureCacheRef.current, rot, fx, fy, ox, oy);
+      const dataUrl = oriented.toDataURL("image/png");
+      const tex = await el.createTexture(dataUrl);
+      // Still try the sampler clamp — kills tiling when KHR_texture_transform
+      // *is* supported. Harmless if it no-ops.
+      try { tex.sampler.setWrapS(CLAMP_TO_EDGE); } catch (_) {}
+      try { tex.sampler.setWrapT(CLAMP_TO_EDGE); } catch (_) {}
+      material.pbrMetallicRoughness.baseColorTexture.setTexture(tex);
+      material.pbrMetallicRoughness.setMetallicFactor(0);
+      material.pbrMetallicRoughness.setRoughnessFactor(0.4);
+      setTextured(true);
+      try { localStorage.setItem("phone3d-screen-material", materialName); } catch {}
+      console.log(`[Phone3DHero] Applied to "${materialName}" — rot=${rot}° flipX=${fx} flipY=${fy} (pixel-rotated)`);
+    } catch (err) {
+      console.warn("[Phone3DHero] Texture apply failed:", err);
+    }
+  }
+
+  // When the user changes rotation/flip/pan, re-apply with the new
+  // transform. State + localStorage updates so the next reload starts
+  // from the dialled-in position.
+  function adjustTransform(patch) {
+    if ("rotation" in patch) {
+      setRotation(patch.rotation);
+      try { localStorage.setItem("phone3d-tex-rot", String(patch.rotation)); } catch {}
+    }
+    if ("flipX" in patch) {
+      setFlipX(patch.flipX);
+      try { localStorage.setItem("phone3d-tex-flipx", patch.flipX ? "1" : "0"); } catch {}
+    }
+    if ("flipY" in patch) {
+      setFlipY(patch.flipY);
+      try { localStorage.setItem("phone3d-tex-flipy", patch.flipY ? "1" : "0"); } catch {}
+    }
+    if ("offsetX" in patch) {
+      setOffsetX(patch.offsetX);
+      try { localStorage.setItem("phone3d-tex-offx", String(patch.offsetX)); } catch {}
+    }
+    if ("offsetY" in patch) {
+      setOffsetY(patch.offsetY);
+      try { localStorage.setItem("phone3d-tex-offy", String(patch.offsetY)); } catch {}
+    }
+    if (pickedName) applyToMaterial(pickedName, patch);
+  }
+
+  useEffect(() => {
+    const el = viewerRef.current;
+    if (!el) return;
+
+    const onError = () => setModelMissing(true);
+
+    const onCameraChange = (e) => {
+      if (e.detail && e.detail.source === "user-interaction") {
+        setRotating(true);
+        if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current);
+        rotateTimerRef.current = setTimeout(() => setRotating(false), 800);
+      }
+    };
+
+    const onLoad = async () => {
+      try {
+        const materials = el.model && el.model.materials;
+        if (!materials || materials.length === 0) return;
+        const names = materials.map(m => m.name || "(unnamed)");
+        setMaterialNames(names);
+        console.log("[Phone3DHero] Materials:", names);
+        // Pick: previously-saved choice → heuristic → first material.
+        const initial =
+          (pickedName && names.includes(pickedName) && pickedName)
+          || names.find(n => /screen|display|panel|lcd|oled/i.test(n))
+          || names.find(n => /gray|grey|black/i.test(n))
+          || names.find(n => /glass|front/i.test(n))
+          || names[0];
+        if (initial) {
+          setPickedName(initial);
+          await applyToMaterial(initial);
+        }
+      } catch (err) {
+        console.warn("[Phone3DHero] Load handler failed:", err);
+      }
+    };
+
+    el.addEventListener("error", onError);
+    el.addEventListener("load", onLoad);
+    el.addEventListener("camera-change", onCameraChange);
+    return () => {
+      el.removeEventListener("error", onError);
+      el.removeEventListener("load", onLoad);
+      el.removeEventListener("camera-change", onCameraChange);
+      if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className={"phone3d-hero" + (rotating ? " rotating" : "")}>
+      <span className="phone3d-hero-hint">Drag to spin</span>
+      {modelMissing ? (
+        <div className="phone3d-hero-missing">
+          <strong>3D model not loaded</strong>
+          <span>Save a free iPhone <code>.glb</code> file at:</span>
+          <code style={{ fontSize: 11 }}>share/assets/iphone.glb</code>
+          <span style={{ fontSize: 12, marginTop: 8 }}>
+            Try <a href="https://sketchfab.com/3d-models?features=downloadable&q=iphone+15&licenses=322a749bcfa841b29dff1e8a1bb74b0b" target="_blank" rel="noopener" style={{ color: "var(--finn-blue)" }}>Sketchfab</a> or <a href="https://poly.pizza/search/iphone" target="_blank" rel="noopener" style={{ color: "var(--finn-blue)" }}>poly.pizza</a>.
+          </span>
+        </div>
+      ) : (
+        <model-viewer
+          ref={viewerRef}
+          src="assets/iphone.glb"
+          alt="iPhone 3D model"
+          camera-controls
+          touch-action="pan-y"
+          /* Start facing the screen, not the back. If your model's
+             front is the opposite side, change theta to 180deg. */
+          camera-orbit="0deg 90deg auto"
+          min-camera-orbit="auto 0deg auto"
+          max-camera-orbit="auto 180deg auto"
+          shadow-intensity="0.9"
+          shadow-softness="1"
+          environment-image="neutral"
+          exposure="1.1"
+          interaction-prompt="none"
+        />
+      )}
+      {/* Hidden source — html2canvas captures THIS to a PNG and applies
+          it as the screen-material texture on the model. Positioned far
+          off-screen so it doesn't interfere with the visible layout, but
+          still rendered (visibility:hidden doesn't work — html2canvas
+          needs the node to be laid out).
+          The outer div is much larger than the inner JobAdContent so
+          there's white padding on every side. That way the UV mapping
+          can crop into a sub-region of the texture and still show the
+          whole Job Ad. */}
+      <div
+        ref={sourceRef}
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: -9999, top: 0,
+          width: 1170, height: 2532,
+          background: "#fff", color: "#1d1d1d",
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      >
+        <div style={{
+          /* JobAdContent sits centred in a much larger canvas. The
+             Job Ad itself occupies ~33% of each dimension; the rest is
+             white padding. That way even if the screen face's UV map
+             crops in (which it does on this .glb), the whole Job Ad
+             fits inside the visible region. */
+          position: "absolute",
+          top: 844, left: 390,
+          width: 390, height: 844,
+          background: "#fff",
+        }}>
+          <JobAdContent job={JOB} />
+        </div>
+      </div>
+      {/* 2D Job Ad overlay — fallback before the texture has been
+          applied to the model. Hidden once the texture swap succeeds. */}
+      {!modelMissing && !textured && (
+        <div className="phone3d-hero-screen">
+          <div style={{
+            width: "100%", height: "100%",
+            overflowY: "auto", overflowX: "hidden",
+            background: "#fff", color: "#1d1d1d",
+            transform: "scale(0.78)", transformOrigin: "top center",
+          }}>
+            <JobAdContent job={JOB} />
+          </div>
+        </div>
+      )}
+      <button className="phone3d-hero-cta press" onClick={onEnter}>
+        Open the application →
+      </button>
+      {/* Material picker + texture orientation controls. Once you've
+          dialled the right combo (material name + rotation + flip + pan),
+          it persists in localStorage so future visits use it automatically. */}
+      {materialNames.length > 0 && (() => {
+        const panBtnStyle = {
+          background: "transparent",
+          color: "#fff",
+          border: "1px solid rgba(255,255,255,0.25)",
+          borderRadius: 6,
+          padding: "3px 7px",
+          font: "600 12px/1 var(--sys-text)",
+          cursor: "pointer",
+          minWidth: 26,
+        };
+        return ((
+        <div style={{
+          position: "absolute",
+          top: 12, left: 12,
+          zIndex: 10,
+          background: "rgba(0,0,0,0.62)",
+          backdropFilter: "blur(8px)",
+          color: "#fff",
+          padding: "8px 10px",
+          borderRadius: 10,
+          font: "500 11px/1.2 var(--sys-text)",
+          display: "flex", flexDirection: "column", gap: 6,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ opacity: 0.65 }}>Screen:</span>
+            <select
+              value={pickedName}
+              onChange={(e) => {
+                setPickedName(e.target.value);
+                applyToMaterial(e.target.value);
+              }}
+              style={{
+                background: "transparent",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.25)",
+                borderRadius: 6,
+                padding: "3px 6px",
+                font: "600 11px/1.2 var(--sys-text)",
+                cursor: "pointer",
+              }}
+            >
+              {materialNames.map(n => (
+                <option key={n} value={n} style={{ color: "#1d1d1d" }}>{n}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ opacity: 0.65 }}>Rotate:</span>
+            {[0, 90, 180, 270].map(deg => (
+              <button
+                key={deg}
+                onClick={() => adjustTransform({ rotation: deg })}
+                style={{
+                  background: rotation === deg ? "#fff" : "transparent",
+                  color: rotation === deg ? "#1d1d1d" : "#fff",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  borderRadius: 6,
+                  padding: "3px 6px",
+                  font: "600 11px/1.2 var(--sys-text)",
+                  cursor: "pointer",
+                  minWidth: 32,
+                }}
+              >
+                {deg}°
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ opacity: 0.65 }}>Flip:</span>
+            <button
+              onClick={() => adjustTransform({ flipX: !flipX })}
+              style={{
+                background: flipX ? "#fff" : "transparent",
+                color: flipX ? "#1d1d1d" : "#fff",
+                border: "1px solid rgba(255,255,255,0.25)",
+                borderRadius: 6,
+                padding: "3px 8px",
+                font: "600 11px/1.2 var(--sys-text)",
+                cursor: "pointer",
+              }}
+            >
+              X
+            </button>
+            <button
+              onClick={() => adjustTransform({ flipY: !flipY })}
+              style={{
+                background: flipY ? "#fff" : "transparent",
+                color: flipY ? "#1d1d1d" : "#fff",
+                border: "1px solid rgba(255,255,255,0.25)",
+                borderRadius: 6,
+                padding: "3px 8px",
+                font: "600 11px/1.2 var(--sys-text)",
+                cursor: "pointer",
+              }}
+            >
+              Y
+            </button>
+          </div>
+          {/* Pan controls — shift the Job Ad within the texture canvas
+              to align it with the screen face's UV region. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ opacity: 0.65 }}>Pan:</span>
+            <button
+              onClick={() => adjustTransform({ offsetX: offsetX - 80 })}
+              style={panBtnStyle}
+              aria-label="Pan left"
+            >←</button>
+            <button
+              onClick={() => adjustTransform({ offsetY: offsetY - 80 })}
+              style={panBtnStyle}
+              aria-label="Pan up"
+            >↑</button>
+            <button
+              onClick={() => adjustTransform({ offsetY: offsetY + 80 })}
+              style={panBtnStyle}
+              aria-label="Pan down"
+            >↓</button>
+            <button
+              onClick={() => adjustTransform({ offsetX: offsetX + 80 })}
+              style={panBtnStyle}
+              aria-label="Pan right"
+            >→</button>
+            <button
+              onClick={() => adjustTransform({ offsetX: 0, offsetY: 0 })}
+              style={{ ...panBtnStyle, fontSize: 9, padding: "3px 5px" }}
+              aria-label="Reset pan"
+            >0</button>
+          </div>
+          <div style={{ opacity: 0.5, fontSize: 10 }}>
+            offset {offsetX},{offsetY}
+          </div>
+        </div>
+        ));
+      })()}
+    </div>
+  );
+}
+
+// ===========================================================
+// Phone3DStage — drag-to-spin 3D iPhone, iOS Job Ad screen only
+// ===========================================================
+// Plays only when `active` is true (set by App when platform === "ios" and
+// screen === "jobad"). Drag *outside* the device bezel to rotate; tap or
+// drag *on* the device passes through to the prototype normally. Release
+// eases back to flat. The back panel and four side strips are pure CSS,
+// so this has no extra dependencies and stays nimble.
+function Phone3DStage({ active, children }) {
+  const [rot, setRot] = useState({ x: 0, y: 0 });
+  const [grabbing, setGrabbing] = useState(false);
+  const [snap, setSnap] = useState(true);
+  const dragRef = useRef(null);
+  const snapTimerRef = useRef(null);
+
+  // When the stage deactivates (e.g. user navigates away from jobad),
+  // ease the phone back to flat so the next visit starts clean.
+  useEffect(() => {
+    if (active) return;
+    setSnap(true);
+    setRot({ x: 0, y: 0 });
+  }, [active]);
+
+  // Clamp helpers — we don't want the phone to flip completely round,
+  // which makes the back unreadable and the gesture feel uncontrolled.
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  function onPointerDown(e) {
+    if (!active) return;
+    // Only rotate when the pointer lands on the *stage padding* — not
+    // on the device itself. Tapping the screen content should always
+    // pass through to the prototype.
+    if (e.target.closest(".device-bezel")) return;
+    if (snapTimerRef.current) {
+      clearTimeout(snapTimerRef.current);
+      snapTimerRef.current = null;
+    }
+    dragRef.current = {
+      startX: e.clientX, startY: e.clientY,
+      rotX: rot.x, rotY: rot.y,
+    };
+    setGrabbing(true);
+    setSnap(false);
+    e.preventDefault();
+  }
+
+  // Global pointer listeners while dragging — keeps tracking even if the
+  // pointer leaves the stage rectangle.
+  useEffect(() => {
+    if (!grabbing) return;
+    const onMove = (e) => {
+      if (!dragRef.current) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setRot({
+        // Looser multipliers so a short drag covers more rotation.
+        // Y axis (left-right spin) is uncapped — you can roll it 360°.
+        // X axis (tilt forward/back) still clamps so the phone can't flip.
+        x: clamp(dragRef.current.rotX - dy * 0.75, -40, 40),
+        y: dragRef.current.rotY + dx * 0.95,
+      });
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      setGrabbing(false);
+      // No auto-snap — leave the phone where the user spun it so they can
+      // hold a pose. Switching screens or platforms still resets it to
+      // flat via the `active` effect above.
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [grabbing]);
+
+  useEffect(() => () => {
+    if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
+  }, []);
+
+  if (!active) return children;
+
+  return (
+    <div
+      className={"phone3d-stage" + (grabbing ? " grabbing" : "")}
+      onPointerDown={onPointerDown}
+    >
+      <div
+        className={
+          "phone3d-shell" +
+          (snap ? " snap" : "") +
+          /* Glare lights up as soon as the phone leaves flat. Threshold of
+             ~3° avoids flickering it on at sub-pixel rotations. */
+          (Math.abs(rot.x) > 3 || Math.abs(rot.y) > 3 ? " tilted" : "")
+        }
+        style={{ transform: `rotateX(${rot.x}deg) rotateY(${rot.y}deg)` }}
+      >
+        <div className="phone3d-face phone3d-front">
+          {children}
+          <div className="phone3d-glare" aria-hidden="true" />
+        </div>
+        <div className="phone3d-face phone3d-back">
+          <div className="phone3d-camera">
+            <div className="phone3d-lens" />
+            <div className="phone3d-lens" />
+            <div className="phone3d-lens" />
+            <div className="phone3d-flash" />
+          </div>
+          {/* MagSafe ring sits behind the logo */}
+          <div className="phone3d-back-magsafe" />
+          {/* Apple-style logo, centred and chrome-finished */}
+          <div className="phone3d-back-logo" aria-hidden="true">
+            <svg viewBox="0 0 170 200" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="phone3dLogoGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor="#fafafc" stopOpacity="0.95"/>
+                  <stop offset="55%" stopColor="#bcbcc1" stopOpacity="0.85"/>
+                  <stop offset="100%" stopColor="#6e6e74" stopOpacity="0.80"/>
+                </linearGradient>
+              </defs>
+              <path
+                fill="url(#phone3dLogoGrad)"
+                d="M150.37 150.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.197-2.12-9.973-3.17-14.34-3.17-4.58 0-9.492 1.05-14.746 3.17-5.262 2.13-9.501 3.24-12.742 3.35-4.929.21-9.842-1.96-14.746-6.52-3.13-2.73-7.045-7.41-11.735-14.04-5.032-7.08-9.169-15.29-12.41-24.65-3.471-10.11-5.211-19.9-5.211-29.378 0-10.857 2.346-20.221 7.045-28.068 3.693-6.303 8.606-11.275 14.755-14.925s12.793-5.51 19.948-5.629c3.915 0 9.049 1.211 15.429 3.591 6.362 2.388 10.447 3.599 12.235 3.599 1.337 0 5.877-1.415 13.57-4.237 7.275-2.618 13.415-3.702 18.445-3.275 13.63 1.1 23.87 6.473 30.68 16.153-12.19 7.386-18.22 17.731-18.1 31.002.11 10.337 3.86 18.939 11.23 25.769 3.34 3.17 7.07 5.62 11.22 7.36-.9 2.61-1.85 5.11-2.86 7.51zM119.11 27.24c0 8.102-2.96 15.667-8.86 22.669-7.12 8.324-15.732 13.134-25.071 12.375a25.222 25.222 0 0 1-.188-3.07c0-7.778 3.386-16.102 9.399-22.908 3.002-3.446 6.82-6.311 11.45-8.597 4.62-2.252 8.99-3.497 13.1-3.71.12 1.083.17 2.166.17 3.241z"
+              />
+            </svg>
+          </div>
+          <div className="phone3d-back-wordmark">iPhone</div>
+        </div>
+        {/* Right side: power / side button */}
+        <div className="phone3d-face phone3d-side phone3d-side-r">
+          <div className="phone3d-btn phone3d-btn-side" />
+        </div>
+        {/* Left side: action button + volume up + volume down */}
+        <div className="phone3d-face phone3d-side phone3d-side-l">
+          <div className="phone3d-btn phone3d-btn-action" />
+          <div className="phone3d-btn phone3d-btn-volup" />
+          <div className="phone3d-btn phone3d-btn-voldown" />
+        </div>
+        <div className="phone3d-face phone3d-side phone3d-side-t" />
+        <div className="phone3d-face phone3d-side phone3d-side-b" />
+      </div>
+      <div className="phone3d-hint">Drag around the phone to spin</div>
+    </div>
+  );
 }
 
 function MobileKeyboard({ platform, open }) {
@@ -13242,7 +14276,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   // on a "scan to test on phone" experience.
   const [view, setView] = useState(fullscreen ? "prototype" : "prototype");
   const [storyVersion, setStoryVersion] = useState("all"); // all | mvp | v1 | v2
-  const [version, setVersion] = useState("mvp"); // dev panel toggle: mvp | v1 | v2
+  const [version, setVersion] = useState("agentic"); // dev panel toggle: agentic | mvp | v1 | v2 — MVP (Agentic) is the default demo
   const [platform, setPlatform] = useState("ios"); // ios | android | web (toggle UI hidden for now)
   // Web sub-view: only relevant when platform === "web". "mobile" keeps the
   // phone-width responsive layout (FINN.no on a small viewport); "desktop"
@@ -13623,6 +14657,9 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   const [cvPickerActive, setCvPickerActive] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState("draft"); // draft | sent
   const [activityTab, setActivityTab] = useState("drafts");
+  // 3D iPhone hero was an experiment — removed for now because we
+  // couldn't get the texture aligned cleanly across different .glb
+  // models. Phone3DHero component is still defined; just not wired up.
 
   // v2.0 'Magic Apply' state — auto-ticks each row then sends automatically.
   const [magicMode, setMagicMode] = useState(false);
@@ -14119,7 +15156,22 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
             label="Version"
             value={version}
             lang={lang}
-            onChange={setVersion}
+            onChange={(id) => {
+              // Switching version is a big context shift — reset to the job
+              // ad as the canonical entry point so the demo starts cleanly
+              // every time. We keep `userState` so you can compare how the
+              // same scenario (e.g. missing-cv) renders across versions.
+              setVersion(id);
+              cancelMagic();
+              setMagicMode(false);
+              setMagicStep(0);
+              setMagicSent(false);
+              setOverlay(null);
+              setLoadingPhase("ready");
+              setCvPickerActive(false);
+              setApplicationStatus("draft");
+              setScreen("jobad");
+            }}
             options={[
               { id: "agentic", label: "MVP (Agentic)" },
               { id: "mvp",     label: "1.0 (Easy Apply)" },
