@@ -3358,10 +3358,40 @@
     .ac-sheet { width: 100%; max-width: 100%; }
   }
 
+  /* ─── Edge cases grid ─── */
+  .edges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .edge-card {
+    border: 1px solid;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  }
+  .edge-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .edge-card-add { min-height: 120px; }
+  @media (max-width: 640px) {
+    .edges-grid { grid-template-columns: 1fr; gap: 12px; }
+  }
+
   /* ─── View-level toolbar (CloudStatus + Activity) ─── */
+  /* Width-matched to the .surface card below (max-width 1080px, centered),
+     with left padding equal to .surface's 28px so the Activity button and
+     Synced pill align with the content under them. Children stay left-
+     aligned via flex-start. */
   .view-toolbar {
-    display: inline-flex; align-items: center; gap: 8px;
-    margin: 0 0 14px;
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 auto 14px;
+    max-width: 1080px;
+    padding-left: 28px;
+    padding-right: 28px;
+    box-sizing: border-box;
   }
   .view-toolbar .cloud-pill { margin: 0; }
   .view-toolbar .hdr-tool-wrap { display: inline-flex; }
@@ -10769,10 +10799,286 @@ const HANDOFF = {
   ],
 };
 
-function HandoffView() {
-  // Four tabs only — dropped What's new / A11y / Backend, and folded
-  // Platform into Components, Motion into Tokens, and Instrumentation
-  // into Metrics. Each tab now tells a complete story end-to-end.
+// ─── Edge cases ("Chaos cards") ─────────────────────────────────────────
+// Each card describes an edge case in the agentic apply flow + how we
+// expect the agent to handle it. Sourced from the Phase 2 chaos-card
+// workshop. Persisted to Supabase under the "edges" key so the team can
+// refine collaboratively. The five handles ladder roughly by
+// intervention level: auto-resolve → ask user → block → notify → punt.
+const HANDLE_TYPES = [
+  { id: "auto",   label: "Auto",        icon: "♻️", color: "#1f8a3b", bg: "#d6f0de", border: "#a8e0bd" },
+  { id: "ask",    label: "Ask",         icon: "🤨", color: "#c47a00", bg: "#fff2d4", border: "#ffd98a" },
+  { id: "block",  label: "Block",       icon: "✋", color: "#b8403a", bg: "#fadddd", border: "#f5b8b3" },
+  { id: "notify", label: "Notify",      icon: "🔔", color: "#7a5b00", bg: "#fff6c2", border: "#ffe88c" },
+  { id: "scope",  label: "Out of scope",icon: "❌", color: "#6b6b6b", bg: "#ededed", border: "#cccccf" },
+];
+
+function handleType(id) {
+  return HANDLE_TYPES.find(h => h.id === id) || HANDLE_TYPES[0];
+}
+
+const INITIAL_EDGES = [
+  { id: "e1",  title: "Missing critical info", example: "Candidate has no phone number. Right to residency.", handle: "ask" },
+  { id: "e2",  title: "Legal dilemma",         example: "Candidate doesn't approve.", handle: "block" },
+  { id: "e3",  title: "ATS block",             example: "ATS rejects application.", handle: "notify" },
+  { id: "e4",  title: "Ethics",                example: "Candidate doesn't want to share age, gender.", handle: "ask" },
+  { id: "e5",  title: "Lacking input data",    example: "Agent lacks input to answer some questions in the form.", handle: "ask" },
+  { id: "e6",  title: "Loading time",          example: "Form length is unpredictable / too long / creates uncertainty for the candidate.", handle: "notify" },
+  { id: "e7",  title: "Downtime",              example: "ATS API is unavailable.", handle: "block" },
+  { id: "e8",  title: "Duplicate profile",     example: "Profile already exists in ATS.", handle: "auto" },
+  { id: "e9",  title: "Duplicate applications",example: "Candidate has already applied before, or our agent starts apply to the same ad (e.g. a renewed ad).", handle: "notify" },
+  { id: "e10", title: "Incomplete application",example: "Candidate doesn't finish the application.", handle: "notify" },
+  { id: "e11", title: "Question type",         example: "The ATS form has a video question.", handle: "scope" },
+];
+
+function edgesAreCurrentShape(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return false;
+  return arr.every(e =>
+    e && typeof e === "object" &&
+    typeof e.id === "string" &&
+    typeof e.title === "string" &&
+    typeof e.example === "string" &&
+    typeof e.handle === "string"
+  );
+}
+
+function EdgeCasesView({ edges, onEditEdges, onResetEdges, actorName }) {
+  const [filter, setFilter] = useState("all");
+  const [editing, setEditing] = useState(false);
+  const visible = filter === "all" ? edges : edges.filter(e => e.handle === filter);
+  const counts = HANDLE_TYPES.reduce((acc, h) => {
+    acc[h.id] = edges.filter(e => e.handle === h.id).length;
+    return acc;
+  }, {});
+
+  function patchEdge(id, patch) {
+    onEditEdges(prev => prev.map(e => e.id === id ? { ...e, ...patch } : e));
+  }
+  function addEdge() {
+    const id = "e" + Date.now().toString(36);
+    onEditEdges(prev => [...prev, { id, title: "New edge case", example: "Describe the example…", handle: "ask" }]);
+  }
+  function removeEdge(id) {
+    onEditEdges(prev => prev.filter(e => e.id !== id));
+  }
+  function cycleHandle(id) {
+    const order = HANDLE_TYPES.map(h => h.id);
+    onEditEdges(prev => prev.map(e => {
+      if (e.id !== id) return e;
+      const i = order.indexOf(e.handle);
+      return { ...e, handle: order[(i + 1) % order.length] };
+    }));
+  }
+
+  // Renders bare — the parent Handoff `<section className="surface">` is
+  // already the white card surrounding this view, so we don't wrap again.
+  return (
+    <div aria-label="Edge cases" style={{ paddingTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.3 }}>Edge cases</h2>
+          <p style={{ margin: "6px 0 0", color: "#6b6b6b", fontSize: 13, lineHeight: 1.55 }}>
+            Where the agentic apply flow meets the messy real world. Each card
+            names an edge case, an example, and how the agent should handle it.
+            Click a card to edit; click the handle chip to cycle the decision.
+          </p>
+        </div>
+        <button
+          onClick={() => setEditing(v => !v)}
+          className="press"
+          style={{
+            background: editing ? "#0063fb" : "#fff",
+            color: editing ? "#fff" : "#0063fb",
+            border: "1px solid " + (editing ? "#0063fb" : "rgba(0,99,251,0.45)"),
+            borderRadius: 9999, padding: "8px 16px",
+            font: "600 13px/1 var(--sys-text)",
+            cursor: "pointer", flexShrink: 0,
+          }}
+        >
+          {editing ? "Done editing" : "Edit"}
+        </button>
+      </div>
+
+      {/* Filter pills */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "0 0 24px" }}>
+        <button
+          onClick={() => setFilter("all")}
+          className="press"
+          style={filterChipStyle(filter === "all", "#1d1d1d", "#ededed", "#cccccf")}
+        >
+          All <span style={{ opacity: 0.6, marginLeft: 4 }}>{edges.length}</span>
+        </button>
+        {HANDLE_TYPES.map(h => (
+          <button
+            key={h.id}
+            onClick={() => setFilter(h.id)}
+            className="press"
+            style={filterChipStyle(filter === h.id, h.color, h.bg, h.border)}
+          >
+            <span style={{ marginRight: 6 }}>{h.icon}</span>
+            {h.label}
+            <span style={{ opacity: 0.6, marginLeft: 4 }}>{counts[h.id] || 0}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Card grid */}
+      <div className="edges-grid">
+        {visible.map(edge => {
+          const h = handleType(edge.handle);
+          return (
+            <div
+              key={edge.id}
+              className="edge-card"
+              style={{
+                background: h.bg,
+                borderColor: h.border,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+                <button
+                  onClick={() => cycleHandle(edge.id)}
+                  className="press"
+                  title="Click to cycle handle"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "4px 10px",
+                    background: "rgba(255,255,255,0.7)",
+                    color: h.color,
+                    border: "1px solid " + h.border,
+                    borderRadius: 9999,
+                    font: "600 11px/1 var(--sys-text)", letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span>{h.icon}</span>{h.label}
+                </button>
+                {editing && (
+                  <button
+                    onClick={() => removeEdge(edge.id)}
+                    aria-label="Remove edge case"
+                    style={{
+                      background: "transparent", border: 0, cursor: "pointer",
+                      color: "#6b6b6b", padding: 0, fontSize: 16, lineHeight: 1,
+                    }}
+                  >✕</button>
+                )}
+              </div>
+              <EdgeText
+                value={edge.title}
+                onChange={(v) => patchEdge(edge.id, { title: v })}
+                tag="h3"
+                editable={editing}
+                placeholder="Title"
+                style={{
+                  margin: "0 0 8px",
+                  font: "700 16px/1.3 var(--sys-text)",
+                  color: "#1d1d1d",
+                  letterSpacing: "-0.15px",
+                }}
+              />
+              <EdgeText
+                value={edge.example}
+                onChange={(v) => patchEdge(edge.id, { example: v })}
+                tag="p"
+                editable={editing}
+                placeholder="Example…"
+                style={{
+                  margin: 0,
+                  font: "500 13px/1.5 var(--sys-text)",
+                  color: "#404040",
+                }}
+              />
+            </div>
+          );
+        })}
+        {editing && (
+          <button
+            onClick={addEdge}
+            className="press edge-card edge-card-add"
+            style={{
+              cursor: "pointer", textAlign: "left", color: "#0063fb",
+              background: "rgba(0,99,251,0.04)",
+              borderColor: "rgba(0,99,251,0.35)",
+              borderStyle: "dashed",
+              font: "600 14px/1.5 var(--sys-text)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Add edge case
+          </button>
+        )}
+      </div>
+
+      {visible.length === 0 && (
+        <p style={{ color: "#6b6b6b", textAlign: "center", padding: "32px 0", margin: 0 }}>
+          No cards in this filter yet.
+        </p>
+      )}
+
+      {editing && onResetEdges && (
+        <div style={{ marginTop: 24, textAlign: "right" }}>
+          <button
+            onClick={onResetEdges}
+            style={{
+              background: "transparent", border: "1px solid #cccccf",
+              color: "#6b6b6b", borderRadius: 9999,
+              padding: "6px 14px", font: "500 12px/1 var(--sys-text)",
+              cursor: "pointer",
+            }}
+          >
+            Reset to defaults
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function filterChipStyle(active, color, bg, border) {
+  return {
+    appearance: "none", cursor: "pointer",
+    display: "inline-flex", alignItems: "center",
+    padding: "6px 12px",
+    borderRadius: 9999,
+    background: active ? bg : "#fff",
+    color: active ? color : "#6b6b6b",
+    border: "1px solid " + (active ? border : "#ededed"),
+    font: "600 12px/1 var(--sys-text)",
+    letterSpacing: "-0.05px",
+    transition: "background 140ms var(--ease-out), border-color 140ms var(--ease-out)",
+  };
+}
+
+function EdgeText({ value, onChange, tag = "p", editable, placeholder, style }) {
+  if (!editable) {
+    return React.createElement(tag, { style }, value);
+  }
+  return (
+    <textarea
+      defaultValue={value}
+      onBlur={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={tag === "h3" ? 1 : 3}
+      style={{
+        width: "100%", border: "1px dashed rgba(0,0,0,0.18)", borderRadius: 8,
+        outline: "0", resize: "vertical", padding: "6px 8px",
+        background: "rgba(255,255,255,0.65)",
+        fontFamily: "inherit",
+        boxSizing: "border-box",
+        ...style,
+        margin: tag === "h3" ? "0 0 8px" : 0,
+      }}
+    />
+  );
+}
+
+function HandoffView({ edges, onEditEdges, onResetEdges }) {
+  // Five tabs — Site map / Tokens / Components / Edge cases / Metrics.
+  // Edge cases moved in here (was a top-level tab) because it's part of
+  // the handoff package: "how the agent should behave under stress".
   const [section, setSection] = useState("sitemap");
 
   // Small dividing rule between sections that are now stacked on a
@@ -10802,6 +11108,7 @@ function HandoffView() {
           { id: "sitemap",    label: "Site map" },
           { id: "tokens",     label: "Tokens" },
           { id: "components", label: "Components" },
+          { id: "edges",      label: "Edge cases" },
           { id: "metrics",    label: "Metrics" },
         ].map(t => (
           <button key={t.id} role="tab" aria-selected={section === t.id}
@@ -10811,6 +11118,14 @@ function HandoffView() {
       </div>
 
       {section === "sitemap" && <HandoffSitemap />}
+
+      {section === "edges" && (
+        <EdgeCasesView
+          edges={edges || []}
+          onEditEdges={onEditEdges}
+          onResetEdges={onResetEdges}
+        />
+      )}
 
       {section === "tokens" && (
         <>
@@ -14699,6 +15014,18 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     } catch (_) {}
     return deepCloneJSON(TREE_DATA);
   });
+  // Edge cases ("Chaos cards") — same persistence pattern as tree.
+  const [edges, setEdges] = useState(() => {
+    try {
+      const v = parseInt(localStorage.getItem("vend-edges-v") || "0", 10);
+      const saved = localStorage.getItem("vend-edges");
+      if (saved && v === SCHEMA) {
+        const parsed = JSON.parse(saved);
+        if (edgesAreCurrentShape(parsed)) return parsed;
+      }
+    } catch (_) {}
+    return deepCloneJSON(INITIAL_EDGES);
+  });
 
   // Cloud sync status — shown in the dev panel + on the matrix/storymap.
   // 'off'      → no Supabase keys configured, local-only
@@ -14756,10 +15083,19 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
       } else if (cloudTree && cloudTree.data) {
         await cloudStore.set("tree", deepCloneJSON(TREE_DATA));
       }
+      // Edge cases — same legacy-shape guard.
+      const cloudEdges = await cloudStore.get("edges");
+      if (cancelled) return;
+      if (cloudEdges && cloudEdges.data && edgesAreCurrentShape(cloudEdges.data)) {
+        setEdges(cloudEdges.data);
+      } else if (cloudEdges && cloudEdges.data) {
+        await cloudStore.set("edges", deepCloneJSON(INITIAL_EDGES));
+      }
       // If cloud was completely empty, seed it from whatever we have locally.
       if (!cloudStories) await cloudStore.set("storymap", stories);
       if (!cloudSolutions) await cloudStore.set("matrix", solutions);
       if (!cloudTree) await cloudStore.set("tree", tree);
+      if (!cloudEdges) await cloudStore.set("edges", edges);
       cloudReadyRef.current = true;
       setCloudStatus("synced");
       setCloudLastSyncedAt(new Date());
@@ -14800,6 +15136,16 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
       if (ok) setCloudLastSyncedAt(new Date());
     }, 400)
   ).current;
+  // Edge cases — debounced cloud writes, same 400ms as the tree.
+  const saveEdgesToCloud = useRef(
+    debounce(async (next) => {
+      if (!cloudStore.enabled || !cloudReadyRef.current) return;
+      setCloudStatus("saving");
+      const ok = await cloudStore.set("edges", next);
+      setCloudStatus(ok ? "synced" : "error");
+      if (ok) setCloudLastSyncedAt(new Date());
+    }, 400)
+  ).current;
 
   // Persist storymap on change — local immediate, cloud debounced.
   useEffect(() => {
@@ -14818,6 +15164,15 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     } catch (_) {}
     saveTreeToCloud(tree);
   }, [tree, saveTreeToCloud]);
+
+  // Persist edges on change — local immediate, cloud debounced.
+  useEffect(() => {
+    try {
+      localStorage.setItem("vend-edges", JSON.stringify(edges));
+      localStorage.setItem("vend-edges-v", String(SCHEMA));
+    } catch (_) {}
+    saveEdgesToCloud(edges);
+  }, [edges, saveEdgesToCloud]);
 
   // Persist matrix on change — local immediate, cloud debounced.
   useEffect(() => {
@@ -14977,6 +15332,31 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
       if (cloudStore.enabled) {
         cloudStore.set("tree", fresh);
         cloudStore.logEvent({ action: "reset-tree", actor: who });
+      }
+    });
+  }
+
+  // Edit + reset helpers for edge cases. Same actor + cloud-event pattern
+  // as tree so the activity feed shows "X edited an edge case".
+  function editEdges(mutator) {
+    ensureActor((who) => {
+      setEdges(prev => {
+        const next = typeof mutator === "function" ? mutator(prev) : mutator;
+        if (cloudStore.enabled) {
+          cloudStore.logEvent({ action: "edit-edges", actor: who });
+        }
+        return next;
+      });
+    });
+  }
+  function resetEdges() {
+    ensureActor((who) => {
+      const fresh = deepCloneJSON(INITIAL_EDGES);
+      setEdges(fresh);
+      try { localStorage.removeItem("vend-edges"); } catch (_) {}
+      if (cloudStore.enabled) {
+        cloudStore.set("edges", fresh);
+        cloudStore.logEvent({ action: "reset-edges", actor: who });
       }
     });
   }
@@ -15255,7 +15635,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
       )}
       {view === "handoff" && (
         <div key="handoff-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
-          <HandoffView />
+          <HandoffView edges={edges} onEditEdges={editEdges} onResetEdges={resetEdges} />
         </div>
       )}
       {inspect && inspectInfo && (
