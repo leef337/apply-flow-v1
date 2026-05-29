@@ -15924,9 +15924,33 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
             value={userState}
             lang={lang}
             onChange={(id) => {
+              // Pick a state → jump straight to the screen that demonstrates it.
               setUserState(id);
-              setOverlay(null);
-              if (id === "already-applied") setScreen("jobad");
+              cancelMagic();
+              setMagicMode(false);
+              setMagicStep(0);
+              setMagicSent(false);
+              setApplicationStatus("draft");
+
+              if (id === "not-logged-in") {
+                // Land on the job ad with the login sheet already open.
+                setScreen("jobad");
+                setLoadingPhase("ready");
+                setOverlay("login");
+              } else if (id === "already-applied") {
+                setScreen("jobad");
+                setLoadingPhase("ready");
+                setOverlay(null);
+              } else if (id === "ready") {
+                setScreen("jobad");
+                setLoadingPhase("ready");
+                setOverlay(null);
+              } else {
+                // missing-personalia / missing-cv / missing-questions live on the preview screen.
+                setScreen("preview");
+                setLoadingPhase("ready");
+                setOverlay(null);
+              }
             }}
             options={USER_STATES}
           />
