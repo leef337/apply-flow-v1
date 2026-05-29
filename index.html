@@ -10803,13 +10803,14 @@ const HANDOFF = {
 // Each card describes an edge case in the agentic apply flow + how we
 // expect the agent to handle it. Sourced from the Phase 2 chaos-card
 // workshop. Persisted to Supabase under the "edges" key so the team can
-// refine collaboratively. The five handles ladder roughly by
-// intervention level: auto-resolve → ask user → block → notify → punt.
+// refine collaboratively. Handles ladder by intervention level — lightest
+// touch first: auto-resolve → notify (FYI) → ask (needs input) → block →
+// punt (out of scope).
 const HANDLE_TYPES = [
   { id: "auto",   label: "Auto",        icon: "♻️", color: "#1f8a3b", bg: "#d6f0de", border: "#a8e0bd" },
+  { id: "notify", label: "Notify",      icon: "🔔", color: "#7a5b00", bg: "#fff6c2", border: "#ffe88c" },
   { id: "ask",    label: "Ask",         icon: "🤨", color: "#c47a00", bg: "#fff2d4", border: "#ffd98a" },
   { id: "block",  label: "Block",       icon: "✋", color: "#b8403a", bg: "#fadddd", border: "#f5b8b3" },
-  { id: "notify", label: "Notify",      icon: "🔔", color: "#7a5b00", bg: "#fff6c2", border: "#ffe88c" },
   { id: "scope",  label: "Out of scope",icon: "❌", color: "#6b6b6b", bg: "#ededed", border: "#cccccf" },
 ];
 
@@ -10845,7 +10846,13 @@ function edgesAreCurrentShape(arr) {
 function EdgeCasesView({ edges, onEditEdges, onResetEdges, actorName }) {
   const [filter, setFilter] = useState("all");
   const [editing, setEditing] = useState(false);
-  const visible = filter === "all" ? edges : edges.filter(e => e.handle === filter);
+  // Group cards by handle order (Auto → Notify → Ask → Block → Out of scope)
+  // so the grid reads from lightest-touch to heaviest intervention.
+  const handleOrder = HANDLE_TYPES.reduce((acc, h, i) => { acc[h.id] = i; return acc; }, {});
+  const sorted = [...edges].sort((a, b) =>
+    (handleOrder[a.handle] ?? 99) - (handleOrder[b.handle] ?? 99)
+  );
+  const visible = filter === "all" ? sorted : sorted.filter(e => e.handle === filter);
   const counts = HANDLE_TYPES.reduce((acc, h) => {
     acc[h.id] = edges.filter(e => e.handle === h.id).length;
     return acc;
@@ -10856,7 +10863,7 @@ function EdgeCasesView({ edges, onEditEdges, onResetEdges, actorName }) {
   }
   function addEdge() {
     const id = "e" + Date.now().toString(36);
-    onEditEdges(prev => [...prev, { id, title: "New edge case", example: "Describe the example…", handle: "ask" }]);
+    onEditEdges(prev => [...prev, { id, title: "New principle", example: "Describe the example…", handle: "ask" }]);
   }
   function removeEdge(id) {
     onEditEdges(prev => prev.filter(e => e.id !== id));
@@ -10873,14 +10880,15 @@ function EdgeCasesView({ edges, onEditEdges, onResetEdges, actorName }) {
   // Renders bare — the parent Handoff `<section className="surface">` is
   // already the white card surrounding this view, so we don't wrap again.
   return (
-    <div aria-label="Edge cases" style={{ paddingTop: 8 }}>
+    <div aria-label="Operating principles" style={{ paddingTop: 8 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.3 }}>Edge cases</h2>
+          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.3 }}>Operating principles</h2>
           <p style={{ margin: "6px 0 0", color: "#6b6b6b", fontSize: 13, lineHeight: 1.55 }}>
-            Where the agentic apply flow meets the messy real world. Each card
-            names an edge case, an example, and how the agent should handle it.
-            Click a card to edit; click the handle chip to cycle the decision.
+            The team-aligned rules for how the agent behaves when the apply
+            flow meets the messy real world. Each card names a situation, an
+            example, and the agreed handle. Click a card to edit; click the
+            handle chip to cycle the decision.
           </p>
         </div>
         <button
@@ -10957,7 +10965,7 @@ function EdgeCasesView({ edges, onEditEdges, onResetEdges, actorName }) {
                 {editing && (
                   <button
                     onClick={() => removeEdge(edge.id)}
-                    aria-label="Remove edge case"
+                    aria-label="Remove principle"
                     style={{
                       background: "transparent", border: 0, cursor: "pointer",
                       color: "#6b6b6b", padding: 0, fontSize: 16, lineHeight: 1,
@@ -11007,7 +11015,7 @@ function EdgeCasesView({ edges, onEditEdges, onResetEdges, actorName }) {
               gap: 8,
             }}
           >
-            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Add edge case
+            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Add principle
           </button>
         )}
       </div>
@@ -11108,7 +11116,7 @@ function HandoffView({ edges, onEditEdges, onResetEdges }) {
           { id: "sitemap",    label: "Site map" },
           { id: "tokens",     label: "Tokens" },
           { id: "components", label: "Components" },
-          { id: "edges",      label: "Edge cases" },
+          { id: "edges",      label: "Operating principles" },
           { id: "metrics",    label: "Metrics" },
         ].map(t => (
           <button key={t.id} role="tab" aria-selected={section === t.id}
