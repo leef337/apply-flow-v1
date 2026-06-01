@@ -617,6 +617,34 @@
     width: 100%; height: 100%;
     overflow: auto;
     background: #fff;
+    box-sizing: border-box;
+    /* Reflow timing matches drawer slide-in (360ms cubic-bezier(0.32,0.72,0,1))
+       so the ad making room for the drawer feels like one motion, not two. */
+    transition: width 360ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  /* True split-view: physically narrow the scroll container so nothing
+     inside can render past the drawer's left edge. Drawer takes 480px on
+     the right; we cede an additional 64px as buffer so the ad never butts
+     up against the drawer. */
+  .desktop-scene[data-drawer-open="true"] .fn-scroll {
+    width: calc(100% - 544px);
+  }
+  /* Left-anchor the ad inside the remaining area instead of centring it,
+     so any spare width opens up as breathing room on the *right* (next to
+     the drawer) rather than splitting evenly on both sides. */
+  .desktop-scene[data-drawer-open="true"] .fn-jobad {
+    grid-template-columns: 1fr;
+    max-width: 760px;
+    margin-left: 0;
+    margin-right: auto;
+    gap: 28px;
+  }
+  /* Aside (CTAs, contact info, follow-firma, links) is suppressed while
+     the drawer is open. Those affordances are redundant mid-application,
+     and showing them next to the drawer just creates a cropped middle
+     column. They reappear the moment the user closes the drawer. */
+  .desktop-scene[data-drawer-open="true"] .fn-side {
+    display: none;
   }
   /* FINN top bar — logo on the left, icon cluster on the right */
   .fn-topbar {
@@ -733,6 +761,71 @@
     animation: fadein 240ms cubic-bezier(0.45, 0, 0.25, 1);
     cursor: pointer;
   }
+  /* In the desktop split-view the drawer is a peer column, not a modal, so
+     the dimming backdrop is intentionally suppressed. Close still happens
+     via the explicit "Tilbake til annonsen" button in the drawer head. */
+  .desktop-scene .apply-backdrop { display: none; }
+
+  /* ─── Drawer loading view ─────────────────────────────────────────── */
+  /* Desktop port of the mobile preview's row-ladder. Sits in the drawer
+     body slot until loadingPhase flips to "ready". */
+  .apply-drawer .drawer-loading {
+    flex: 1; overflow-y: auto;
+    padding: 4px 20px 24px;
+    display: flex; flex-direction: column;
+    background: #fff;
+    animation: drawerBodyEnter 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .apply-drawer .drawer-loading-row {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 18px 0;
+    border-top: 0.5px solid #ededed;
+  }
+  .apply-drawer .drawer-loading-row[data-last="true"] {
+    border-bottom: 0.5px solid #ededed;
+  }
+  .apply-drawer .drawer-loading-icon {
+    width: 32px; height: 32px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .apply-drawer .drawer-loading-text { flex: 1; min-width: 0; }
+  .apply-drawer .drawer-loading-title {
+    font: 600 16px/1.25 var(--sys-text); letter-spacing: -0.2px;
+    color: #1d1d1d; margin: 0 0 4px;
+    display: inline-flex; align-items: center;
+  }
+  .apply-drawer .drawer-loading-sub {
+    font: 400 13px/1.4 var(--sys-text); color: #6b6b6b; margin: 0;
+  }
+  /* Lightweight CSS spinner — visual cousin of the mobile RiveSpinner,
+     no asset dependency so it always renders. */
+  .drawer-spinner {
+    width: 24px; height: 24px;
+    border: 2px solid rgba(0, 99, 251, 0.18);
+    border-top-color: #0063fb;
+    border-radius: 50%;
+    animation: drawerSpin 820ms linear infinite;
+  }
+  @keyframes drawerSpin { to { transform: rotate(360deg); } }
+
+  /* Soft fade-in for the review form + footer when the drawer flips from
+     loading → ready, so the swap reads as a handover, not a hard cut. */
+  @keyframes drawerBodyEnter {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .apply-drawer .drawer-body-enter {
+    animation: drawerBodyEnter 380ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .apply-drawer .drawer-foot-enter {
+    animation: drawerBodyEnter 380ms cubic-bezier(0.32, 0.72, 0, 1) 80ms both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .drawer-spinner { animation: none; }
+    .apply-drawer .drawer-body-enter,
+    .apply-drawer .drawer-foot-enter,
+    .apply-drawer .drawer-loading { animation: none; }
+  }
   @keyframes drawerSlideIn {
     from { transform: translate3d(20px, 0, 0); opacity: 0; }
     to   { transform: translate3d(0,    0, 0); opacity: 1; }
@@ -778,28 +871,145 @@
   }
   .apply-drawer .drawer-body {
     flex: 1; overflow-y: auto;
-    padding: 4px 20px 20px;
+    padding: 8px 20px 28px;
     display: flex; flex-direction: column;
     background: #fff;
   }
-  /* Section grouping — clean section header + divider hairline.
-     Matches the mobile section-sheet visual once you'd opened a section. */
+  /* Section grouping — header row that echoes the loading-state rows
+     (green check + title + status sub), then a fields area below. The
+     visual rhythm reads as "this is what we loaded" rather than "now
+     here's a brand-new form". */
   .apply-drawer .drawer-section {
-    padding: 18px 0 8px;
+    padding: 32px 0 32px;
     border-top: 0.5px solid #ededed;
   }
-  .apply-drawer .drawer-section:first-child { border-top: 0; padding-top: 4px; }
-  .apply-drawer .drawer-section-title {
-    font: 700 13px/1 var(--sys-text);
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: #6b6b6b;
-    margin: 0 0 18px;
+  .apply-drawer .drawer-section:first-child { border-top: 0; padding-top: 18px; }
+  .apply-drawer .drawer-section:last-child  { padding-bottom: 12px; }
+  /* Title + status block, all left-aligned with the form fields below.
+     Check icon sits inline with the title text so it reads as a status
+     glyph on the title, not a separate column pushing content right. */
+  .apply-drawer .drawer-section-head {
+    margin-bottom: 22px;
   }
-  /* Reuse the mobile .ar-rv field pattern verbatim inside the drawer so
-     headings, inputs, source pills, missing chips, and radio pills all
-     look identical to the mobile section-sheet content. The drawer just
-     widens the column. */
-  .apply-drawer .ar-rv { margin-bottom: 22px; }
+  .apply-drawer .drawer-section-title {
+    font: 700 17px/1.25 var(--sys-text); letter-spacing: -0.3px;
+    color: #1d1d1d;
+    margin: 0;
+    display: inline-flex; align-items: center; gap: 8px;
+    text-transform: none;
+  }
+  .apply-drawer .drawer-section-title svg {
+    flex-shrink: 0;
+  }
+  .apply-drawer .drawer-section-title-suffix {
+    display: inline-flex; margin-left: 2px;
+  }
+  .apply-drawer .drawer-section-status {
+    font: 400 13px/1.4 var(--sys-text); color: #6b6b6b;
+    margin: 4px 0 0;
+  }
+  /* Fields sit flush with the section title — no indent. */
+  .apply-drawer .drawer-section-fields {
+    padding-left: 0;
+  }
+  /* Reuse the mobile .ar-rv field pattern but desktop-tune the spacing.
+     Generous vertical gap so questions feel distinct, not stacked. */
+  .apply-drawer .ar-rv { margin-bottom: 26px; }
+  .apply-drawer .ar-rv:last-child { margin-bottom: 0; }
+  .apply-drawer .ar-rv-heading {
+    font: 600 14px/1.3 var(--sys-text); letter-spacing: -0.1px;
+    color: #1d1d1d;
+    margin: 0 0 8px;
+  }
+  .apply-drawer .ar-rv-input {
+    padding: 12px 14px; border-radius: 10px;
+    font: 500 15px/1.35 var(--sys-text); letter-spacing: -0.15px;
+    background: #f7f7f9;
+    border: 1px solid transparent;
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out);
+  }
+  .apply-drawer .ar-rv-input:hover { background: #f0f0f3; }
+  .apply-drawer .ar-rv-input:focus,
+  .apply-drawer .ar-rv-input:focus-visible {
+    background: #fff;
+    border-color: #0063fb;
+    outline: 0;
+  }
+  /* LinkedIn opt-in checkbox row — tidier than ad-hoc inline styles. */
+  .apply-drawer .drawer-checkrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font: 400 13px/1.4 var(--sys-text); color: #1d1d1d;
+    margin-top: 12px; cursor: pointer;
+  }
+  .apply-drawer .drawer-checkrow input[type="checkbox"] {
+    width: 16px; height: 16px; margin: 0;
+    accent-color: #0063fb;
+  }
+  /* ─── WARP radio group (desktop drawer) ──────────────────────────────
+     Faithful to @warp-ds/css radio spec: 20px circular control with a
+     strong neutral border when unchecked, FINN-blue border + 10px solid
+     inner dot when checked. Label on the right. Vertically stacked,
+     44px min-height per row for the tap/click target. */
+  .warp-radio-group {
+    display: flex; flex-direction: column;
+    gap: 0;
+  }
+  .warp-radio {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 12px;
+    min-height: 32px;
+    padding: 0;
+    cursor: pointer;
+    font: 400 15px/1.4 var(--sys-text); color: #1d1d1d;
+    letter-spacing: -0.1px;
+    -webkit-user-select: none; user-select: none;
+  }
+  /* Native input visually hidden but kept for a11y/form semantics. */
+  .warp-radio input[type="radio"] {
+    position: absolute; opacity: 0;
+    width: 20px; height: 20px;
+    left: 0; top: 50%; transform: translateY(-50%);
+    margin: 0; cursor: pointer;
+  }
+  .warp-radio-control {
+    flex-shrink: 0;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5px solid #6b6b6b;
+    box-sizing: border-box;
+    position: relative;
+    transition: border-color 140ms cubic-bezier(0.45, 0, 0.25, 1),
+                box-shadow 140ms cubic-bezier(0.45, 0, 0.25, 1);
+  }
+  .warp-radio-control::after {
+    content: "";
+    position: absolute; inset: 50% auto auto 50%;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #0063fb;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 160ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .warp-radio:hover .warp-radio-control {
+    border-color: #1d1d1d;
+  }
+  .warp-radio.is-checked .warp-radio-control {
+    border-color: #0063fb;
+    border-width: 2px;
+  }
+  .warp-radio.is-checked .warp-radio-control::after {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  /* Focus ring on the visually-hidden input → drawn on the control via
+     focus-visible. Matches WARP's blue 2px outline + 1px offset. */
+  .warp-radio input[type="radio"]:focus-visible + .warp-radio-control {
+    outline: 2px solid #0063fb;
+    outline-offset: 2px;
+  }
+  .warp-radio-label {
+    flex: 1; min-width: 0;
+    font: inherit;
+  }
   .apply-drawer .drawer-foot {
     padding: 16px 20px 22px;
     border-top: 0.5px solid #ededed;
@@ -9159,9 +9369,33 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
 // is the first thing the user sees — matching the share's sketch.
 function DesktopApplyScene({ onSend }) {
   const t = useT();
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  // Drawer starts closed: the first paint is the full FINN ad in its native
+  // 1080px / 1fr + 320px layout. The drawer + loading sequence only kick in
+  // when the user actually triggers Fast Apply.
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  // Mirrors the mobile preview's loading ladder so desktop and mobile feel
+  // like the same product. "ready" means the auto-filled review is in.
+  const [loadingPhase, setLoadingPhase] = useState("ready");
+  const loadingTimers = useRef([]);
   const sceneRef = useRef(null);
+
+  function clearLoadingTimers() {
+    loadingTimers.current.forEach(clearTimeout);
+    loadingTimers.current = [];
+  }
+  // Søk nå → animate drawer in and step through the same cadence as mobile
+  // (loading-cv → loading-letter → ready). 950ms / 2400ms matches the
+  // mobile prototype exactly so the two flows feel cousined.
+  function openDrawerWithLoading() {
+    clearLoadingTimers();
+    setConfirmed(false);
+    setLoadingPhase("loading-cv");
+    setDrawerOpen(true);
+    loadingTimers.current.push(setTimeout(() => setLoadingPhase("loading-letter"), 950));
+    loadingTimers.current.push(setTimeout(() => setLoadingPhase("ready"), 2400));
+  }
+  useEffect(() => () => clearLoadingTimers(), []);
   // If the optional finn-jobad-desktop.png is present, set data-bg-image so
   // the CSS uses it as the background instead of the CSS recreation below.
   const [hasBgImage, setHasBgImage] = useState(false);
@@ -9173,7 +9407,7 @@ function DesktopApplyScene({ onSend }) {
   }, []);
 
   return (
-    <div ref={sceneRef} className="desktop-scene" data-bg-image={hasBgImage ? "true" : "false"}>
+    <div ref={sceneRef} className="desktop-scene" data-bg-image={hasBgImage ? "true" : "false"} data-drawer-open={drawerOpen ? "true" : "false"}>
       {/* CSS-recreated FINN.no shell — used when no .png is provided. */}
       {!hasBgImage && (
         <div className="fn-scroll">
@@ -9263,27 +9497,8 @@ function DesktopApplyScene({ onSend }) {
               </div>
 
               <div className="ctas">
-                <button className="cta-primary" onClick={() => setDrawerOpen(true)}>
-                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    {t({ en: "Fast Apply", no: "Søk nå" })}
-                    {/* Visible signal that THIS ad is wired up to FINN's
-                        agentic apply pipeline (vs sent to an external ATS).
-                        Quietly supports KR3 (paid-ad share, 19% → 30%) by
-                        making the FINN-apply differentiator legible at the
-                        CTA itself — recruiter conversations get easier when
-                        seekers visibly prefer pre-filled. */}
-                    <span style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      padding: "2px 8px", borderRadius: 9999,
-                      background: "rgba(255,255,255,0.18)",
-                      color: "#fff",
-                      font: "600 11px/1.2 var(--sys-text)", letterSpacing: -0.05,
-                      whiteSpace: "nowrap",
-                    }}>
-                      <AILogo size={12} radius={3} />
-                      {t({ en: "Pre-filled", no: "Forhåndsutfylt" })}
-                    </span>
-                  </span>
+                <button className="cta-primary" onClick={openDrawerWithLoading}>
+                  {t({ en: "Fast Apply", no: "Søk nå" })}
                 </button>
                 <button className="cta-secondary">{t({ en: "Apply directly", no: "Søk via arbeidsgiver" })}</button>
               </div>
@@ -9310,7 +9525,7 @@ function DesktopApplyScene({ onSend }) {
           the drawer can re-open from any of the screenshot's apply CTAs. */}
       {hasBgImage && !drawerOpen && (
         <button
-          onClick={() => setDrawerOpen(true)}
+          onClick={openDrawerWithLoading}
           aria-label="Open Fast Apply"
           style={{
             position: "absolute", inset: 0, background: "transparent",
@@ -9323,6 +9538,7 @@ function DesktopApplyScene({ onSend }) {
       {drawerOpen && (
         <ApplyDrawer
           onClose={() => setDrawerOpen(false)}
+          loadingPhase={loadingPhase}
           confirmed={confirmed}
           onConfirmedChange={setConfirmed}
           onSend={() => { if (confirmed) onSend?.(); }}
@@ -9337,9 +9553,12 @@ function DesktopApplyScene({ onSend }) {
 // values, and visuals (.ar-rv field pattern, radio pills, source pills,
 // edited chips) are identical to what the mobile section-sheets show —
 // just stacked inline since desktop has the vertical room.
-function ApplyDrawer({ onClose, confirmed, onConfirmedChange, onSend }) {
+function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedChange, onSend }) {
   const t = useT();
   const [exiting, close] = useDelayedClose(onClose, 280);
+  // Mirrors the mobile preview's loading ladder. Body crossfades from the
+  // loading rows to the review form when phase flips to "ready".
+  const isLoading = loadingPhase !== "ready";
   // Same auto-filled initial state as AgenticReviewScreen so the demo
   // lands on the exact mobile values.
   const [fields, setFields] = useState({
@@ -9393,78 +9612,122 @@ function ApplyDrawer({ onClose, confirmed, onConfirmedChange, onSend }) {
           <Icon name="chevron-left" size={16} stroke={2.4} />
           {t({ en: "Back to job page", no: "Tilbake til annonsen" })}
         </button>
-        <h1>{t({ en: "Review your application", no: "Se gjennom søknaden din" })}</h1>
+        <h1>
+          {isLoading
+            ? t({ en: "Preparing your application…", no: "Forbereder søknaden din …" })
+            : t({ en: "Review your application",      no: "Se gjennom søknaden din" })}
+        </h1>
         <p className="drawer-sub">Fag- og personalleder — Politiets IT-enhet</p>
-        <p className="drawer-lede">{t({
-          en: "We've auto-filled your application based on your Job profile. Review and confirm, and we'll send it for you.",
-          no: "Vi har automatisk fylt ut søknaden din basert på Jobbprofilen din. Se gjennom og bekreft, så sender vi for deg.",
-        })}</p>
+        <p className="drawer-lede">
+          {isLoading
+            ? t({
+                en: "We're pulling everything together from your Job profile. Just a moment.",
+                no: "Vi henter alt vi trenger fra Jobbprofilen din. Tar bare et øyeblikk.",
+              })
+            : t({
+                en: "We've auto-filled your application based on your Job profile. Review and confirm, and we'll send it for you.",
+                no: "Vi har automatisk fylt ut søknaden din basert på Jobbprofilen din. Se gjennom og bekreft, så sender vi for deg.",
+              })}
+        </p>
       </header>
 
-      <div className="drawer-body">
-        {/* Personal details — same field set as the mobile Personalia sheet. */}
+      {isLoading ? (
+        <DrawerLoadingView phase={loadingPhase} />
+      ) : (
+      <div className="drawer-body drawer-body-enter">
+        {/* Personal details — same field set as the mobile Personalia sheet.
+            Section heads echo the loading rows: green check + title + status
+            sub, so the eye registers each section as "the loaded version of
+            that row" rather than a brand-new affordance. */}
         <section className="drawer-section">
-          <p className="drawer-section-title">
-            {t({ en: "Personal details", no: "Personopplysninger" })}
-          </p>
-          <DrawerField label={LABELS.firstName} field={fields.firstName} onChange={(v) => update("firstName", v)} autoComplete="given-name" />
-          <DrawerField label={LABELS.lastName}  field={fields.lastName}  onChange={(v) => update("lastName",  v)} autoComplete="family-name" />
-          <DrawerField label={LABELS.email}     field={fields.email}     onChange={(v) => update("email",     v)} type="email" autoComplete="email" />
-          <DrawerField label={LABELS.phone}     field={fields.phone}     onChange={(v) => update("phone",     v)} type="tel"   autoComplete="tel" />
-          <DrawerRadio label={LABELS.gender}    field={fields.gender}    onChange={(v) => update("gender",    v)}
-            options={[
-              { id: "Male",   label: t({ en: "Male",   no: "Mann"   }) },
-              { id: "Female", label: t({ en: "Female", no: "Kvinne" }) },
-              { id: "Other",  label: t({ en: "Other",  no: "Annet"  }) },
-            ]} />
-          <div className="ar-rv">
-            <p className="ar-rv-heading">
-              <span className="ar-rv-heading-label">{LABELS.linkedin}</span>
-              <span className="ar-rv-source" style={{ background: "#f0f0f3", color: "#6b6b6b" }}>
-                {t({ en: "Not required", no: "Valgfritt" })}
-              </span>
+          <header className="drawer-section-head">
+            <h2 className="drawer-section-title">
+              <Icon name="check-circle" size={20} color="#1f8a3b" stroke={2} />
+              <span>{t({ en: "Personal details", no: "Personalia" })}</span>
+            </h2>
+            <p className="drawer-section-status">
+              {t({ en: "Synced from your profile", no: "Hentet fra profilen din" })}
             </p>
-            <DrawerInput value={fields.linkedin.v} onChange={(v) => update("linkedin", v)} />
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, color: "#1d1d1d", marginTop: 10, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={includeLinkedin}
-                onChange={(e) => setIncludeLinkedin(e.target.checked)}
-                style={{ width: 16, height: 16 }}
-              />
-              {t({ en: "Add this optional information to my application",
-                   no: "Inkluder denne valgfrie informasjonen i søknaden min" })}
-            </label>
+          </header>
+          <div className="drawer-section-fields">
+            <DrawerField label={LABELS.firstName} field={fields.firstName} onChange={(v) => update("firstName", v)} autoComplete="given-name" />
+            <DrawerField label={LABELS.lastName}  field={fields.lastName}  onChange={(v) => update("lastName",  v)} autoComplete="family-name" />
+            <DrawerField label={LABELS.email}     field={fields.email}     onChange={(v) => update("email",     v)} type="email" autoComplete="email" />
+            <DrawerField label={LABELS.phone}     field={fields.phone}     onChange={(v) => update("phone",     v)} type="tel"   autoComplete="tel" />
+            <DrawerRadio label={LABELS.gender}    field={fields.gender}    onChange={(v) => update("gender",    v)}
+              options={[
+                { id: "Male",   label: t({ en: "Male",   no: "Mann"   }) },
+                { id: "Female", label: t({ en: "Female", no: "Kvinne" }) },
+                { id: "Other",  label: t({ en: "Other",  no: "Annet"  }) },
+              ]} />
+            <div className="ar-rv">
+              <p className="ar-rv-heading">
+                <span className="ar-rv-heading-label">{LABELS.linkedin}</span>
+                <span className="ar-rv-source" style={{ background: "#f0f0f3", color: "#6b6b6b" }}>
+                  {t({ en: "Optional", no: "Valgfritt" })}
+                </span>
+              </p>
+              <DrawerInput value={fields.linkedin.v} onChange={(v) => update("linkedin", v)} />
+              <label className="drawer-checkrow">
+                <input
+                  type="checkbox"
+                  checked={includeLinkedin}
+                  onChange={(e) => setIncludeLinkedin(e.target.checked)}
+                />
+                <span>{t({ en: "Add this optional information to my application",
+                          no: "Inkluder denne valgfrie informasjonen i søknaden min" })}</span>
+              </label>
+            </div>
           </div>
         </section>
 
         {/* Vedlegg — CV + Cover letter, FileCard-style. */}
         <section className="drawer-section">
-          <p className="drawer-section-title">
-            {t({ en: "Attachments", no: "Vedlegg" })}
-          </p>
-          <DrawerFile label={LABELS.cv}     file={fields.cv}     icon="file"
-            onSwap={() => update("cv",     "CV_new.pdf")} />
-          <DrawerFile label={LABELS.letter} file={fields.letter} icon="sparkle"
-            onSwap={() => update("letter", "Cover_letter_new.doc")} />
+          <header className="drawer-section-head">
+            <h2 className="drawer-section-title">
+              <Icon name="check-circle" size={20} color="#1f8a3b" stroke={2} />
+              <span>{t({ en: "Attachments", no: "Vedlegg" })}</span>
+              <span className="drawer-section-title-suffix"><AILogo size={14} /></span>
+            </h2>
+            <p className="drawer-section-status">
+              {t({ en: "CV from your profile · AI-drafted cover letter",
+                   no: "CV fra profilen · AI-utkast for søknadsbrev" })}
+            </p>
+          </header>
+          <div className="drawer-section-fields">
+            <DrawerFile label={LABELS.cv}     file={fields.cv}     icon="file"
+              onSwap={() => update("cv",     "CV_new.pdf")} />
+            <DrawerFile label={LABELS.letter} file={fields.letter} icon="sparkle"
+              onSwap={() => update("letter", "Cover_letter_new.doc")} />
+          </div>
         </section>
 
         {/* Tilleggsspørsmål — qNorsk + qExp. */}
         <section className="drawer-section">
-          <p className="drawer-section-title">
-            {t({ en: "Additional questions", no: "Tilleggsspørsmål" })}
-          </p>
-          <DrawerRadio label={LABELS.qNorsk} field={fields.qNorsk}
-            onChange={(v) => update("qNorsk", v)}
-            options={[
-              { id: "Yes", label: t({ en: "Yes", no: "Ja"  }) },
-              { id: "No",  label: t({ en: "No",  no: "Nei" }) },
-            ]} />
-          <DrawerField label={LABELS.qExp} field={fields.qExp} onChange={(v) => update("qExp", v)} />
+          <header className="drawer-section-head">
+            <h2 className="drawer-section-title">
+              <Icon name="check-circle" size={20} color="#1f8a3b" stroke={2} />
+              <span>{t({ en: "Employer questions", no: "Spørsmål fra arbeidsgiver" })}</span>
+            </h2>
+            <p className="drawer-section-status">
+              {t({ en: "2 answers filled in", no: "2 svar fylt ut" })}
+            </p>
+          </header>
+          <div className="drawer-section-fields">
+            <DrawerRadio label={LABELS.qNorsk} field={fields.qNorsk}
+              onChange={(v) => update("qNorsk", v)}
+              options={[
+                { id: "Yes", label: t({ en: "Yes", no: "Ja"  }) },
+                { id: "No",  label: t({ en: "No",  no: "Nei" }) },
+              ]} />
+            <DrawerField label={LABELS.qExp} field={fields.qExp} onChange={(v) => update("qExp", v)} />
+          </div>
         </section>
       </div>
+      )}
 
-      <footer className="drawer-foot">
+      {!isLoading && (
+      <footer className="drawer-foot drawer-foot-enter">
         <label style={{ display: "inline-flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#1d1d1d", cursor: "pointer" }}>
           <input
             type="checkbox"
@@ -9493,8 +9756,84 @@ function ApplyDrawer({ onClose, confirmed, onConfirmedChange, onSend }) {
           {t({ en: "Send application", no: "Send søknad" })}
         </button>
       </footer>
+      )}
     </aside>
     </>
+  );
+}
+
+// ─── DrawerLoadingView ─────────────────────────────────────────────────
+// Desktop port of the mobile preview's loading rows. Same 4-row ladder
+// (Personalia · CV · Cover letter · Spørsmål), same cadence, same shimmer.
+// Rows tick from spinner→check as loadingPhase advances. Kept inline in
+// the drawer body so the visual rhythm (header → rows → eventual footer)
+// reads as one panel.
+function DrawerLoadingView({ phase }) {
+  const t = useT();
+  const cvLoading     = phase === "loading-cv";
+  const letterLoading = phase === "loading-cv" || phase === "loading-letter";
+  const rows = [
+    {
+      id: "personalia",
+      title: t({ en: "Personal details", no: "Personalia" }),
+      sub:   t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
+      loading: false,
+    },
+    {
+      id: "cv",
+      title: "CV",
+      sub: cvLoading
+        ? t({ en: "Fetching your CV…", no: "Henter CV …" })
+        : t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
+      loading: cvLoading,
+    },
+    {
+      id: "letter",
+      title: t({ en: "Cover letter", no: "Søknadsbrev" }),
+      sub: letterLoading
+        ? t({ en: "Drafting for this role…", no: "Skriver utkast for denne jobben …" })
+        : t({ en: "AI draft · editable", no: "AI-utkast · kan endres" }),
+      loading: letterLoading,
+      ai: true,
+    },
+    {
+      id: "questions",
+      title: t({ en: "Employer questions", no: "Spørsmål fra arbeidsgiver" }),
+      sub:   t({ en: "You answered 2 questions", no: "Du svarte på 2 spørsmål" }),
+      loading: false,
+    },
+  ];
+  return (
+    <div className="drawer-loading">
+      {rows.map((r, i) => (
+        <DrawerLoadingRow key={r.id} row={r} isLast={i === rows.length - 1} />
+      ))}
+    </div>
+  );
+}
+
+function DrawerLoadingRow({ row, isLast }) {
+  return (
+    <div className="drawer-loading-row" data-last={isLast ? "true" : "false"}>
+      <div className="drawer-loading-icon">
+        {row.loading ? (
+          <span className="drawer-spinner" aria-hidden="true" />
+        ) : (
+          <Icon name="check-circle" size={26} color="#1f8a3b" stroke={2} />
+        )}
+      </div>
+      <div className="drawer-loading-text">
+        <p className="drawer-loading-title">
+          <span className={row.loading ? "ai-shimmer-text" : ""}>{row.title}</span>
+          {row.ai && !row.loading && (
+            <span style={{ display: "inline-flex", marginLeft: 6, verticalAlign: "middle" }}>
+              <AILogo size={14} />
+            </span>
+          )}
+        </p>
+        <p className="drawer-loading-sub">{row.sub}</p>
+      </div>
+    </div>
   );
 }
 
@@ -9528,23 +9867,29 @@ function DrawerInput({ value, onChange, type = "text", autoComplete }) {
 }
 
 // Radio pills — matches the mobile .ar-radio-pills look exactly.
+// WARP-spec radio group used inside the desktop drawer: vertically-stacked
+// rows with a true 20px radio control on the left + label on the right.
+// Mirrors WARP's @warp-ds/css radio styles (strong border unchecked,
+// FINN-blue border + 10px inner dot when checked, 44px tap target).
 function DrawerRadio({ label, options, field, onChange }) {
+  const groupName = (typeof label === "string" ? label : "radio").replace(/\s+/g, "-").toLowerCase();
   return (
     <div className="ar-rv">
       <p className="ar-rv-heading">
         <span className="ar-rv-heading-label">{label}</span>
         {field.e && <DrawerEditedChip />}
       </p>
-      <div className="ar-radio-pills" role="radiogroup" aria-label={typeof label === "string" ? label : undefined}>
+      <div className="warp-radio-group" role="radiogroup" aria-label={typeof label === "string" ? label : undefined}>
         {options.map(o => (
-          <label key={o.id} className={"ar-radio-pill" + (field.v === o.id ? " on" : "")}>
+          <label key={o.id} className={"warp-radio" + (field.v === o.id ? " is-checked" : "")}>
             <input
               type="radio"
-              name={typeof label === "string" ? label : "radio"}
+              name={groupName}
               checked={field.v === o.id}
               onChange={() => onChange?.(o.id)}
             />
-            {o.label}
+            <span className="warp-radio-control" aria-hidden="true" />
+            <span className="warp-radio-label">{o.label}</span>
           </label>
         ))}
       </div>
