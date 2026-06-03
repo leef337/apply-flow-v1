@@ -766,39 +766,67 @@
      via the explicit "Tilbake til annonsen" button in the drawer head. */
   .desktop-scene .apply-backdrop { display: none; }
 
-  /* ─── Drawer loading view ─────────────────────────────────────────── */
-  /* Desktop port of the mobile preview's row-ladder. Sits in the drawer
-     body slot until loadingPhase flips to "ready". */
-  .apply-drawer .drawer-loading {
-    flex: 1; overflow-y: auto;
-    padding: 4px 20px 24px;
-    display: flex; flex-direction: column;
+  /* ─── Drawer streaming-in-place states ─────────────────────────────── */
+  /* Header title row + "Drafting…" pill — shows while any field is still
+     streaming, disappears the moment everything's ready. */
+  .apply-drawer .drawer-title-row {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .apply-drawer .drawer-title-row h1 { margin: 0; }
+  .apply-drawer .drawer-drafting-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 9999px;
+    background: #eaf2ff;
+    font: 600 12px/1 var(--sys-text); letter-spacing: -0.05px;
+    color: #0063fb;
+  }
+  .apply-drawer .drawer-drafting-pill .ai-shimmer-text {
+    background: linear-gradient(
+      100deg,
+      #0063fb 0%, #0063fb 42%,
+      rgba(0, 99, 251, 0.45) 50%,
+      #0063fb 58%, #0063fb 100%
+    );
+    background-size: 240% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+  .apply-drawer .drawer-drafting-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #0063fb;
+    animation: aiBreath 1.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  }
+
+  /* Section status glyph — spinner while streaming, attention dot when
+     waiting on the user, check when fully complete (set in JSX). */
+  .section-glyph-spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(0, 99, 251, 0.22);
+    border-top-color: #0063fb;
+    border-radius: 50%;
+    animation: drawerSpin 820ms linear infinite;
+    flex-shrink: 0;
+  }
+  .section-glyph-attention {
+    position: relative;
+    width: 18px; height: 18px;
+    border: 2px solid #0063fb;
+    border-radius: 50%;
     background: #fff;
-    animation: drawerBodyEnter 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    flex-shrink: 0;
   }
-  .apply-drawer .drawer-loading-row {
-    display: flex; align-items: flex-start; gap: 14px;
-    padding: 18px 0;
-    border-top: 0.5px solid #ededed;
+  .section-glyph-attention::after {
+    content: ""; position: absolute;
+    top: 50%; left: 50%;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #0063fb;
+    transform: translate(-50%, -50%);
   }
-  .apply-drawer .drawer-loading-row[data-last="true"] {
-    border-bottom: 0.5px solid #ededed;
-  }
-  .apply-drawer .drawer-loading-icon {
-    width: 32px; height: 32px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .apply-drawer .drawer-loading-text { flex: 1; min-width: 0; }
-  .apply-drawer .drawer-loading-title {
-    font: 600 16px/1.25 var(--sys-text); letter-spacing: -0.2px;
-    color: #1d1d1d; margin: 0 0 4px;
-    display: inline-flex; align-items: center;
-  }
-  .apply-drawer .drawer-loading-sub {
-    font: 400 13px/1.4 var(--sys-text); color: #6b6b6b; margin: 0;
-  }
-  /* Lightweight CSS spinner — visual cousin of the mobile RiveSpinner,
-     no asset dependency so it always renders. */
+
+  /* Lightweight CSS spinner — used inline next to field labels. */
   .drawer-spinner {
     width: 24px; height: 24px;
     border: 2px solid rgba(0, 99, 251, 0.18);
@@ -806,25 +834,172 @@
     border-radius: 50%;
     animation: drawerSpin 820ms linear infinite;
   }
+  .drawer-spinner-xs { width: 12px; height: 12px; border-width: 1.5px; }
   @keyframes drawerSpin { to { transform: rotate(360deg); } }
 
-  /* Soft fade-in for the review form + footer when the drawer flips from
-     loading → ready, so the swap reads as a handover, not a hard cut. */
-  @keyframes drawerBodyEnter {
-    from { opacity: 0; transform: translateY(4px); }
+  /* Pending pill — sits in the field heading row while the agent is
+     still filling that specific field. Smaller and quieter than the
+     header "Drafting…" pill so it doesn't compete. */
+  .apply-drawer .drawer-pending-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px 2px 6px;
+    border-radius: 9999px;
+    background: #f0f4ff;
+    font: 500 11px/1 var(--sys-text); letter-spacing: -0.05px;
+    color: #0063fb;
+  }
+  .apply-drawer .drawer-pending-pill .ai-shimmer-text {
+    background: linear-gradient(
+      100deg,
+      #0063fb 0%, #0063fb 42%,
+      rgba(0, 99, 251, 0.45) 50%,
+      #0063fb 58%, #0063fb 100%
+    );
+    background-size: 240% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+
+  /* "Your answer needed" pill — agent has surfaced an empty field and
+     the ball is in the user's court. Same FINN-blue family as the
+     pending pill, but with a solid filled dot (no shimmer/animation) so
+     the distinction "agent is doing something" vs. "you need to act" is
+     clear at a glance. */
+  .apply-drawer .drawer-needs-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 10px 2px 8px;
+    border-radius: 9999px;
+    background: #eaf2ff;
+    font: 600 11px/1 var(--sys-text); letter-spacing: -0.05px;
+    color: #0063fb;
+  }
+  .apply-drawer .drawer-needs-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #0063fb;
+  }
+  /* Subtle blue highlight on inputs that need an answer, so the empty
+     state reads as "your turn here" instead of "broken/empty". */
+  .apply-drawer .ar-rv.is-needs-input .ar-rv-input {
+    background: #f5f9ff;
+    border-color: rgba(0, 99, 251, 0.35);
+  }
+  .apply-drawer .ar-rv.is-needs-input .ar-rv-input::placeholder {
+    color: #6b8bbd;
+  }
+
+  /* Header "Your turn" pill — sits in the same slot as the "Drafting…"
+     pill, swapped in once the agent is done but the user still owes
+     answers. Solid blue accent, no shimmer (no work happening on the
+     agent side anymore). */
+  .apply-drawer .drawer-turn-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 9999px;
+    background: #eaf2ff;
+    font: 600 12px/1 var(--sys-text); letter-spacing: -0.05px;
+    color: #0063fb;
+  }
+  .apply-drawer .drawer-turn-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #0063fb;
+  }
+
+  /* Skeleton input — placeholder shown in place of a real input while
+     the field's value is still streaming. Clickable so users can edit
+     early (treated as a user-edit, the agent's draft for this field
+     is then dropped). */
+  .apply-drawer .drawer-skeleton-input {
+    appearance: none; border: 1px solid transparent;
+    background: #f7f7f9; width: 100%;
+    padding: 12px 14px; border-radius: 10px;
+    cursor: text; text-align: left;
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out);
+  }
+  .apply-drawer .drawer-skeleton-input:hover {
+    background: #f0f0f3;
+    border-color: rgba(0, 99, 251, 0.25);
+  }
+  .apply-drawer .drawer-skeleton-input .skeleton {
+    display: block; height: 14px; width: 70%;
+    border-radius: 6px;
+  }
+
+  /* Soft fade-in for a field when its value lands. Triggered by removing
+     the .is-pending class and remounting the input element. */
+  .apply-drawer .ar-rv:not(.is-pending) .ar-rv-input,
+  .apply-drawer .ar-rv:not(.is-pending) .file-card:not(.is-skeleton),
+  .apply-drawer .ar-rv:not(.is-pending) .warp-radio-control,
+  .apply-drawer .ar-rv:not(.is-pending) .warp-radio-label {
+    animation: drawerFieldEnter 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  @keyframes drawerFieldEnter {
+    from { opacity: 0; transform: translateY(2px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  .apply-drawer .drawer-body-enter {
-    animation: drawerBodyEnter 380ms cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Skeleton file-card — used while CV / Cover letter values arrive. */
+  .apply-drawer .file-card.is-skeleton {
+    cursor: default; pointer-events: none;
   }
-  .apply-drawer .drawer-foot-enter {
-    animation: drawerBodyEnter 380ms cubic-bezier(0.32, 0.72, 0, 1) 80ms both;
+  .apply-drawer .file-card.is-skeleton .icon-disk {
+    background: #f0f0f3;
   }
+  .skeleton-line {
+    display: block; border-radius: 4px;
+  }
+
+  /* Pending radio rows — desaturated and uninteractive until the value
+     lands. Once ready, they animate in via drawerFieldEnter above. */
+  .warp-radio.is-pending {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .warp-radio.is-pending input,
+  .warp-radio.is-pending .warp-radio-control {
+    cursor: not-allowed;
+  }
+
+  /* Footer — confirm + send adopt the streaming state. Confirm is
+     locked until everything's ready; Send shows "Drafting…" copy with a
+     subtle inline shimmer dot so it reads as actively working, not just
+     greyed out. */
+  .apply-drawer .drawer-confirm {
+    display: inline-flex; align-items: flex-start; gap: 10px;
+    font: 400 14px/1.4 var(--sys-text); color: #1d1d1d;
+    cursor: pointer;
+  }
+  .apply-drawer .drawer-confirm input[type="checkbox"] {
+    width: 16px; height: 16px; margin-top: 2px;
+    accent-color: #0063fb;
+  }
+  .apply-drawer .drawer-confirm.is-locked {
+    cursor: not-allowed;
+    color: #9a9a9a;
+  }
+  .apply-drawer .drawer-confirm.is-locked input { cursor: not-allowed; }
+  .apply-drawer .drawer-send {
+    appearance: none; border: 0;
+    background: #0063fb; color: #fff;
+    padding: 14px 20px; border-radius: 10px;
+    font: 600 16px/1 var(--sys-text); letter-spacing: -0.1px;
+    cursor: pointer;
+    transition: background 200ms cubic-bezier(0.45, 0, 0.25, 1),
+                color 200ms cubic-bezier(0.45, 0, 0.25, 1);
+  }
+  .apply-drawer .drawer-send:hover:not(.is-blocked) { background: #0050d4; }
+  .apply-drawer .drawer-send.is-blocked {
+    background: #e6e6ea; color: #9a9a9a;
+    cursor: not-allowed;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .drawer-spinner { animation: none; }
-    .apply-drawer .drawer-body-enter,
-    .apply-drawer .drawer-foot-enter,
-    .apply-drawer .drawer-loading { animation: none; }
+    .drawer-spinner,
+    .section-glyph-spinner,
+    .apply-drawer .drawer-drafting-dot { animation: none; }
+    .apply-drawer .ar-rv:not(.is-pending) .ar-rv-input,
+    .apply-drawer .ar-rv:not(.is-pending) .file-card:not(.is-skeleton),
+    .apply-drawer .ar-rv:not(.is-pending) .warp-radio-control,
+    .apply-drawer .ar-rv:not(.is-pending) .warp-radio-label { animation: none; }
   }
   @keyframes drawerSlideIn {
     from { transform: translate3d(20px, 0, 0); opacity: 0; }
@@ -1255,19 +1430,88 @@
   }
   .otree-outcome {
     background: linear-gradient(180deg, #f4f8ff 0%, #eaf2ff 100%);
-    border: 1px solid var(--finn-blue-rim);
-    border-radius: 16px; padding: 18px 22px;
-    text-align: center; max-width: 520px; margin: 0 auto 8px;
+    border: 1px solid rgba(0,99,251,0.15);
+    border-radius: 20px; padding: 22px 28px;
+    text-align: center; max-width: 600px; margin: 0 auto;
+    box-shadow: 0 4px 16px rgba(0,99,251,0.06);
   }
   .otree-outcome .label {
     font-size: 10px; font-weight: 700; color: var(--finn-blue);
-    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px;
   }
   .otree-outcome .text {
-    font-size: 15px; font-weight: 600; color: var(--ink); line-height: 1.4;
+    font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.35;
+    letter-spacing: -0.2px;
   }
   .otree-outcome .meta {
     font-size: 12px; color: var(--ink-soft); margin-top: 4px;
+  }
+
+  /* Measurable-outcomes card — single elevated container holding a
+     metric table. Each row is a KR with a chip on the left, the
+     description in the middle, and the target pill on the right. */
+  .otree-measurables {
+    background: #fff;
+    border: 1px solid var(--hair);
+    border-radius: 16px;
+    max-width: 760px;
+    margin: 14px auto 0;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .otree-measurables .label {
+    font-size: 10px; font-weight: 700; color: var(--finn-blue);
+    text-transform: uppercase; letter-spacing: 0.12em;
+    text-align: center;
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid var(--hair);
+  }
+  .otree-measurable {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 18px;
+    border-top: 1px solid rgba(0,0,0,0.04);
+    font-size: 13px;
+    text-align: left;
+    color: var(--ink);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .otree-measurable:first-of-type { border-top: 0; }
+  .otree-kr-chip {
+    font-size: 10px; font-weight: 700;
+    color: var(--finn-blue);
+    background: rgba(0,99,251,0.08);
+    border-radius: 8px;
+    padding: 5px 0;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+  .otree-target {
+    font-size: 13px; font-weight: 700;
+    color: var(--finn-blue);
+    background: rgba(0,99,251,0.06);
+    border: 1px solid rgba(0,99,251,0.18);
+    border-radius: 999px;
+    padding: 3px 12px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .otree-target.is-tbd {
+    color: var(--ink-soft);
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.08);
+    font-style: italic;
+    font-weight: 600;
+  }
+  @media (max-width: 560px) {
+    .otree-measurable {
+      grid-template-columns: 44px 1fr;
+      gap: 10px 14px;
+    }
+    .otree-target { grid-column: 2 / 3; justify-self: start; margin-top: 2px; }
   }
   .otree-spine {
     display: flex; justify-content: center; padding: 6px 0 14px;
@@ -4477,6 +4721,7 @@ function Icon({ name, size = 24, color = "currentColor", stroke = 1.8, fill = "n
     "sparkle":       "M12 2l2.5 6.5L21 11l-6.5 2.5L12 20l-2.5-6.5L3 11l6.5-2.5z",
     "file":          "M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6",
     "bookmark":      "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z",
+    "heart":         "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z",
     "share":         "M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13",
     "map-pin":       "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zm-9 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
     "briefcase":     "M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16",
@@ -5978,6 +6223,10 @@ function JobDetailScreen({ job, onApply, onBack, userState }) {
   const { homeArea } = useMetrics();
   const isAndroid = platform === "android";
   const isApplied = userState === "already-applied";
+  // Heart / favourite toggle for the bottom action bar — local UI state,
+  // matches the FINN Item Page treatment (square outline button beside
+  // the primary "Søk på stillingen" CTA).
+  const [favourited, setFavourited] = useState(false);
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#fff" }}>
       <NavBar
@@ -6055,19 +6304,55 @@ function JobDetailScreen({ job, onApply, onBack, userState }) {
           {t({ en: "Apply", no: "Søk" })}
         </button>
       ) : (
+        /* FINN Item Page bottom action bar — square heart-toggle on the
+           left + full-width "Søk på stillingen" primary button. */
         <div style={{
           position: "absolute", bottom: 0, left: 0, right: 0,
           background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.08)",
           padding: "14px 16px",
           paddingBottom: `calc(14px + ${homeArea}px)`,
           zIndex: 3,
+          display: "flex", alignItems: "center", gap: 10,
         }}>
-          <PrimaryButton onClick={onApply}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-              <Icon name="sparkle" size={18} color="#fff" stroke={0} fill="#fff" />
-              {t({ en: "Apply now", no: "Søk på jobben" })}
-            </span>
-          </PrimaryButton>
+          <button
+            className="press"
+            onClick={() => { haptic("tap"); setFavourited(v => !v); }}
+            aria-pressed={favourited}
+            aria-label={favourited
+              ? t({ en: "Remove from favourites", no: "Fjern fra favoritter" })
+              : t({ en: "Save to favourites",     no: "Lagre som favoritt"   })}
+            style={{
+              width: 56, height: 56,
+              borderRadius: 12,
+              background: favourited ? "#eaf2ff" : "#fff",
+              border: `1px solid ${favourited ? "#0063fb" : "#d4d4d4"}`,
+              cursor: "pointer",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+              transition: "background 160ms var(--ease-out), border-color 160ms var(--ease-out)",
+            }}>
+            <Icon
+              name="heart"
+              size={22}
+              color="#0063fb"
+              fill={favourited ? "#0063fb" : "none"}
+              stroke={2}
+            />
+          </button>
+          <button
+            className="press"
+            onClick={() => { haptic("ok"); onApply?.(); }}
+            style={{
+              flex: 1, height: 56,
+              borderRadius: 12,
+              background: "#0063fb", color: "#fff",
+              border: 0, cursor: "pointer",
+              font: "700 17px/1 var(--sys-text)",
+              letterSpacing: -0.2,
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+            }}>
+            {t({ en: "Apply for the position", no: "Søk på stillingen" })}
+          </button>
         </div>
       )}
     </div>
@@ -6148,7 +6433,14 @@ function ApplicationPreviewSheet({
   const missPers = state === "missing-personalia";
   const missCv = state === "missing-cv";
   const missQ = state === "missing-questions";
-  const anyMissing = missPers || missCv || missQ;
+  // MVP = Easy Apply MVP. We strip all the "from profile" / "AI draft"
+  // labels and the inline Edit/Endre buttons so the rows read as a clean
+  // summary; the whole row is still tappable to open the editor.
+  const isMvp = version === "mvp";
+  // Employer questions are answered by the user — NOT pre-filled — in MVP.
+  // Treat them as needing an answer until the user fills them in.
+  const mvpQuestionsUnanswered = isMvp;
+  const anyMissing = missPers || missCv || missQ || mvpQuestionsUnanswered;
 
   const rows = [
     {
@@ -6156,7 +6448,9 @@ function ApplicationPreviewSheet({
       title: t({ en: "Personal details", no: "Personalia" }),
       sub: missPers
         ? t({ en: "Phone number is missing", no: "Telefonnummer mangler" })
-        : t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
+        : isMvp
+          ? ""
+          : t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
       source: null,
       status: missPers ? "missing" : "done",
       preview: false,
@@ -6168,7 +6462,9 @@ function ApplicationPreviewSheet({
         ? t({ en: "Fetching your CV…", no: "Henter CV …" })
         : missCv
           ? t({ en: "No CV added — required to send", no: "Ingen CV lagt til – kreves for å sende" })
-          : t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
+          : isMvp
+            ? ""
+            : t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
       source: null,
       status: cvLoading ? "loading" : missCv ? "missing" : "done",
       // No eye affordance — Endre is the single entry to the CV picker.
@@ -6178,24 +6474,29 @@ function ApplicationPreviewSheet({
       id: "letter",
       title: t({ en: "Cover letter", no: "Søknadsbrev" }),
       // Small FINN AI mark inline next to the title text, same height as text.
-      titleSuffix: letterLoading ? null : <AILogo size={16} />,
+      // MVP doesn't surface AI provenance, so we drop the inline AI mark too.
+      titleSuffix: (letterLoading || isMvp) ? null : <AILogo size={16} />,
       sub: letterLoading
         ? t({ en: "Drafting for this role…", no: "Skriver utkast for denne jobben …" })
-        : t({ en: "AI draft · editable", no: "AI-utkast · kan endres" }),
+        : isMvp
+          ? ""
+          : t({ en: "AI draft · editable", no: "AI-utkast · kan endres" }),
       // Source pill removed — the inline AI mark + plain-grey sub line carry it.
       source: null,
-      status: letterLoading ? "loading" : "ai",
+      status: letterLoading ? "loading" : isMvp ? "done" : "ai",
       // Endre is the single entry — opens the cover letter sheet directly.
       preview: false,
     },
     {
       id: "questions",
       title: t({ en: "Employer questions", no: "Spørsmål fra arbeidsgiver" }),
-      sub: missQ
-        ? t({ en: "1 question still needs an answer", no: "Ett spørsmål mangler svar" })
-        : t({ en: "You answered 2 questions", no: "Du svarte på 2 spørsmål" }),
+      sub: (missQ || mvpQuestionsUnanswered)
+        ? t({ en: "3 questions need answers", no: "3 spørsmål mangler svar" })
+        : isMvp
+          ? ""
+          : t({ en: "You answered 2 questions", no: "Du svarte på 2 spørsmål" }),
       source: null,
-      status: missQ ? "missing" : "done",
+      status: (missQ || mvpQuestionsUnanswered) ? "missing" : "done",
       preview: false,
     },
   ];
@@ -6314,7 +6615,10 @@ function ApplicationPreviewSheet({
         )}
 
         {/* In-sheet tabs: Application ↔ Job ad. Lets the seeker re-read the ad
-            without dismissing the draft. iOS segmented control look. */}
+            without dismissing the draft. iOS segmented control look. Hidden
+            on MVP — that pattern lands in 1.0; MVP keeps a single Application
+            view (dismiss the sheet to re-read the ad). */}
+        {!isMvp && (
         <div style={{ padding: "2px 16px 12px" }}>
           <div role="tablist" aria-label={t({ en: "Sheet view", no: "Visning" })}
             style={{
@@ -6365,6 +6669,7 @@ function ApplicationPreviewSheet({
             </button>
           </div>
         </div>
+        )}
 
         {anyMissing && sheetTab === "application" && (
           <div style={{
@@ -6433,6 +6738,8 @@ function ApplicationPreviewSheet({
                     else onOpenEdit(r.id);
                   }}
                   onPreview={null}
+                  // MVP — strip the inline Edit button; entire row is the tap target.
+                  hideEdit={isMvp}
                   // No eye anywhere. Endre is the single entry for every row;
                   // letter row opens the cover letter sheet, CV row opens the
                   // picker, others open their respective editors.
@@ -6543,7 +6850,7 @@ function ApplicationPreviewSheet({
   );
 }
 
-function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
+function PreviewRow({ row, onEdit, onPreview, isLast, editLabel, hideEdit = false }) {
   const t = useT();
   const isLoading = row.status === "loading";
   const label = editLabel ?? t({ en: "Edit", no: "Endre" });
@@ -6628,6 +6935,7 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
     <div style={{
       borderTop: "0.5px solid #ededed",
       borderBottom: isLast ? "0.5px solid #ededed" : "none",
+      position: "relative",
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "16px 16px" }}>
         {/* Status icon — fixed 32×32 slot so swap between spinner/check/queued
@@ -6730,22 +7038,39 @@ function PreviewRow({ row, onEdit, onPreview, isLast, editLabel }) {
             <Icon name="eye" size={18} color="#0063fb" stroke={2} />
           </button>
         )}
-        <button
-          className="press"
-          onClick={() => { if (!isLoading) { haptic("tap"); onEdit?.(); } }}
-          disabled={isLoading}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 2,
-            background: "transparent", border: 0,
-            cursor: isLoading ? "not-allowed" : "pointer",
-            color: isLoading ? "#a5a5a5" : "#0063fb",
-            fontFamily: "inherit",
-            fontSize: 15, fontWeight: 600, padding: "8px 2px 8px 8px",
-            flexShrink: 0, minHeight: 44, letterSpacing: -0.1,
-          }}>
-          {label}
-          <Icon name="chevron-right" size={16} color={isLoading ? "#a5a5a5" : "#0063fb"} stroke={2.2} />
-        </button>
+        {!hideEdit && (
+          <button
+            className="press"
+            onClick={() => { if (!isLoading) { haptic("tap"); onEdit?.(); } }}
+            disabled={isLoading}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 2,
+              background: "transparent", border: 0,
+              cursor: isLoading ? "not-allowed" : "pointer",
+              color: isLoading ? "#a5a5a5" : "#0063fb",
+              fontFamily: "inherit",
+              fontSize: 15, fontWeight: 600, padding: "8px 2px 8px 8px",
+              flexShrink: 0, minHeight: 44, letterSpacing: -0.1,
+            }}>
+            {label}
+            <Icon name="chevron-right" size={16} color={isLoading ? "#a5a5a5" : "#0063fb"} stroke={2.2} />
+          </button>
+        )}
+        {hideEdit && (
+          /* MVP — no explicit Edit button. The whole row becomes a tap target
+             so the user can still open the editor without an extra chip. */
+          <button
+            className="press"
+            onClick={() => { if (!isLoading) { haptic("tap"); onEdit?.(); } }}
+            disabled={isLoading}
+            aria-label={label}
+            style={{
+              position: "absolute", inset: 0,
+              background: "transparent", border: 0, padding: 0,
+              cursor: isLoading ? "not-allowed" : "pointer",
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -7009,7 +7334,7 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
           background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.06)",
         }}>
           <PrimaryButton onClick={() => { haptic("ok"); onClose?.(); }}>
-            {t({ en: "Add to application", no: "Legg til i søknaden" })}
+            {t({ en: "Use this cover letter", no: "Bruk dette søknadsbrevet" })}
           </PrimaryButton>
         </div>
       </div>
@@ -7358,9 +7683,7 @@ function SelectLetterSheet({ onClose, onPick }) {
           <PrimaryButton
             onClick={() => { haptic("ok"); onPick?.(); }}
             disabled={!canConfirm}>
-            {tab === "profile"
-              ? t({ en: "Select document", no: "Velg dokument" })
-              : t({ en: "Upload document", no: "Last opp dokument" })}
+            {t({ en: "Use this cover letter", no: "Bruk dette søknadsbrevet" })}
           </PrimaryButton>
         </div>
       </div>
@@ -7688,7 +8011,7 @@ function CVPreviewSheet({ onClose, onBack, onCommit, initialSource = "profile", 
           background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.06)",
         }}>
           <PrimaryButton onClick={() => { haptic("ok"); goCommit(); }}>
-            {t({ en: "Add to application", no: "Legg til i søknaden" })}
+            {t({ en: "Use this CV", no: "Bruk denne CV-en" })}
           </PrimaryButton>
         </div>
       </div>
@@ -7864,16 +8187,20 @@ function TailorSheet({ onDone, onClose }) {
 // ===========================================================
 // EDIT sheets — inline-editable fields + iOS controls
 // ===========================================================
-function InputField({ label, value, onChange, type = "text", autoComplete, placeholder, last }) {
+function InputField({ label, value, onChange, type = "text", autoComplete, placeholder, last, dimmed = false }) {
   const [focused, setFocused] = useState(false);
   // Filled-card style: label above the input in sentence case, input
   // itself is a grey #f7f7f9 rounded card with finn-blue border on
   // focus. Used everywhere across MVP (Agentic), 1.0, 1.2 and 2.0 so the
   // form-input language is consistent.
+  // `dimmed` softens the field — used for optional inputs (e.g. LinkedIn)
+  // that should read as not-yet-filled / lower priority.
   return (
     <div style={{
       display: "flex", flexDirection: "column",
       paddingBottom: last ? 0 : 14,
+      opacity: dimmed ? 0.5 : 1,
+      transition: "opacity 200ms var(--ease-out)",
     }}>
       <label style={{
         display: "flex", alignItems: "center", gap: 8,
@@ -7885,8 +8212,9 @@ function InputField({ label, value, onChange, type = "text", autoComplete, place
         type={type} value={value}
         autoComplete={autoComplete} placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
-        onFocus={() => setFocused(true)}
+        onFocus={() => { if (!dimmed) setFocused(true); }}
         onBlur={() => setFocused(false)}
+        disabled={dimmed}
         style={{
           fontSize: 17, color: "#1d1d1d", fontWeight: 500,
           border: focused ? "1px solid #0063fb" : "1px solid transparent",
@@ -7898,6 +8226,7 @@ function InputField({ label, value, onChange, type = "text", autoComplete, place
           letterSpacing: -0.2, width: "100%",
           boxSizing: "border-box",
           caretColor: "#0063fb",
+          cursor: dimmed ? "not-allowed" : "text",
           transition: "border-color 160ms var(--ease-out)",
         }}
       />
@@ -7955,40 +8284,68 @@ function FieldRow({ label, value, last }) {
 }
 
 // Personal details editor — inline editable, with iOS-style toggle
-function PersonaliaEditor() {
+function PersonaliaEditor({ version = "mvp" }) {
   const t = useT();
+  const isMvp = version === "mvp";
   const [v, setV] = useState({
     name: "Lee Frost",
     email: "lee@example.com",
     phone: "+47 412 34 567",
     location: "Oslo",
+    linkedin: "",
   });
-  const [saveToProfile, setSaveToProfile] = useState(true);
+  // MVP default: "Add optional info" is off and LinkedIn is dimmed until
+  // the user opts in. Other versions surface optional info by default.
+  const [showOptional, setShowOptional] = useState(!isMvp);
+  const [saveToProfile, setSaveToProfile] = useState(!isMvp);
   const update = (k) => (val) => setV(prev => ({ ...prev, [k]: val }));
   return (
     <div style={{ padding: "0 20px" }}>
       <InputField label={t({ en: "Name", no: "Navn" })} value={v.name} onChange={update("name")} autoComplete="name" />
       <InputField label={t({ en: "Email", no: "E-post" })} value={v.email} onChange={update("email")} type="email" autoComplete="email" />
       <InputField label={t({ en: "Phone", no: "Telefon" })} value={v.phone} onChange={update("phone")} type="tel" autoComplete="tel" />
-      <InputField label={t({ en: "Location", no: "Bosted" })} value={v.location} onChange={update("location")} autoComplete="address-level2" last />
+      <InputField label={t({ en: "Location", no: "Bosted" })} value={v.location} onChange={update("location")} autoComplete="address-level2" />
+      <InputField
+        label={t({ en: "LinkedIn (optional)", no: "LinkedIn (valgfritt)" })}
+        value={v.linkedin}
+        onChange={update("linkedin")}
+        placeholder={t({ en: "linkedin.com/in/your-handle", no: "linkedin.com/in/ditt-navn" })}
+        autoComplete="url"
+        dimmed={!showOptional}
+        last
+      />
       <div style={{ marginTop: 8, borderTop: "0.5px solid #ededed", paddingTop: 4 }}>
         <IOSSwitch
-          checked={saveToProfile}
-          onChange={setSaveToProfile}
-          label={t({ en: "Also save to my profile", no: "Lagre også til profilen" })}
-          hint={saveToProfile
-            ? t({ en: "Future applications will use these details", no: "Fremtidige søknader bruker disse opplysningene" })
-            : t({ en: "Changes apply only to this application", no: "Endringene gjelder kun denne søknaden" })}
+          checked={showOptional}
+          onChange={setShowOptional}
+          label={t({ en: "Add optional info", no: "Legg til valgfri info" })}
+          hint={showOptional
+            ? t({ en: "LinkedIn and other optional fields are visible", no: "LinkedIn og andre valgfrie felt vises" })
+            : t({ en: "Show LinkedIn and other optional fields", no: "Vis LinkedIn og andre valgfrie felt" })}
         />
+        {!isMvp && (
+          <IOSSwitch
+            checked={saveToProfile}
+            onChange={setSaveToProfile}
+            label={t({ en: "Also save to my profile", no: "Lagre også til profilen" })}
+            hint={saveToProfile
+              ? t({ en: "Future applications will use these details", no: "Fremtidige søknader bruker disse opplysningene" })
+              : t({ en: "Changes apply only to this application", no: "Endringene gjelder kun denne søknaden" })}
+          />
+        )}
       </div>
     </div>
   );
 }
 
 // Employer questions — inline answer for the missing one
-function QuestionsEditor() {
+function QuestionsEditor({ version = "mvp" }) {
   const t = useT();
   const lang = useLang();
+  const isMvp = version === "mvp";
+  // MVP: questions start unanswered, no provenance tags. The user fills
+  // all three before they can send. Other versions prefill the first two
+  // from profile / Tilpass so the user only sees one open question.
   const [answer, setAnswer] = useState("");
   const filled = answer.trim().length >= 12;
   const suggestion = lang === "no"
@@ -7998,13 +8355,13 @@ function QuestionsEditor() {
     <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 20 }}>
       <Question
         q={t({ en: "How many years of leadership experience?", no: "Hvor mange års lederfaring har du?" })}
-        a={t({ en: "2–5 years", no: "2–5 år" })}
-        from={t({ en: "From your Tailor answers", no: "Fra svarene i Tilpass" })}
+        a={isMvp ? null : t({ en: "2–5 years", no: "2–5 år" })}
+        from={isMvp ? null : t({ en: "From your Tailor answers", no: "Fra svarene i Tilpass" })}
       />
       <Question
         q={t({ en: "Are you eligible to work in Norway?", no: "Har du tillatelse til å jobbe i Norge?" })}
-        a={t({ en: "Yes", no: "Ja" })}
-        from={t({ en: "From your profile", no: "Fra profilen din" })}
+        a={isMvp ? null : t({ en: "Yes", no: "Ja" })}
+        from={isMvp ? null : t({ en: "From your profile", no: "Fra profilen din" })}
       />
       <div>
         <p style={{ fontSize: 15, fontWeight: 600, color: "#1d1d1d", margin: "0 0 8px", letterSpacing: -0.1 }}>
@@ -8128,30 +8485,35 @@ function Question({ q, a, from }) {
         padding: "10px 14px", borderRadius: 10,
         background: a ? "#f7f7f9" : "#fadddd",
         color: a ? "#1d1d1d" : "#cc1414",
-        fontSize: 15, fontWeight: a ? 500 : 600, marginBottom: 6,
+        fontSize: 15, fontWeight: a ? 500 : 600, marginBottom: from ? 6 : 0,
         display: "flex", alignItems: "center", gap: 8,
       }}>
         {!a && <Icon name="alert" size={16} color="#cc1414" stroke={2.4} />}
         {a || t({ en: "Needs an answer", no: "Mangler svar" })}
       </div>
-      <p style={{ fontSize: 12, color: "#6b6b6b", margin: 0 }}>{from}</p>
+      {from && (
+        <p style={{ fontSize: 12, color: "#6b6b6b", margin: 0 }}>{from}</p>
+      )}
     </div>
   );
 }
 
-function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
+function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false, version = "mvp" }) {
   const t = useT();
   const [exiting, close] = useDelayedClose(onClose, 320);
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const { statusBarH, homeArea } = useMetrics();
   const backdropH = statusBarH + 16;
+  const isMvp = version === "mvp";
   const config = {
     personalia: {
       title: t({ en: "Personal details", no: "Personalia" }),
-      sub: t({ en: "Edit anything · save just for this application or to your profile",
+      sub: isMvp
+        ? t({ en: "Edit your personal details", no: "Endre personalia" })
+        : t({ en: "Edit anything · save just for this application or to your profile",
               no: "Endre alt · lagre kun for denne søknaden eller til profilen" }),
-      body: <PersonaliaEditor />,
+      body: <PersonaliaEditor version={version} />,
     },
     cv: {
       title: "CV",
@@ -8205,7 +8567,7 @@ function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
     questions: {
       title: t({ en: "Employer questions", no: "Spørsmål fra arbeidsgiver" }),
       sub: t({ en: "The employer has 3 questions", no: "Arbeidsgiver har 3 spørsmål" }),
-      body: <QuestionsEditor />,
+      body: <QuestionsEditor version={version} />,
     },
   };
   const c = config[rowId];
@@ -8250,7 +8612,13 @@ function EditSheet({ rowId, onClose, onOpenCV, showTailoredCV = false }) {
           paddingBottom: `calc(12px + ${homeArea}px)`,
           borderTop: "0.5px solid rgba(0,0,0,0.06)",
         }}>
-          <PrimaryButton onClick={close}>{t({ en: "Done", no: "Ferdig" })}</PrimaryButton>
+          <PrimaryButton onClick={close}>
+            {rowId === "cv"
+              ? t({ en: "Use this CV", no: "Bruk denne CV-en" })
+              : rowId === "letter"
+                ? t({ en: "Use this cover letter", no: "Bruk dette søknadsbrevet" })
+                : t({ en: "Done", no: "Ferdig" })}
+          </PrimaryButton>
         </div>
       </div>
     </div>
@@ -8446,6 +8814,7 @@ function SectionRow({ id, title, sub, edited, status = "done", onTap }) {
   const t = useT();
   const loading = status === "working";
   const queued  = status === "queued";
+  const missing = status === "missing";
   const idle    = loading || queued;
   let leadingIcon;
   if (loading) {
@@ -8463,6 +8832,16 @@ function SectionRow({ id, title, sub, edited, status = "done", onTap }) {
         width: 32, height: 32, borderRadius: 9999,
         border: "1.5px solid #d4d4d4", background: "#fff",
       }} />
+    );
+  } else if (missing) {
+    leadingIcon = (
+      <div key="missing" className="ar-check-land" style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        width: 32, height: 32, borderRadius: 9999,
+        background: "#fadddd",
+      }}>
+        <Icon name="alert" size={18} color="#cc1414" stroke={2.4} />
+      </div>
     );
   } else {
     leadingIcon = (
@@ -8488,7 +8867,7 @@ function SectionRow({ id, title, sub, edited, status = "done", onTap }) {
         <span className="ar-row-text">
           <span className="ar-row-title">
             {title}
-            {edited && !idle && (
+            {edited && !idle && !missing && (
               <span style={{
                 display: "inline-flex",
                 opacity: 1,
@@ -8496,7 +8875,7 @@ function SectionRow({ id, title, sub, edited, status = "done", onTap }) {
               }}><EditedChip /></span>
             )}
           </span>
-          <span className="ar-row-sub">
+          <span className="ar-row-sub" style={missing ? { color: "#cc1414" } : null}>
             {sub}
           </span>
         </span>
@@ -8505,7 +8884,9 @@ function SectionRow({ id, title, sub, edited, status = "done", onTap }) {
           transition: "opacity 380ms cubic-bezier(0.45, 0, 0.25, 1)",
           pointerEvents: idle ? "none" : "auto",
         }}>
-          {t({ en: "Edit", no: "Endre" })}
+          {missing
+            ? t({ en: "Add", no: "Legg til" })
+            : t({ en: "Edit", no: "Endre" })}
           <Icon name="chevron-right" size={16} color="#0063fb" stroke={2.2} />
         </span>
       </button>
@@ -8585,21 +8966,9 @@ function SourcePill({ source, explanation, variant = "ai" }) {
   );
 }
 
-// Yellow "Redigert" chip next to a section title when the user has touched
-// any of its fields. Lifted alongside SectionRow for the same stability reason.
-function EditedChip() {
-  const t = useT();
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center",
-      fontSize: 11, fontWeight: 500,
-      padding: "2px 8px", borderRadius: 9999,
-      background: "#fdedb0", color: "#4d3a00",
-      whiteSpace: "nowrap", letterSpacing: -0.05,
-      textTransform: "none",
-    }}>{t({ en: "Edited", no: "Redigert" })}</span>
-  );
-}
+// Edited / Redigert chip — removed from the MVP. Kept as a no-op so any
+// legacy callers don't blow up; renders nothing.
+function EditedChip() { return null; }
 
 function AgenticReviewScreen({ job, onClose, onSend }) {
   const t = useT();
@@ -8636,6 +9005,9 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
   function pushVedleggPage(page) {
     setVedleggDir("push");
     setVedleggStack(s => [...s, page]);
+    // Reset the in-flight upload state any time we enter a fresh picker.
+    setPickerUploaded(null);
+    setPickerSaveToProfile(true);
   }
   function popVedleggPage() {
     setVedleggDir("pop");
@@ -8643,6 +9015,19 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
   }
   const vedleggPage = vedleggStack[vedleggStack.length - 1];
   const vedleggCanGoBack = vedleggStack.length > 1;
+  // Lifted picker state — sits up here so the bottom footer can commit
+  // the upload with a single "Use this CV / cover letter" button instead
+  // of the picker carrying its own inline primary button.
+  const [pickerUploaded, setPickerUploaded] = useState(null);
+  const [pickerSaveToProfile, setPickerSaveToProfile] = useState(true);
+  function commitPickerUpload() {
+    if (!pickerUploaded) return;
+    haptic("ok");
+    const fieldKey = vedleggPage === "cv-picker" ? "cv" : "letter";
+    update(fieldKey, pickerUploaded.name);
+    popVedleggPage();
+    setPickerUploaded(null);
+  }
   const { statusBarH, homeArea } = useMetrics();
   const platform = usePlatform();
   const sheetRadius = PLATFORM_RADII[platform].sheet;
@@ -8680,11 +9065,15 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
     linkedin:  { v: "Georgetownlinkedin",    e: false },
     cv:        { v: "CV_2025.pdf",           e: false },
     letter:    { v: "Cover_Letter_2025.doc", e: false },
-    qNorsk:    { v: "Yes",                   e: false }, // canonical English
-    qExp:      { v: "10+ years",             e: false },
+    // Additional questions start empty — user fills them in. No AI pre-fill
+    // in MVP (Hypothesis 2.2 — seekers want control on user-answered Qs).
+    qNorsk:    { v: "",                      e: false },
+    qExp:      { v: "",                      e: false },
   };
   const [fields, setFields] = useState(initial);
-  const [includeLinkedin, setIncludeLinkedin] = useState(true);
+  // Optional info (LinkedIn) is opt-in. Defaults off so the linked-in field
+  // reads as a deliberate add-on rather than implicit profile data.
+  const [includeLinkedin, setIncludeLinkedin] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [editing, setEditing] = useState(null); // field key currently inline-edited
   // Which section's child edit sheet is currently open. The agentic review
@@ -8825,10 +9214,11 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
       <div className="ar-rv">
         <p className="ar-rv-heading">
           <span className="ar-rv-heading-label">{LABELS[k]}</span>
-          {isMissing
-            ? <span className="ar-rv-missing">{t({ en: "Missing", no: "Mangler" })}</span>
-            : (src && <SourcePill source={src} explanation={SOURCE_EXPLANATIONS[k]} />)}
-          {f.e && !isMissing && <EditedChip />}
+          {/* MVP — no source / edit chips next to inputs. Only the
+              red "Missing" tag stays so required fields read clearly. */}
+          {isMissing && (
+            <span className="ar-rv-missing">{t({ en: "Missing", no: "Mangler" })}</span>
+          )}
         </p>
         {control}
         {isMissing && (
@@ -8845,7 +9235,6 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
   // pattern: tap → page-push transition inside the existing sheet.
   function FileCard({ k }) {
     const f = fields[k];
-    const src = SOURCE_BY_KEY[k];
     const open = () => {
       haptic("tap");
       pushVedleggPage(k === "cv" ? "cv-picker" : "letter-picker");
@@ -8854,8 +9243,7 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
       <div className="ar-rv">
         <p className="ar-rv-heading">
           <span className="ar-rv-heading-label">{LABELS[k]}</span>
-          {src && <SourcePill source={src} explanation={SOURCE_EXPLANATIONS[k]} />}
-          {f.e && <EditedChip />}
+          {/* MVP — no source / edit chips on file rows. */}
         </p>
         <CVOption
           icon={k === "letter" ? "sparkle" : "file"}
@@ -8878,11 +9266,22 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
   // Subtitle summaries (what the agent prepared, in plain text). Enum
   // values are stored canonically in English (Yes/No, Male/Female/Other)
   // so we translate them locally for display.
-  const yesNoDisplay = t({ en: fields.qNorsk.v, no: fields.qNorsk.v === "Yes" ? "Ja" : "Nei" });
+  const yesNoDisplay = fields.qNorsk.v
+    ? t({ en: fields.qNorsk.v, no: fields.qNorsk.v === "Yes" ? "Ja" : "Nei" })
+    : "";
   const personaliaSub = `${fields.firstName.v} ${fields.lastName.v} · ${fields.email.v}`;
   const vedleggSub    = [fields.cv.v, fields.letter.v].filter(Boolean).join(" · ")
                         || t({ en: "No attachments", no: "Ingen vedlegg" });
-  const questionsSub  = `${t({ en: "Norwegian", no: "Norsk" })}: ${yesNoDisplay} · ${fields.qExp.v}`;
+  // Count which additional questions are still unanswered so the row can
+  // show "2 questions need answers" instead of an awkward empty summary.
+  const questionsMissingCount = (fields.qNorsk.v ? 0 : 1) + (fields.qExp.v ? 0 : 1);
+  const questionsMissing = questionsMissingCount > 0;
+  const questionsSub = questionsMissing
+    ? t({
+        en: questionsMissingCount === 1 ? "1 question needs an answer" : `${questionsMissingCount} questions need answers`,
+        no: questionsMissingCount === 1 ? "Ett spørsmål mangler svar"   : `${questionsMissingCount} spørsmål mangler svar`,
+      })
+    : `${t({ en: "Norwegian", no: "Norsk" })}: ${yesNoDisplay} · ${fields.qExp.v}`;
 
   // SectionRow lives at module scope (see top of file). The inner copy used
   // to redeclare on every parent re-render, which caused React to unmount/
@@ -8968,7 +9367,9 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
           edited={!isPreparing && vedleggEdited}
           onTap={setSectionSheet} />
         <SectionRow id="questions"
-          status={isPreparing ? sectionPrep.questions : "done"}
+          status={isPreparing
+            ? sectionPrep.questions
+            : questionsMissing ? "missing" : "done"}
           title={t({ en: "Additional questions", no: "Tilleggsspørsmål" })}
           sub={(isPreparing && sectionPrep.questions !== "done")
             ? prepSub("questions") : questionsSub}
@@ -9023,7 +9424,10 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
         { en: "Other",  no: "Annet" },
       ]} />
       <div className="ar-rv">
-        <p className="ar-rv-heading">
+        <p className="ar-rv-heading" style={{
+          opacity: includeLinkedin ? 1 : 0.5,
+          transition: "opacity 200ms var(--ease-out)",
+        }}>
           <span className="ar-rv-heading-label">
             {LABELS.linkedin}
             <span style={{
@@ -9033,29 +9437,39 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
               letterSpacing: -0.05,
             }}>{t({ en: "Optional", no: "Valgfri" })}</span>
           </span>
-          <span className="ar-rv-source">{t({ en: "From your profile", no: "Fra profilen din" })}</span>
-          {fields.linkedin.e && <EditedChip />}
         </p>
-        {editing === "linkedin" ? (
-          <input className="ar-rv-input"
-            value={fields.linkedin.v} autoFocus
-            onChange={(e) => update("linkedin", e.target.value)}
-            onBlur={() => setEditing(null)}
-            onKeyDown={(e) => { if (e.key === "Enter") setEditing(null); }} />
-        ) : (
-          <button className="ar-rv-answer press"
-            onClick={() => { haptic("tap"); setEditing("linkedin"); }}>
-            {fields.linkedin.v}
-          </button>
-        )}
+        {/* LinkedIn is dimmed until "Add optional info" is toggled on.
+            The field still renders so the toggle has visible context, but
+            it's not interactive while opted out. */}
+        <div style={{
+          opacity: includeLinkedin ? 1 : 0.5,
+          pointerEvents: includeLinkedin ? "auto" : "none",
+          transition: "opacity 200ms var(--ease-out)",
+        }}>
+          {editing === "linkedin" ? (
+            <input className="ar-rv-input"
+              value={fields.linkedin.v} autoFocus
+              onChange={(e) => update("linkedin", e.target.value)}
+              onBlur={() => setEditing(null)}
+              onKeyDown={(e) => { if (e.key === "Enter") setEditing(null); }} />
+          ) : (
+            <button className="ar-rv-answer press"
+              onClick={() => { haptic("tap"); setEditing("linkedin"); }}>
+              {fields.linkedin.v}
+            </button>
+          )}
+        </div>
         <div style={{ marginTop: 14, borderTop: "0.5px solid #ededed" }}>
           <IOSSwitch
             checked={includeLinkedin}
             onChange={setIncludeLinkedin}
             label={t({
-              en: "Add this optional information to my application",
-              no: "Legg til denne valgfrie informasjonen i søknaden min",
+              en: "Add optional info",
+              no: "Legg til valgfri info",
             })}
+            hint={includeLinkedin
+              ? t({ en: "LinkedIn will be sent with your application", no: "LinkedIn sendes med søknaden" })
+              : t({ en: "LinkedIn won't be included", no: "LinkedIn tas ikke med" })}
           />
         </div>
       </div>
@@ -9219,8 +9633,8 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
             transition: "opacity 400ms cubic-bezier(0.45, 0, 0.25, 1)",
           }}>
             <PrimaryButton
-              onClick={() => { if (phase === "ready" && confirmed) onSend(); }}
-              disabled={phase !== "ready" || !confirmed}>
+              onClick={() => { if (phase === "ready" && confirmed && !questionsMissing) onSend(); }}
+              disabled={phase !== "ready" || !confirmed || questionsMissing}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <Icon name="send" size={18} color="#fff" stroke={2.2} />
                 {t({ en: "Send application", no: "Send søknad" })}
@@ -9327,6 +9741,10 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
                     kind="cv"
                     currentName={fields.cv.v}
                     onPick={(name) => { update("cv", name); popVedleggPage(); }}
+                    uploaded={pickerUploaded}
+                    setUploaded={setPickerUploaded}
+                    saveToProfile={pickerSaveToProfile}
+                    setSaveToProfile={setPickerSaveToProfile}
                   />
                 )}
                 {vedleggPage === "letter-picker" && (
@@ -9334,6 +9752,10 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
                     kind="letter"
                     currentName={fields.letter.v}
                     onPick={(name) => { update("letter", name); popVedleggPage(); }}
+                    uploaded={pickerUploaded}
+                    setUploaded={setPickerUploaded}
+                    saveToProfile={pickerSaveToProfile}
+                    setSaveToProfile={setPickerSaveToProfile}
                   />
                 )}
               </div>
@@ -9343,16 +9765,32 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
               {sectionBody}
             </div>
           )}
-          {/* Footer */}
+          {/* Footer — context-aware. On a picker sub-page the bottom CTA
+              becomes "Use this CV / cover letter" and commits the staged
+              upload; everywhere else it's the section's "Done". */}
           <div style={{
             padding: "12px 16px",
             paddingBottom: `calc(12px + ${homeArea}px)`,
             background: "#fff",
             borderTop: "0.5px solid rgba(0,0,0,0.06)",
           }}>
-            <PrimaryButton onClick={() => { haptic("ok"); closeSectionSheet(); }}>
-              {t({ en: "Done", no: "Ferdig" })}
-            </PrimaryButton>
+            {sectionSheet === "vedlegg" && vedleggPage === "cv-picker" ? (
+              <PrimaryButton
+                onClick={commitPickerUpload}
+                disabled={!pickerUploaded}>
+                {t({ en: "Use this CV", no: "Bruk denne CV-en" })}
+              </PrimaryButton>
+            ) : sectionSheet === "vedlegg" && vedleggPage === "letter-picker" ? (
+              <PrimaryButton
+                onClick={commitPickerUpload}
+                disabled={!pickerUploaded}>
+                {t({ en: "Use this cover letter", no: "Bruk dette søknadsbrevet" })}
+              </PrimaryButton>
+            ) : (
+              <PrimaryButton onClick={() => { haptic("ok"); closeSectionSheet(); }}>
+                {t({ en: "Done", no: "Ferdig" })}
+              </PrimaryButton>
+            )}
           </div>
         </div>
       </div>
@@ -9370,32 +9808,17 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
 function DesktopApplyScene({ onSend }) {
   const t = useT();
   // Drawer starts closed: the first paint is the full FINN ad in its native
-  // 1080px / 1fr + 320px layout. The drawer + loading sequence only kick in
-  // when the user actually triggers Fast Apply.
+  // 1080px / 1fr + 320px layout. Opening the drawer animates in the agentic
+  // flow; per-field arrival timing lives inside the drawer so each field
+  // ticks ready on its own schedule (see ApplyDrawer).
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  // Mirrors the mobile preview's loading ladder so desktop and mobile feel
-  // like the same product. "ready" means the auto-filled review is in.
-  const [loadingPhase, setLoadingPhase] = useState("ready");
-  const loadingTimers = useRef([]);
   const sceneRef = useRef(null);
 
-  function clearLoadingTimers() {
-    loadingTimers.current.forEach(clearTimeout);
-    loadingTimers.current = [];
-  }
-  // Søk nå → animate drawer in and step through the same cadence as mobile
-  // (loading-cv → loading-letter → ready). 950ms / 2400ms matches the
-  // mobile prototype exactly so the two flows feel cousined.
   function openDrawerWithLoading() {
-    clearLoadingTimers();
     setConfirmed(false);
-    setLoadingPhase("loading-cv");
     setDrawerOpen(true);
-    loadingTimers.current.push(setTimeout(() => setLoadingPhase("loading-letter"), 950));
-    loadingTimers.current.push(setTimeout(() => setLoadingPhase("ready"), 2400));
   }
-  useEffect(() => () => clearLoadingTimers(), []);
   // If the optional finn-jobad-desktop.png is present, set data-bg-image so
   // the CSS uses it as the background instead of the CSS recreation below.
   const [hasBgImage, setHasBgImage] = useState(false);
@@ -9538,7 +9961,6 @@ function DesktopApplyScene({ onSend }) {
       {drawerOpen && (
         <ApplyDrawer
           onClose={() => setDrawerOpen(false)}
-          loadingPhase={loadingPhase}
           confirmed={confirmed}
           onConfirmedChange={setConfirmed}
           onSend={() => { if (confirmed) onSend?.(); }}
@@ -9553,30 +9975,116 @@ function DesktopApplyScene({ onSend }) {
 // values, and visuals (.ar-rv field pattern, radio pills, source pills,
 // edited chips) are identical to what the mobile section-sheets show —
 // just stacked inline since desktop has the vertical room.
-function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedChange, onSend }) {
+function ApplyDrawer({ onClose, confirmed, onConfirmedChange, onSend }) {
   const t = useT();
   const [exiting, close] = useDelayedClose(onClose, 280);
-  // Mirrors the mobile preview's loading ladder. Body crossfades from the
-  // loading rows to the review form when phase flips to "ready".
-  const isLoading = loadingPhase !== "ready";
-  // Same auto-filled initial state as AgenticReviewScreen so the demo
-  // lands on the exact mobile values.
+  // Each field carries v (value), r (ready — agent has filled it OR user
+  // has touched it), e (edited by user). Initial state: all empty + not
+  // ready. Arrival timers below stream values into fields out-of-order,
+  // mirroring how the real agent works (instant profile fields, fast
+  // questions, slower cover-letter generation). Users can edit any
+  // already-ready field while the rest are still streaming.
   const [fields, setFields] = useState({
-    firstName: { v: "George",                e: false },
-    lastName:  { v: "Town",                  e: false },
-    email:     { v: "georgetownt@gmail.com", e: false },
-    phone:     { v: "98 73 88 21",           e: false },
-    gender:    { v: "Male",                  e: false },
-    linkedin:  { v: "Georgetownlinkedin",    e: false },
-    cv:        { v: "CV_2025.pdf",           e: false },
-    letter:    { v: "Cover_Letter_2025.doc", e: false },
-    qNorsk:    { v: "Yes",                   e: false },
-    qExp:      { v: "10+ years",             e: false },
+    firstName: { v: "", r: false, e: false },
+    lastName:  { v: "", r: false, e: false },
+    email:     { v: "", r: false, e: false },
+    phone:     { v: "", r: false, e: false },
+    gender:    { v: "", r: false, e: false },
+    linkedin:  { v: "", r: false, e: false },
+    cv:        { v: "", r: false, e: false },
+    letter:    { v: "", r: false, e: false },
+    qNorsk:    { v: "", r: false, e: false },
+    qExp:      { v: "", r: false, e: false },
   });
   const [includeLinkedin, setIncludeLinkedin] = useState(true);
+
+  // Fields that the agent surfaces but does NOT auto-fill — the user has
+  // to answer these. The agent's job here is just to "fetch" them from
+  // the ad so they appear in the form; the value stays empty until the
+  // user clicks. They show a "Your answer needed" pill (not the
+  // "Filling…" shimmer), and the Send button stays locked until both
+  // are answered.
+  const ASK_USER = useRef(new Set(["qNorsk", "qExp"])).current;
+
+  // Simulated agent arrivals — deliberately out-of-order and stretched
+  // to ~90s total so the streaming-in-place pattern is fully observable
+  // for testing. Personalia trickles in over the first ~25s; questions
+  // land mid-way as empty fields the user must answer; the cover letter
+  // is the LLM-slow tail at ~88s. This is "testing speed" — divide every
+  // value by ~30 to get realistic production timing (~3s total) when
+  // you're done observing.
+  const ARRIVALS = useRef([
+    { key: "firstName", v: "George",                at:  3000 },
+    { key: "email",     v: "georgetownt@gmail.com", at:  7000 },
+    { key: "lastName",  v: "Town",                  at: 12000 },
+    { key: "qExp",      v: "",                      at: 18000 }, // user-input
+    { key: "phone",     v: "98 73 88 21",           at: 24000 },
+    { key: "cv",        v: "CV_2025.pdf",           at: 32000 },
+    { key: "linkedin",  v: "Georgetownlinkedin",    at: 41000 },
+    { key: "qNorsk",    v: "",                      at: 52000 }, // user-input
+    { key: "gender",    v: "Male",                  at: 65000 },
+    { key: "letter",    v: "Cover_Letter_2025.doc", at: 88000 },
+  ]).current;
+
+  useEffect(() => {
+    const timers = ARRIVALS.map(({ key, v, at }) =>
+      setTimeout(() => {
+        setFields(prev => {
+          // Don't overwrite a field the user has already edited — first
+          // edit wins, agent's draft is silently dropped for that field.
+          if (prev[key].e) return prev;
+          return { ...prev, [key]: { v, r: true, e: false } };
+        });
+      }, at)
+    );
+    return () => timers.forEach(clearTimeout);
+  // ARRIVALS is a useRef.current, stable for the life of the component.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function update(key, v) {
-    setFields(prev => ({ ...prev, [key]: { v, e: v !== prev[key].v ? true : prev[key].e } }));
+    // User input: mark ready + edited so the pending arrival timer skips
+    // it. For ASK_USER fields the user is the original author (not an
+    // editor), so we don't set the "edited" flag — that's reserved for
+    // fields where the user has changed an agent-provided value.
+    setFields(prev => ({
+      ...prev,
+      [key]: { v, r: true, e: !ASK_USER.has(key) && v !== "" },
+    }));
   }
+
+  // Aggregate state per section. Three buckets per field:
+  //  • pending    — agent hasn't surfaced it yet (r === false)
+  //  • needs-input — agent has surfaced an ASK_USER field that's empty
+  //  • complete    — has a value (agent-filled or user-answered)
+  // Sections are "done" only when every field is complete.
+  const SECTION_KEYS = {
+    personalia: ["firstName", "lastName", "email", "phone", "gender", "linkedin"],
+    attachments: ["cv", "letter"],
+    questions: ["qNorsk", "qExp"],
+  };
+  function isComplete(k)   { return fields[k].r && (!ASK_USER.has(k) || fields[k].v !== ""); }
+  function isNeedsInput(k) { return fields[k].r && ASK_USER.has(k) && fields[k].v === ""; }
+  function sectionState(keys) {
+    const processed = keys.filter(k => fields[k].r).length;
+    const complete  = keys.filter(isComplete).length;
+    const needsInput = keys.filter(isNeedsInput).length;
+    return {
+      processed, complete, needsInput,
+      total: keys.length,
+      streaming: processed < keys.length,
+      done: complete === keys.length,
+    };
+  }
+  const personaliaState  = sectionState(SECTION_KEYS.personalia);
+  const attachmentsState = sectionState(SECTION_KEYS.attachments);
+  const questionsState   = sectionState(SECTION_KEYS.questions);
+  // agentDone — agent has surfaced every field (no spinners left).
+  // allReady   — every required field also has a value (send-eligible).
+  const agentDone = !personaliaState.streaming && !attachmentsState.streaming && !questionsState.streaming;
+  const allReady  = personaliaState.done && attachmentsState.done && questionsState.done;
+  // Count of user-input fields still waiting on the user.
+  const needsInputCount = personaliaState.needsInput + attachmentsState.needsInput + questionsState.needsInput;
 
   // Labels are the same as AgenticReviewScreen's LABELS map.
   const LABELS = {
@@ -9592,7 +10100,8 @@ function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedCh
     qExp:      t({ en: "How many years of relevant experience do you have?", no: "Hvor mange års relevant erfaring har du?" }),
   };
 
-  const blockingFields = !confirmed;
+  // Send blocked while anything's still streaming OR user hasn't confirmed.
+  const sendBlocked = !allReady || !confirmed;
 
   return (
     <>
@@ -9612,29 +10121,31 @@ function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedCh
           <Icon name="chevron-left" size={16} stroke={2.4} />
           {t({ en: "Back to job page", no: "Tilbake til annonsen" })}
         </button>
-        <h1>
-          {isLoading
-            ? t({ en: "Preparing your application…", no: "Forbereder søknaden din …" })
-            : t({ en: "Review your application",      no: "Se gjennom søknaden din" })}
-        </h1>
-        <p className="drawer-sub">Fag- og personalleder — Politiets IT-enhet</p>
-        <p className="drawer-lede">
-          {isLoading
-            ? t({
-                en: "We're pulling everything together from your Job profile. Just a moment.",
-                no: "Vi henter alt vi trenger fra Jobbprofilen din. Tar bare et øyeblikk.",
-              })
-            : t({
-                en: "We've auto-filled your application based on your Job profile. Review and confirm, and we'll send it for you.",
-                no: "Vi har automatisk fylt ut søknaden din basert på Jobbprofilen din. Se gjennom og bekreft, så sender vi for deg.",
+        <div className="drawer-title-row">
+          <h1>{t({ en: "Review your application", no: "Se gjennom søknaden din" })}</h1>
+          {!agentDone ? (
+            <span className="drawer-drafting-pill" aria-live="polite">
+              <span className="drawer-drafting-dot" />
+              <span className="ai-shimmer-text">{t({ en: "Drafting…", no: "Skriver …" })}</span>
+            </span>
+          ) : needsInputCount > 0 ? (
+            <span className="drawer-turn-pill" aria-live="polite">
+              <span className="drawer-turn-dot" />
+              {t({
+                en: needsInputCount === 1 ? "Your answer needed" : "Your answers needed",
+                no: needsInputCount === 1 ? "Ditt svar trengs"  : "Dine svar trengs",
               })}
-        </p>
+            </span>
+          ) : null}
+        </div>
+        <p className="drawer-sub">Fag- og personalleder — Politiets IT-enhet</p>
+        <p className="drawer-lede">{t({
+          en: "We're auto-filling your application from your Job profile. Edit anything as it streams in, then send.",
+          no: "Vi fyller ut søknaden din fra Jobbprofilen din. Du kan endre alt etter hvert som det kommer inn, og sende når du er klar.",
+        })}</p>
       </header>
 
-      {isLoading ? (
-        <DrawerLoadingView phase={loadingPhase} />
-      ) : (
-      <div className="drawer-body drawer-body-enter">
+      <div className="drawer-body">
         {/* Personal details — same field set as the mobile Personalia sheet.
             Section heads echo the loading rows: green check + title + status
             sub, so the eye registers each section as "the loaded version of
@@ -9642,11 +10153,16 @@ function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedCh
         <section className="drawer-section">
           <header className="drawer-section-head">
             <h2 className="drawer-section-title">
-              <Icon name="check-circle" size={20} color="#1f8a3b" stroke={2} />
+              <SectionStatusGlyph state={personaliaState} />
               <span>{t({ en: "Personal details", no: "Personalia" })}</span>
             </h2>
             <p className="drawer-section-status">
-              {t({ en: "Synced from your profile", no: "Hentet fra profilen din" })}
+              {personaliaState.done
+                ? t({ en: "Synced from your profile", no: "Hentet fra profilen din" })
+                : t({
+                    en: `Filling ${personaliaState.ready} of ${personaliaState.total} fields…`,
+                    no: `Fyller ut ${personaliaState.ready} av ${personaliaState.total} felt …`,
+                  })}
             </p>
           </header>
           <div className="drawer-section-fields">
@@ -9660,23 +10176,43 @@ function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedCh
                 { id: "Female", label: t({ en: "Female", no: "Kvinne" }) },
                 { id: "Other",  label: t({ en: "Other",  no: "Annet"  }) },
               ]} />
-            <div className="ar-rv">
+            <div className={"ar-rv" + (!fields.linkedin.r ? " is-pending" : "")}>
               <p className="ar-rv-heading">
                 <span className="ar-rv-heading-label">{LABELS.linkedin}</span>
-                <span className="ar-rv-source" style={{ background: "#f0f0f3", color: "#6b6b6b" }}>
-                  {t({ en: "Optional", no: "Valgfritt" })}
-                </span>
+                {!fields.linkedin.r ? (
+                  <span className="drawer-pending-pill">
+                    <span className="drawer-spinner drawer-spinner-xs" aria-hidden="true" />
+                    <span className="ai-shimmer-text">{t({ en: "Filling …", no: "Fyller ut …" })}</span>
+                  </span>
+                ) : (
+                  <span className="ar-rv-source" style={{ background: "#f0f0f3", color: "#6b6b6b" }}>
+                    {t({ en: "Optional", no: "Valgfritt" })}
+                  </span>
+                )}
               </p>
-              <DrawerInput value={fields.linkedin.v} onChange={(v) => update("linkedin", v)} />
-              <label className="drawer-checkrow">
-                <input
-                  type="checkbox"
-                  checked={includeLinkedin}
-                  onChange={(e) => setIncludeLinkedin(e.target.checked)}
-                />
-                <span>{t({ en: "Add this optional information to my application",
-                          no: "Inkluder denne valgfrie informasjonen i søknaden min" })}</span>
-              </label>
+              {!fields.linkedin.r ? (
+                <button
+                  type="button"
+                  className="drawer-skeleton-input"
+                  onClick={() => update("linkedin", "")}
+                  aria-label={t({ en: "Edit early", no: "Endre nå" })}
+                >
+                  <span className="skeleton" />
+                </button>
+              ) : (
+                <>
+                  <DrawerInput value={fields.linkedin.v} onChange={(v) => update("linkedin", v)} />
+                  <label className="drawer-checkrow">
+                    <input
+                      type="checkbox"
+                      checked={includeLinkedin}
+                      onChange={(e) => setIncludeLinkedin(e.target.checked)}
+                    />
+                    <span>{t({ en: "Add this optional information to my application",
+                              no: "Inkluder denne valgfrie informasjonen i søknaden min" })}</span>
+                  </label>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -9685,13 +10221,18 @@ function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedCh
         <section className="drawer-section">
           <header className="drawer-section-head">
             <h2 className="drawer-section-title">
-              <Icon name="check-circle" size={20} color="#1f8a3b" stroke={2} />
+              <SectionStatusGlyph state={attachmentsState} />
               <span>{t({ en: "Attachments", no: "Vedlegg" })}</span>
               <span className="drawer-section-title-suffix"><AILogo size={14} /></span>
             </h2>
             <p className="drawer-section-status">
-              {t({ en: "CV from your profile · AI-drafted cover letter",
-                   no: "CV fra profilen · AI-utkast for søknadsbrev" })}
+              {attachmentsState.done
+                ? t({ en: "CV from your profile · AI-drafted cover letter",
+                     no: "CV fra profilen · AI-utkast for søknadsbrev" })
+                : !fields.cv.r
+                  ? t({ en: "Fetching your CV…", no: "Henter CV …" })
+                  : t({ en: "Drafting your cover letter — feel free to keep reviewing.",
+                       no: "Skriver søknadsbrev — du kan fortsette å se gjennom." })}
             </p>
           </header>
           <div className="drawer-section-fields">
@@ -9706,34 +10247,42 @@ function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedCh
         <section className="drawer-section">
           <header className="drawer-section-head">
             <h2 className="drawer-section-title">
-              <Icon name="check-circle" size={20} color="#1f8a3b" stroke={2} />
+              <SectionStatusGlyph state={questionsState} />
               <span>{t({ en: "Employer questions", no: "Spørsmål fra arbeidsgiver" })}</span>
             </h2>
             <p className="drawer-section-status">
-              {t({ en: "2 answers filled in", no: "2 svar fylt ut" })}
+              {questionsState.done
+                ? t({ en: "Answers ready", no: "Svar er klare" })
+                : questionsState.streaming
+                  ? t({
+                      en: `Fetching ${questionsState.total - questionsState.processed} more from the ad…`,
+                      no: `Henter ${questionsState.total - questionsState.processed} til fra annonsen …`,
+                    })
+                  : t({
+                      en: `${questionsState.needsInput} ${questionsState.needsInput === 1 ? "question" : "questions"} need your answer`,
+                      no: `${questionsState.needsInput} ${questionsState.needsInput === 1 ? "spørsmål trenger" : "spørsmål trenger"} ditt svar`,
+                    })}
             </p>
           </header>
           <div className="drawer-section-fields">
-            <DrawerRadio label={LABELS.qNorsk} field={fields.qNorsk}
+            <DrawerRadio label={LABELS.qNorsk} field={fields.qNorsk} askUser
               onChange={(v) => update("qNorsk", v)}
               options={[
                 { id: "Yes", label: t({ en: "Yes", no: "Ja"  }) },
                 { id: "No",  label: t({ en: "No",  no: "Nei" }) },
               ]} />
-            <DrawerField label={LABELS.qExp} field={fields.qExp} onChange={(v) => update("qExp", v)} />
+            <DrawerField label={LABELS.qExp} field={fields.qExp} askUser onChange={(v) => update("qExp", v)} />
           </div>
         </section>
       </div>
-      )}
 
-      {!isLoading && (
-      <footer className="drawer-foot drawer-foot-enter">
-        <label style={{ display: "inline-flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#1d1d1d", cursor: "pointer" }}>
+      <footer className="drawer-foot">
+        <label className={"drawer-confirm" + (!allReady ? " is-locked" : "")}>
           <input
             type="checkbox"
             checked={confirmed}
+            disabled={!allReady}
             onChange={(e) => onConfirmedChange?.(e.target.checked)}
-            style={{ width: 16, height: 16, marginTop: 2 }}
           />
           <span>
             {t({ en: "I confirm all the information above is correct",
@@ -9742,121 +10291,101 @@ function ApplyDrawer({ onClose, loadingPhase = "ready", confirmed, onConfirmedCh
         </label>
         <button
           onClick={onSend}
-          disabled={blockingFields}
-          style={{
-            appearance: "none", border: 0,
-            background: blockingFields ? "#e6e6ea" : "#0063fb",
-            color: blockingFields ? "#9a9a9a" : "#fff",
-            cursor: blockingFields ? "not-allowed" : "pointer",
-            padding: "14px 20px", borderRadius: 10,
-            font: "600 16px/1 var(--sys-text)", letterSpacing: -0.1,
-            transition: "background 200ms cubic-bezier(0.45, 0, 0.25, 1), color 200ms",
-          }}
+          disabled={sendBlocked}
+          className={"drawer-send" + (sendBlocked ? " is-blocked" : "")}
+          title={
+            !agentDone
+              ? t({ en: "Still drafting…", no: "Skriver fortsatt …" })
+              : needsInputCount > 0
+                ? t({ en: "Answer the remaining questions to send", no: "Svar på resten for å sende" })
+                : undefined
+          }
         >
-          {t({ en: "Send application", no: "Send søknad" })}
+          {!agentDone
+            ? t({ en: "Drafting…", no: "Skriver …" })
+            : needsInputCount > 0
+              ? t({
+                  en: needsInputCount === 1 ? "Answer 1 question to send" : `Answer ${needsInputCount} questions to send`,
+                  no: needsInputCount === 1 ? "Svar på 1 spørsmål for å sende" : `Svar på ${needsInputCount} spørsmål for å sende`,
+                })
+              : t({ en: "Send application", no: "Send søknad" })}
         </button>
       </footer>
-      )}
     </aside>
     </>
   );
 }
 
-// ─── DrawerLoadingView ─────────────────────────────────────────────────
-// Desktop port of the mobile preview's loading rows. Same 4-row ladder
-// (Personalia · CV · Cover letter · Spørsmål), same cadence, same shimmer.
-// Rows tick from spinner→check as loadingPhase advances. Kept inline in
-// the drawer body so the visual rhythm (header → rows → eventual footer)
-// reads as one panel.
-function DrawerLoadingView({ phase }) {
+// SectionStatusGlyph — three-state indicator on section heads:
+//  • spinner   — agent is still streaming fields into this section
+//  • attention — agent is done, but the user has answers to provide
+//  • check     — section is fully complete (agent + any user input)
+function SectionStatusGlyph({ state }) {
+  if (state.done) {
+    return <Icon name="check-circle" size={20} color="#1f8a3b" stroke={2} />;
+  }
+  if (state.streaming) {
+    return <span className="section-glyph-spinner" aria-hidden="true" />;
+  }
+  // Agent done, waiting on the user.
+  return <span className="section-glyph-attention" aria-hidden="true" />;
+}
+
+// DrawerField — three-state input:
+//  • pending     — agent hasn't surfaced it yet → skeleton placeholder
+//  • needs-input — agent surfaced an empty field for the user to answer
+//                  → enabled input with a "Your answer needed" pill
+//  • ready       — has a value (agent-filled or user-answered)
+function DrawerField({ label, field, onChange, type = "text", autoComplete, askUser = false }) {
   const t = useT();
-  const cvLoading     = phase === "loading-cv";
-  const letterLoading = phase === "loading-cv" || phase === "loading-letter";
-  const rows = [
-    {
-      id: "personalia",
-      title: t({ en: "Personal details", no: "Personalia" }),
-      sub:   t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
-      loading: false,
-    },
-    {
-      id: "cv",
-      title: "CV",
-      sub: cvLoading
-        ? t({ en: "Fetching your CV…", no: "Henter CV …" })
-        : t({ en: "Synced from your profile", no: "Hentet fra profilen din" }),
-      loading: cvLoading,
-    },
-    {
-      id: "letter",
-      title: t({ en: "Cover letter", no: "Søknadsbrev" }),
-      sub: letterLoading
-        ? t({ en: "Drafting for this role…", no: "Skriver utkast for denne jobben …" })
-        : t({ en: "AI draft · editable", no: "AI-utkast · kan endres" }),
-      loading: letterLoading,
-      ai: true,
-    },
-    {
-      id: "questions",
-      title: t({ en: "Employer questions", no: "Spørsmål fra arbeidsgiver" }),
-      sub:   t({ en: "You answered 2 questions", no: "Du svarte på 2 spørsmål" }),
-      loading: false,
-    },
-  ];
-  return (
-    <div className="drawer-loading">
-      {rows.map((r, i) => (
-        <DrawerLoadingRow key={r.id} row={r} isLast={i === rows.length - 1} />
-      ))}
-    </div>
-  );
-}
-
-function DrawerLoadingRow({ row, isLast }) {
-  return (
-    <div className="drawer-loading-row" data-last={isLast ? "true" : "false"}>
-      <div className="drawer-loading-icon">
-        {row.loading ? (
-          <span className="drawer-spinner" aria-hidden="true" />
-        ) : (
-          <Icon name="check-circle" size={26} color="#1f8a3b" stroke={2} />
-        )}
-      </div>
-      <div className="drawer-loading-text">
-        <p className="drawer-loading-title">
-          <span className={row.loading ? "ai-shimmer-text" : ""}>{row.title}</span>
-          {row.ai && !row.loading && (
-            <span style={{ display: "inline-flex", marginLeft: 6, verticalAlign: "middle" }}>
-              <AILogo size={14} />
-            </span>
-          )}
+  if (!field.r) {
+    return (
+      <div className="ar-rv is-pending">
+        <p className="ar-rv-heading">
+          <span className="ar-rv-heading-label">{label}</span>
+          <span className="drawer-pending-pill">
+            <span className="drawer-spinner drawer-spinner-xs" aria-hidden="true" />
+            <span className="ai-shimmer-text">{t({ en: "Filling …", no: "Fyller ut …" })}</span>
+          </span>
         </p>
-        <p className="drawer-loading-sub">{row.sub}</p>
+        <button
+          type="button"
+          className="drawer-skeleton-input"
+          onClick={() => onChange?.("")}
+          aria-label={t({ en: "Edit early", no: "Endre nå" })}
+        >
+          <span className="skeleton" />
+        </button>
       </div>
-    </div>
-  );
-}
-
-// Mobile-style .ar-rv field — heading row + input, with optional edited chip.
-function DrawerField({ label, field, onChange, type = "text", autoComplete }) {
+    );
+  }
+  const needsInput = askUser && field.v === "";
   return (
-    <div className="ar-rv">
+    <div className={"ar-rv" + (needsInput ? " is-needs-input" : "")}>
       <p className="ar-rv-heading">
         <span className="ar-rv-heading-label">{label}</span>
-        {field.e && <DrawerEditedChip />}
+        {needsInput ? (
+          <span className="drawer-needs-pill">
+            <span className="drawer-needs-dot" />
+            {t({ en: "Your answer needed", no: "Ditt svar trengs" })}
+          </span>
+        ) : (
+          field.e && !askUser && <DrawerEditedChip />
+        )}
       </p>
-      <DrawerInput value={field.v} onChange={onChange} type={type} autoComplete={autoComplete} />
+      <DrawerInput value={field.v} onChange={onChange} type={type} autoComplete={autoComplete} placeholder={needsInput ? t({ en: "Type your answer…", no: "Skriv svaret ditt …" }) : undefined} />
     </div>
   );
 }
 
-function DrawerInput({ value, onChange, type = "text", autoComplete }) {
+function DrawerInput({ value, onChange, type = "text", autoComplete, placeholder }) {
   const [focused, setFocused] = useState(false);
   return (
     <input
       type={type}
       value={value}
       autoComplete={autoComplete}
+      placeholder={placeholder}
       onChange={(e) => onChange?.(e.target.value)}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
@@ -9871,21 +10400,37 @@ function DrawerInput({ value, onChange, type = "text", autoComplete }) {
 // rows with a true 20px radio control on the left + label on the right.
 // Mirrors WARP's @warp-ds/css radio styles (strong border unchecked,
 // FINN-blue border + 10px inner dot when checked, 44px tap target).
-function DrawerRadio({ label, options, field, onChange }) {
+function DrawerRadio({ label, options, field, onChange, askUser = false }) {
+  const t = useT();
   const groupName = (typeof label === "string" ? label : "radio").replace(/\s+/g, "-").toLowerCase();
+  const pending = !field.r;
+  const needsInput = !pending && askUser && field.v === "";
   return (
-    <div className="ar-rv">
+    <div className={"ar-rv" + (pending ? " is-pending" : "") + (needsInput ? " is-needs-input" : "")}>
       <p className="ar-rv-heading">
         <span className="ar-rv-heading-label">{label}</span>
-        {field.e && <DrawerEditedChip />}
+        {pending ? (
+          <span className="drawer-pending-pill">
+            <span className="drawer-spinner drawer-spinner-xs" aria-hidden="true" />
+            <span className="ai-shimmer-text">{t({ en: "Filling …", no: "Fyller ut …" })}</span>
+          </span>
+        ) : needsInput ? (
+          <span className="drawer-needs-pill">
+            <span className="drawer-needs-dot" />
+            {t({ en: "Your answer needed", no: "Ditt svar trengs" })}
+          </span>
+        ) : (
+          field.e && !askUser && <DrawerEditedChip />
+        )}
       </p>
       <div className="warp-radio-group" role="radiogroup" aria-label={typeof label === "string" ? label : undefined}>
         {options.map(o => (
-          <label key={o.id} className={"warp-radio" + (field.v === o.id ? " is-checked" : "")}>
+          <label key={o.id} className={"warp-radio" + (field.v === o.id ? " is-checked" : "") + (pending ? " is-pending" : "")}>
             <input
               type="radio"
               name={groupName}
               checked={field.v === o.id}
+              disabled={pending}
               onChange={() => onChange?.(o.id)}
             />
             <span className="warp-radio-control" aria-hidden="true" />
@@ -9900,32 +10445,48 @@ function DrawerRadio({ label, options, field, onChange }) {
 // File card — mirrors the mobile FileCard (icon disk + filename + Tap-to-change).
 function DrawerFile({ label, file, icon, onSwap }) {
   const t = useT();
+  const pending = !file.r;
   return (
-    <div className="ar-rv">
+    <div className={"ar-rv" + (pending ? " is-pending" : "")}>
       <p className="ar-rv-heading">
         <span className="ar-rv-heading-label">{label}</span>
-        {file.e && <DrawerEditedChip />}
+        {pending ? (
+          <span className="drawer-pending-pill">
+            <span className="drawer-spinner drawer-spinner-xs" aria-hidden="true" />
+            <span className="ai-shimmer-text">{t({ en: "Filling …", no: "Fyller ut …" })}</span>
+          </span>
+        ) : (
+          file.e && <DrawerEditedChip />
+        )}
       </p>
-      <button type="button" className="file-card" onClick={onSwap}>
-        <span className="icon-disk">
-          <Icon name={icon} size={20} color="#0063fb" stroke={2} />
-        </span>
-        <span className="meta">
-          <p className="name">{file.v}</p>
-          <p className="sub">{t({ en: "Tap to change", no: "Trykk for å bytte" })}</p>
-        </span>
-        <Icon name="chevron-right" size={18} color="#0063fb" stroke={2.2} />
-      </button>
+      {pending ? (
+        <div className="file-card is-skeleton" aria-hidden="true">
+          <span className="icon-disk">
+            <Icon name={icon} size={20} color="#9aa3ad" stroke={2} />
+          </span>
+          <span className="meta">
+            <span className="skeleton skeleton-line" style={{ width: "60%", height: 12 }} />
+            <span className="skeleton skeleton-line" style={{ width: "40%", height: 10, marginTop: 6 }} />
+          </span>
+        </div>
+      ) : (
+        <button type="button" className="file-card" onClick={onSwap}>
+          <span className="icon-disk">
+            <Icon name={icon} size={20} color="#0063fb" stroke={2} />
+          </span>
+          <span className="meta">
+            <p className="name">{file.v}</p>
+            <p className="sub">{t({ en: "Tap to change", no: "Trykk for å bytte" })}</p>
+          </span>
+          <Icon name="chevron-right" size={18} color="#0063fb" stroke={2.2} />
+        </button>
+      )}
     </div>
   );
 }
 
-function DrawerEditedChip() {
-  const t = useT();
-  return (
-    <span className="ar-edited">{t({ en: "Edited", no: "Redigert" })}</span>
-  );
-}
+// Desktop drawer edited chip — same MVP cleanup; renders nothing.
+function DrawerEditedChip() { return null; }
 
 // ─── Vedlegg internal-nav page components ────────────────────────────────
 // Rendered inside the agentic section sheet's page stack so we don't have
@@ -9942,7 +10503,7 @@ function DrawerEditedChip() {
 // AttachmentPicker — used for both CV (`kind="cv"`) and Cover Letter
 // (`kind="letter"`). Same shape, same affordances; only the labels and
 // the source file list differ.
-function VedleggAttachmentPicker({ kind, currentName, onPick }) {
+function VedleggAttachmentPicker({ kind, currentName, onPick, uploaded, setUploaded, saveToProfile, setSaveToProfile }) {
   const t = useT();
   // Mock per-kind profile files. In a real implementation these come from
   // the user's FINN Job Profile via API. Listed newest first.
@@ -9957,22 +10518,13 @@ function VedleggAttachmentPicker({ kind, currentName, onPick }) {
         { id: "cl-2", name: "Cover_letter_2024.doc",      date: { en: "8 Dec 2024",  no: "8. des 2024"  }, size: "312 KB" },
       ];
 
-  const [uploaded, setUploaded]           = useState(null);
-  const [saveToProfile, setSaveToProfile] = useState(true);
-
   function simulateUpload() {
     haptic("tap");
-    const stamp = new Date().toLocaleDateString();
     setUploaded({
       name: kind === "cv" ? "Lee_Frost_CV_new.pdf" : "Cover_letter_new.pdf",
       size: kind === "cv" ? "189 KB" : "168 KB",
       date: { en: "just now", no: "akkurat nå" },
     });
-  }
-  function commitUpload() {
-    if (!uploaded) return;
-    haptic("ok");
-    onPick?.(uploaded.name, { savedToProfile: saveToProfile, fresh: true });
   }
 
   return (
@@ -10090,11 +10642,6 @@ function VedleggAttachmentPicker({ kind, currentName, onPick }) {
                 })}
               </span>
             </label>
-            <PrimaryButton onClick={commitUpload}>
-              {kind === "cv"
-                ? t({ en: "Use this CV",            no: "Bruk denne CV-en"      })
-                : t({ en: "Use this cover letter", no: "Bruk dette søknadsbrevet" })}
-            </PrimaryButton>
           </div>
         )}
       </div>
@@ -10308,105 +10855,116 @@ function VedleggSelectLetter({ onPick }) {
   );
 }
 
+// Confirmation is presented as a bottom sheet over the job ad — the user
+// stays anchored to the listing they just applied for, and there's a
+// single CTA back to FINN Jobs. Same modal shell language as the apply
+// preview sheet so the surfaces feel like one flow.
 function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
   const t = useT();
+  const [exiting, close] = useDelayedClose(onDone, 320);
   const platform = usePlatform();
+  const sheetRadius = PLATFORM_RADII[platform].sheet;
   const cardR = PLATFORM_RADII[platform].card;
   const { statusBarH, homeArea } = useMetrics();
+  const backdropH = statusBarH + 16;
   useEffect(() => { haptic("ok"); }, []);
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#fff" }}>
-      <div style={{ height: statusBarH, flexShrink: 0 }} />
-      <div style={{
-        flex: 1, display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center", padding: "0 32px",
-        textAlign: "center", gap: 16,
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 70,
+        display: "flex", flexDirection: "column",
+        background: "rgba(0,0,0,.30)",
+        animation: "fadein 300ms var(--ease-modal)",
       }}>
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          marginBottom: 4, position: "relative",
-          animation: "popin 620ms var(--ease-spring)",
+      <div onClick={close} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
+          overflow: "hidden",
+          animation: "slideup 440ms var(--ease-modal)",
         }}>
-          <SuccessIllustration size={180} />
+        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
+          <SheetDragHandle />
         </div>
-        <h1 style={{
-          fontSize: 26, fontWeight: 700, margin: 0, color: "#1d1d1d", letterSpacing: -0.4,
-        }}>{t({ en: "Application sent", no: "Søknad sendt" })}</h1>
 
-        {magic && (
+        <div style={{
+          flex: 1, display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          padding: "12px 32px 24px",
+          textAlign: "center", gap: 14,
+          overflowY: "auto",
+        }}>
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "5px 12px 5px 10px",
-            background: "linear-gradient(180deg, #f4f8ff, #eaf2ff)",
-            border: "1px solid rgba(0,99,251,0.18)",
-            borderRadius: 9999,
-            fontSize: 11, color: "#0063fb", fontWeight: 700, letterSpacing: 0.08,
-            textTransform: "uppercase",
-            animation: "fadein 300ms var(--ease-modal)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            marginBottom: 4, position: "relative",
+            animation: "popin 620ms var(--ease-spring)",
           }}>
-            <Icon name="sparkle" size={12} color="#0063fb" stroke={0} fill="#0063fb" />
-            {t({ en: "Magic Apply", no: "Smart søknad" })}
+            <SuccessIllustration size={150} />
           </div>
-        )}
+          <h1 style={{
+            fontSize: 24, fontWeight: 700, margin: 0, color: "#1d1d1d", letterSpacing: -0.4,
+          }}>{t({ en: "Application sent", no: "Søknad sendt" })}</h1>
 
-        <div style={{
-          width: "100%", padding: 14, borderRadius: cardR,
-          // Material 3 Filled card on Android — no shadow, surface-variant fill.
-          background: platform === "android" ? "#f3edf7" : "#f7f7f9",
-          display: "flex", alignItems: "center", gap: 12, marginTop: 4,
-          boxShadow: "none",
-        }}>
-          <CompanyLogo size={44} radius={Math.min(cardR - 4, 12)} initials={job.initials} color={job.brandColor} logo={job.logo} />
-          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-            <p style={{
-              fontSize: 15, fontWeight: 600, color: "#1d1d1d", margin: 0, lineHeight: 1.3,
-              letterSpacing: -0.1,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>{t({ en: job.title, no: job.titleNo })}</p>
-            <p style={{ fontSize: 13, color: "#6b6b6b", margin: "2px 0 0" }}>
-              {job.company} · {t({ en: "sent just now", no: "sendt nå" })}
-            </p>
+          {magic && (
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "5px 12px 5px 10px",
+              background: "linear-gradient(180deg, #f4f8ff, #eaf2ff)",
+              border: "1px solid rgba(0,99,251,0.18)",
+              borderRadius: 9999,
+              fontSize: 11, color: "#0063fb", fontWeight: 700, letterSpacing: 0.08,
+              textTransform: "uppercase",
+              animation: "fadein 300ms var(--ease-modal)",
+            }}>
+              <Icon name="sparkle" size={12} color="#0063fb" stroke={0} fill="#0063fb" />
+              {t({ en: "Magic Apply", no: "Smart søknad" })}
+            </div>
+          )}
+
+          <div style={{
+            width: "100%", padding: 14, borderRadius: cardR,
+            background: platform === "android" ? "#f3edf7" : "#f7f7f9",
+            display: "flex", alignItems: "center", gap: 12, marginTop: 4,
+            boxShadow: "none",
+          }}>
+            <CompanyLogo size={44} radius={Math.min(cardR - 4, 12)} initials={job.initials} color={job.brandColor} logo={job.logo} />
+            <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+              <p style={{
+                fontSize: 15, fontWeight: 600, color: "#1d1d1d", margin: 0, lineHeight: 1.3,
+                letterSpacing: -0.1,
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>{t({ en: job.title, no: job.titleNo })}</p>
+              <p style={{ fontSize: 13, color: "#6b6b6b", margin: "2px 0 0" }}>
+                {job.company} · {t({ en: "sent just now", no: "sendt nå" })}
+              </p>
+            </div>
           </div>
+
+          <p style={{ fontSize: 14, color: "#6b6b6b", lineHeight: 1.5, margin: "4px 0 0", maxWidth: 320 }}>
+            {magic ? t({
+              en: <>Application <strong style={{ color: "#1d1d1d" }}>automatically optimised</strong> based on your role and experience — and sent for you. We'll let you know when the employer responds.</>,
+              no: <>Søknaden er <strong style={{ color: "#1d1d1d" }}>automatisk tilpasset</strong> rollen og erfaringen din — og sendt for deg. Vi sier ifra når arbeidsgiver svarer.</>,
+            }) : t({
+              en: <>You'll find this in <strong style={{ color: "#1d1d1d" }}>My applications</strong>. We'll let you know when the employer responds.</>,
+              no: <>Du finner søknaden under <strong style={{ color: "#1d1d1d" }}>Mine søknader</strong>. Vi sier ifra når arbeidsgiver svarer.</>,
+            })}
+          </p>
         </div>
 
-        <p style={{ fontSize: 14, color: "#6b6b6b", lineHeight: 1.5, margin: "8px 0 0", maxWidth: 320 }}>
-          {magic ? t({
-            en: <>Application <strong style={{ color: "#1d1d1d" }}>automatically optimised</strong> based on your role and experience — and sent for you. We'll let you know when the employer responds.</>,
-            no: <>Søknaden er <strong style={{ color: "#1d1d1d" }}>automatisk tilpasset</strong> rollen og erfaringen din — og sendt for deg. Vi sier ifra når arbeidsgiver svarer.</>,
-          }) : t({
-            en: <>You'll find this in <strong style={{ color: "#1d1d1d" }}>My applications</strong>. We'll let you know when the employer responds.</>,
-            no: <>Du finner søknaden under <strong style={{ color: "#1d1d1d" }}>Mine søknader</strong>. Vi sier ifra når arbeidsgiver svarer.</>,
-          })}
-        </p>
-      </div>
-      <div style={{
-        padding: "12px 16px",
-        paddingBottom: `calc(12px + ${homeArea}px)`,
-        background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.06)",
-        display: "flex", flexDirection: "column", gap: 10,
-      }}>
-        <PrimaryButton onClick={onDone}>
-          {t({ en: "Go to My applications", no: "Gå til Mine søknader" })}
-        </PrimaryButton>
-        {/* Find similar roles — secondary action with full visual weight
-            (outlined button vs. inline text link). Returning the user to a
-            related search is one of the strongest stickiness moves on a
-            confirmation screen: highest motivation, lowest friction moment
-            to re-engage. Supports the must-win "stickiness in app" battle. */}
-        <button
-          className="press"
-          onClick={() => { haptic("tap"); onReset?.(); }}
-          style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-            background: "#fff", color: "#0063fb",
-            border: "1px solid rgba(0,99,251,0.4)",
-            padding: "14px 20px", borderRadius: 10,
-            fontFamily: "inherit", fontSize: 16, fontWeight: 600,
-            cursor: "pointer", letterSpacing: -0.1,
-          }}>
-          <Icon name="search" size={18} stroke={2.2} color="#0063fb" />
-          {t({ en: "Find similar roles", no: "Finn lignende stillinger" })}
-        </button>
+        <div style={{
+          padding: "12px 16px",
+          paddingBottom: `calc(12px + ${homeArea}px)`,
+          background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.06)",
+        }}>
+          <PrimaryButton onClick={close}>
+            {t({ en: "Back to FINN Jobs", no: "Tilbake til FINN Jobb" })}
+          </PrimaryButton>
+        </div>
       </div>
     </div>
   );
@@ -10442,86 +11000,77 @@ const USER_STATES = [
 ];
 
 // ─── Strategy data: opportunity tree + impact/effort scores ────────────────
-// Mirrors the team's opportunity-tree FigJam.
-// `needs: true` on a hypothesis = pink card on the FigJam = open questions / not yet validated.
+// Mirrors the team's T3 2026 opportunity-tree FigJam ("Jobs Prio #2 2026 —
+// AI-native app-first experience"). Three opportunities sized by exit-survey
+// drop-out share; each opportunity carries two hypotheses; each hypothesis
+// owns its concrete solutions. `needs: true` on a hypothesis = pink card
+// on the FigJam = open questions / not yet validated.
 const TREE_DATA = {
-  business: "Business",
+  business: "Jobs Prio #2 2026",
   outcome: {
-    text: "Validate agentic apply on iOS + Android by lifting application-step conversion from 30% → ≥ 50%. Mobile-first; web held at parity.",
-    meta: "T2 OKR · KR1 — v1.0 in apps by 15.06.26 · KR2 — 50% conversion (web + apps) by 30.06.26",
+    text: "AI-native app-first experience",
+    measurables: [
+      "Conversion view-form → confirmation (>50%)",
+      "Hotjar satisfaction score (all platforms): (> 4/5)",
+      "Usage of agentic apply button vs regular apply button (x)",
+      "CTR of agentic apply-button greater than CTR for ATS ads (x)",
+    ],
   },
   problems: [
     {
       id: "1", key: "pa", title: "Latency",
       pct: "39% drop out because processing takes too long",
       hypotheses: [
-        { id: "1.1", needs: true,
-          text: "If we move form-fetching to the ad-import we will make it a one-time action, reducing per-user loading time and increasing conversions.",
+        { id: "1.1",
+          text: "We can optimize our AI usage to increase processing speed",
           solutions: [
-            { n: 3, text: "Pre-fetch hint flagged in dev panel — form fetch moved upstream to ad insertion." },
+            { n: 1, text: "Pre-fetch form at ad-import (once, not per user) ✅" },
+            { n: 2, text: "Use a faster model for simpler fields (Gemini)" },
+            { n: 3, text: "Background processing with push notification when ready" },
           ] },
         { id: "1.2",
-          text: "If we switch to faster, cheaper models like Gemini for easier tasks, processing time will decrease and conversion will increase.",
-          solutions: [] },
-        { id: "1.3",
-          text: "Through design choices we can change users' perception of speed, and hence increase conversions. (Loading states, animations etc.)",
+          text: "Good design choices can change users' perception of speed, and increase conversions.",
           solutions: [
-            { n: 1, text: "No blocking loader — preview sheet slides up; rows hydrate in place." },
-            { n: 2, text: "Per-row spinner + 'Skriver utkast — du kan bla samtidig' status copy." },
-            { n: 13, text: "Skeleton shimmer on CV / letter rows while data hydrates." },
+            { n: 4, text: "Add loading animations" },
+            { n: 5, text: "Side drawer on desktop keeps ad visible while AI works" },
+            { n: 6, text: "Ask questions during the loading state to 'fill' the time and activate the users" },
           ] },
       ],
     },
     {
       id: "2", key: "pb", title: "Trust / Control",
-      pct: "36% drop out because they prefer to fill things out themselves",
+      pct: "36% drop out - they prefer to fill out themselves",
       hypotheses: [
         { id: "2.1",
-          text: "If we improve the accuracy and speed of the auto-filled fields, seekers will trust the AI more and feel less need to manually intervene.",
+          text: "Make the seekers trust the AI more and feel less of a need to manually intervene",
           solutions: [
-            { n: 4, text: "Source pills on every row ('Fra profilen', 'AI-utkast · kan endres') make provenance legible." },
+            { n: 7, text: "Clearer guidance text to help users understand what is going on." },
+            { n: 8, text: "“Generate alternative” button users can control without manual typing" },
+            { n: 9, text: "Side-by-side view: ad requirement → AI's interpretation → editable field" },
           ] },
         { id: "2.2",
-          text: "If we make the UI extremely clear that users can manually edit and overwrite the AI's inputs, they will feel in control and be less likely to abandon the flow.",
+          text: "Seekers would like to feel like they are in control of the process",
           solutions: [
-            { n: 5, text: "'Rediger' sits at parity with Send (44pt target) on every row." },
-            { n: 6, text: "'Skriv selv' is a peer option to 'Generert av FINN' inside the letter sheet." },
-            { n: 7, text: "'Tilpass for denne jobben' is opt-in, not the default path." },
-            { n: 8, text: "Header always shows role + company throughout the apply flow." },
-            { n: 14, text: "In-sheet 'Application ↔ Job ad' tabs — re-read the ad without losing the draft." },
-          ] },
-        { id: "2.3",
-          text: "If we autofill only basic fields and not questions, users will feel more in control of the process.",
-          solutions: [
-            { n: 15, text: "Employer questions stay user-answered — never AI-prefilled." },
+            { n: 10, text: "Let people type their own cover letter and save it as an attached file" },
+            { n: 11, text: "Don't autofill simple questions (e.g. yes/no)" },
           ] },
       ],
     },
     {
-      id: "3", key: "pc", title: "Technical Bugs",
-      pct: "17% drop out due to file uploads, lost progress on refresh, and unclear errors",
+      id: "3", key: "pc", title: "Tech Bugs",
+      pct: "17% drop out due to technical problems",
       hypotheses: [
         { id: "3.1",
-          text: "If we make video questions more clear, users will not get technical issues with these questions.",
-          solutions: [] },
+          text: "If we persist progress and make errors recoverable, users won't abandon mid-flow.",
+          solutions: [
+            { n: 12, text: "Autosave drafts server-side + visible \"Utkast lagret\" indicator" },
+            { n: 13, text: "Per-field error messages with one-tap retry" },
+          ] },
         { id: "3.2",
-          text: "If we ensure users do not lose their progress if the page refreshes, technical drop-offs will decrease.",
-          note: "Open Qs: How will the user know drafts are saved? How do they get back to the flow?",
+          text: "If we fix the question types with known bugs, we close the biggest tech failure paths.",
           solutions: [
-            { n: 9, text: "'Lagret som kladd 9:41' chip pinned at the top of the preview sheet." },
-            { n: 10, text: "Footer copy: 'Søknaden lagres som kladd i profilen din' (belt-and-braces)." },
-            { n: 16, text: "Activity → Drafts entry point lets users resume any in-progress application." },
-          ] },
-        { id: "3.3", needs: true,
-          text: "If we implement clearer error messages, users will be able to recover from mistakes rather than abandoning the application.",
-          note: "Open Q: How to resolve the error?",
-          solutions: [
-            { n: 12, text: "'Ett spørsmål mangler svar' — friendly missing-info state + recovery CTA into the right edit sheet." },
-          ] },
-        { id: "3.4",
-          text: "If we fix file upload issues, fewer users will abandon the process.",
-          solutions: [
-            { n: 11, text: "CV edit offers four explicit fallbacks — profile CV, tailored CV, uploaded PDF, fresh upload." },
+            { n: 14, text: "Video question UX: recording guidance + text fallback" },
+            { n: 15, text: "File upload: chunked upload + clear size/type guidance up-front" },
           ] },
       ],
     },
@@ -10535,24 +11084,32 @@ const TREE_DATA = {
 //   • "1.2-can-wait"  → meaningful polish, but conversion isn't gated on it
 //   • "post-2.0"      → bigger investment / doesn't fit this OKR cycle
 const SOLUTIONS = [
-  { n: 1,  key: "pa", problem: "Latency · 1.3",          title: "No blocking loader — progressive hydration",          impact: 9, effort: 5, jira: "JEA-1179", release: "1.0-must"     },
-  { n: 2,  key: "pa", problem: "Latency · 1.3",          title: "Per-row spinner + status copy on Send",               impact: 6, effort: 2, jira: "JEA-1179", release: "1.0-must"     },
-  { n: 3,  key: "pa", problem: "Latency · 1.1",          title: "Pre-fetch form at ad-insertion (infra)",              impact: 8, effort: 8, jira: "JEA-1074", release: "post-2.0"     },
-  { n: 13, key: "pa", problem: "Latency · 1.3",          title: "Skeleton shimmer while rows hydrate",                 impact: 4, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
+  // Latency · 1.1 — optimise AI usage
+  { n: 1,  key: "pa", problem: "Latency · 1.1",          title: "Pre-fetch form at ad-import (once, not per user)",        impact: 9, effort: 8, jira: "JEA-1074", release: "post-2.0"     },
+  { n: 2,  key: "pa", problem: "Latency · 1.1",          title: "Faster model (Gemini) for simpler fields",                impact: 7, effort: 5, jira: "JEA-1113", release: "1.0-must"     },
+  { n: 3,  key: "pa", problem: "Latency · 1.1",          title: "Background processing + push when ready",                 impact: 6, effort: 8, jira: null      , release: "post-2.0"     },
 
-  { n: 4,  key: "pb", problem: "Trust/Control · 2.1",    title: "Source pills on every row",                            impact: 7, effort: 2, jira: "JEA-1179", release: "1.0-must"     },
-  { n: 5,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Rediger' at visual parity with Send",                 impact: 5, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
-  { n: 6,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Skriv selv' parity with AI-generated letter",         impact: 6, effort: 2, jira: "JEA-1146", release: "1.0-must"     },
-  { n: 7,  key: "pb", problem: "Trust/Control · 2.2",    title: "'Tilpass' is opt-in, not default (Hick's law)",        impact: 7, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
-  { n: 8,  key: "pb", problem: "Trust/Control · 2.2",    title: "Persistent role + company header",                     impact: 4, effort: 1, jira: "JEA-1179", release: "1.2-can-wait" },
-  { n: 14, key: "pb", problem: "Trust/Control · 2.2",    title: "In-sheet tabs — re-read the ad without losing draft",  impact: 6, effort: 2, jira: null       , release: "1.2-can-wait" },
-  { n: 15, key: "pb", problem: "Trust/Control · 2.3",    title: "Employer questions never AI-prefilled",                impact: 5, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
+  // Latency · 1.2 — design choices change perception of speed
+  { n: 4,  key: "pa", problem: "Latency · 1.2",          title: "Loading animations during processing",                    impact: 5, effort: 2, jira: "JEA-1179", release: "1.0-must"     },
+  { n: 5,  key: "pa", problem: "Latency · 1.2",          title: "Side drawer on desktop — ad stays visible while AI works", impact: 6, effort: 4, jira: null      , release: "1.0-must"     },
+  { n: 6,  key: "pa", problem: "Latency · 1.2",          title: "Ask user questions during loading — activates them",      impact: 8, effort: 3, jira: "JEA-1179", release: "1.0-must"     },
 
-  { n: 9,  key: "pc", problem: "Tech Bugs · 3.2",        title: "'Lagret som kladd' chip in preview sheet",             impact: 6, effort: 2, jira: "JEA-1134", release: "1.2-can-wait" },
-  { n: 10, key: "pc", problem: "Tech Bugs · 3.2",        title: "Footer 'lagres som kladd' reassurance copy",           impact: 3, effort: 1, jira: "JEA-1134", release: "1.2-can-wait" },
-  { n: 16, key: "pc", problem: "Tech Bugs · 3.2",        title: "Activity → Drafts entry point to resume",              impact: 6, effort: 3, jira: "JEA-1081", release: "1.2-can-wait" },
-  { n: 12, key: "pc", problem: "Tech Bugs · 3.3",        title: "Friendly missing-info recovery state",                 impact: 7, effort: 4, jira: "JEA-1179", release: "1.0-must"     },
-  { n: 11, key: "pc", problem: "Tech Bugs · 3.4",        title: "CV edit — four explicit fallbacks",                    impact: 8, effort: 5, jira: "JEA-1179", release: "1.0-must"     },
+  // Trust/Control · 2.1 — trust the AI more
+  { n: 7,  key: "pb", problem: "Trust/Control · 2.1",    title: "Clearer guidance text on what the agent is doing",        impact: 5, effort: 2, jira: "JEA-1179", release: "1.0-must"     },
+  { n: 8,  key: "pb", problem: "Trust/Control · 2.1",    title: "'Generate alternative' button — steer without typing",    impact: 7, effort: 4, jira: null      , release: "1.2-can-wait" },
+  { n: 9,  key: "pb", problem: "Trust/Control · 2.1",    title: "Side-by-side: ad requirement → AI interpretation → field", impact: 8, effort: 6, jira: null      , release: "1.2-can-wait" },
+
+  // Trust/Control · 2.2 — feel in control
+  { n: 10, key: "pb", problem: "Trust/Control · 2.2",    title: "Let people type their own cover letter (saved as file)",  impact: 6, effort: 2, jira: "JEA-1146", release: "1.0-must"     },
+  { n: 11, key: "pb", problem: "Trust/Control · 2.2",    title: "Don't autofill simple questions (Y/N etc.)",              impact: 7, effort: 1, jira: "JEA-1179", release: "1.0-must"     },
+
+  // Tech Bugs · 3.1 — persist progress + recoverable errors
+  { n: 12, key: "pc", problem: "Tech Bugs · 3.1",        title: "Server-side autosave + 'Utkast lagret' indicator",        impact: 8, effort: 4, jira: "JEA-1134", release: "1.0-must"     },
+  { n: 13, key: "pc", problem: "Tech Bugs · 3.1",        title: "Per-field error messages with one-tap retry",             impact: 6, effort: 4, jira: null      , release: "1.2-can-wait" },
+
+  // Tech Bugs · 3.2 — fix the question types with known bugs
+  { n: 14, key: "pc", problem: "Tech Bugs · 3.2",        title: "Video question UX — recording guidance + text fallback",  impact: 5, effort: 6, jira: null      , release: "1.2-can-wait" },
+  { n: 15, key: "pc", problem: "Tech Bugs · 3.2",        title: "File upload — chunked + clear size/type guidance",        impact: 6, effort: 4, jira: null      , release: "1.2-can-wait" },
 ];
 
 // Display labels + colour pills for the release tier. Used by ImpactEffortView.
@@ -10610,17 +11167,17 @@ const STORYMAP = {
                      mvp:     [],
                      v1:      [{ story: "Read 'What is Job Match?' to understand the score.", hyp: "2.1", n: null, feature: "job-match", jira: null }],
                      v2:      [] },
-    "tap-apply":   { agentic: [{ story: "Tap Apply once — no extra steps to start.", hyp: "1.3", n: null, jira: "JEA-1179" }],
+    "tap-apply":   { agentic: [{ story: "Tap Apply once — no extra steps to start.", hyp: "1.2", n: null, jira: "JEA-1179" }],
                      mvp:     [{ story: "Easy Apply path opens the same drawer pattern alongside agentic.", hyp: null, n: null, jira: null }],
                      v1:      [{ story: "Form is pre-fetched so the sheet opens immediately.", hyp: "1.1", n: 3, key: "pa", jira: "JEA-1074" }],
                      v2:      [{ story: "Magic Apply — tap once, FINN tailors and sends for you.", hyp: "2.2", n: null, feature: "magic-apply", jira: null }] },
     "open-sheet":  { agentic: [
-                       { story: "Sheet appears instantly — no blocking loader.", hyp: "1.3", n: 1, key: "pa", jira: "JEA-1179" },
-                       { story: "Per-row status icons show what's being prepared.", hyp: "1.3", n: 2, key: "pa", jira: "JEA-1179" },
-                       { story: "'Lagret som kladd' tells me my progress is safe.", hyp: "3.2", n: 9, key: "pc", jira: "JEA-1134" },
+                       { story: "Sheet appears instantly — no blocking loader.", hyp: "1.2", n: 1, key: "pa", jira: "JEA-1179" },
+                       { story: "Per-row status icons show what's being prepared.", hyp: "1.2", n: 2, key: "pa", jira: "JEA-1179" },
+                       { story: "'Lagret som kladd' tells me my progress is safe.", hyp: "3.1", n: 9, key: "pc", jira: "JEA-1134" },
                      ],
                      mvp:     [],
-                     v1:      [{ story: "Faster model means letter is ready in under 2s.", hyp: "1.2", n: null, jira: "JEA-1113" }],
+                     v1:      [{ story: "Faster model means letter is ready in under 2s.", hyp: "1.1", n: null, jira: "JEA-1113" }],
                      v2:      [] },
     "review":      { agentic: [
                        { story: "Source pills tell me where each value came from.", hyp: "2.1", n: 4, key: "pb", jira: "JEA-1179" },
@@ -10632,8 +11189,8 @@ const STORYMAP = {
                      v1:      [{ story: "Confidence cue on AI-filled fields.", hyp: "2.1", n: null, jira: null }],
                      v2:      [{ story: "Compare this draft with my last application.", hyp: null, n: null, jira: null }] },
     "pick-cv":     { agentic: [
-                       { story: "Pick which CV to send from a clear picker.", hyp: "3.4", n: 11, key: "pc", jira: "JEA-1179" },
-                       { story: "Fall back to profile CV if upload fails.", hyp: "3.4", n: 11, key: "pc", jira: "JEA-1179" },
+                       { story: "Pick which CV to send from a clear picker.", hyp: "3.2", n: 11, key: "pc", jira: "JEA-1179" },
+                       { story: "Fall back to profile CV if upload fails.", hyp: "3.2", n: 11, key: "pc", jira: "JEA-1179" },
                      ],
                      mvp:     [],
                      v1:      [{ story: "Tailored CV highlights what matches the listing.", hyp: "2.1", n: null, feature: "tailored-cv", jira: null }],
@@ -10645,13 +11202,13 @@ const STORYMAP = {
                      mvp:     [],
                      v1:      [{ story: "Letter learns voice from past applications.", hyp: "2.1", n: null, jira: null }],
                      v2:      [{ story: "Generate variants and pick the one I like.", hyp: null, n: null, jira: null }] },
-    "answer-qs":   { agentic: [{ story: "Questions stay user-answered, never AI-prefilled.", hyp: "2.3", n: 15, key: "pb", jira: "JEA-1179" }],
+    "answer-qs":   { agentic: [{ story: "Questions stay user-answered, never AI-prefilled.", hyp: "2.2", n: 15, key: "pb", jira: "JEA-1179" }],
                      mvp:     [],
-                     v1:      [{ story: "Clearer copy for video questions to avoid drop-off.", hyp: "3.1", n: null, jira: null }],
+                     v1:      [{ story: "Clearer copy for video questions to avoid drop-off.", hyp: "3.2", n: null, jira: null }],
                      v2:      [] },
     "send":        { agentic: [
-                       { story: "Send is disabled with clear status while drafting.", hyp: "1.3", n: 2, key: "pa", jira: "JEA-1179" },
-                       { story: "Friendly missing-info recovery if a field is blank.", hyp: "3.3", n: 12, key: "pc", jira: "JEA-1179" },
+                       { story: "Send is disabled with clear status while drafting.", hyp: "1.2", n: 2, key: "pa", jira: "JEA-1179" },
+                       { story: "Friendly missing-info recovery if a field is blank.", hyp: "3.1", n: 12, key: "pc", jira: "JEA-1179" },
                      ],
                      mvp:     [],
                      v1:      [{ story: "Schedule send for a chosen time / weekday.", hyp: null, n: null, jira: null }],
@@ -10661,11 +11218,11 @@ const STORYMAP = {
                      v1:      [{ story: "See status updates — 'viewed', 'shortlisted'.", hyp: null, n: null, jira: null }],
                      v2:      [{ story: "Schedule interviews directly from the card.", hyp: null, n: null, jira: null }] },
     "resume":      { agentic: [
-                       { story: "Drafts live under Activity so I can resume anytime.", hyp: "3.2", n: 16, key: "pc", jira: "JEA-1081" },
+                       { story: "Drafts live under Activity so I can resume anytime.", hyp: "3.1", n: 16, key: "pc", jira: "JEA-1081" },
                        { story: "Sent list shows each application with the company brand.", hyp: null, n: null, jira: "JEA-1081" },
                      ],
                      mvp:     [],
-                     v1:      [{ story: "Resume from any device seamlessly.", hyp: "3.2", n: null, jira: null }],
+                     v1:      [{ story: "Resume from any device seamlessly.", hyp: "3.1", n: null, jira: null }],
                      v2:      [{ story: "Interview reminders sync with my calendar.", hyp: null, n: null, jira: null }] },
   },
 };
@@ -10690,15 +11247,15 @@ const _LEGACY_STORYMAP_UNUSED = [
       step: "Step 2", title: "Start the application",
       releases: {
         mvp: [
-          { story: "As a seeker, my application sheet opens instantly so I don't wait on a loader.", hyp: "1.3", n: 1, key: "pa" },
-          { story: "As a seeker, I see a 'Lagret som kladd' indicator and feel safe to navigate.", hyp: "3.2", n: 9, key: "pc" },
+          { story: "As a seeker, my application sheet opens instantly so I don't wait on a loader.", hyp: "1.2", n: 1, key: "pa" },
+          { story: "As a seeker, I see a 'Lagret som kladd' indicator and feel safe to navigate.", hyp: "3.1", n: 9, key: "pc" },
         ],
         v1: [
           { story: "As a seeker, the form is pre-fetched at ad insert so it's ready when I tap Apply.", hyp: "1.1", n: 3, key: "pa" },
-          { story: "As a seeker, my draft is visible from Activity → Drafts so I can resume anywhere.", hyp: "3.2", n: 16, key: "pc" },
+          { story: "As a seeker, my draft is visible from Activity → Drafts so I can resume anywhere.", hyp: "3.1", n: 16, key: "pc" },
         ],
         v2: [
-          { story: "As a seeker, I can resume a draft seamlessly across devices.", hyp: "3.2", n: null },
+          { story: "As a seeker, I can resume a draft seamlessly across devices.", hyp: "3.1", n: null },
         ],
       },
     },
@@ -10709,7 +11266,7 @@ const _LEGACY_STORYMAP_UNUSED = [
           { story: "As a seeker, every row shows a source pill so I trust what FINN drafted vs profile data.", hyp: "2.1", n: 4, key: "pb" },
           { story: "As a seeker, the header keeps the role + company so I never lose context.", hyp: "2.2", n: 8, key: "pb" },
           { story: "As a seeker, I can flip between Application and Job ad inside the sheet.", hyp: "2.2", n: 14, key: "pb" },
-          { story: "As a seeker, missing info gets a friendly 'fix this' state, not a wall.", hyp: "3.3", n: 12, key: "pc" },
+          { story: "As a seeker, missing info gets a friendly 'fix this' state, not a wall.", hyp: "3.1", n: 12, key: "pc" },
         ],
         v1: [
           { story: "As a seeker, each AI-filled field shows a confidence cue.", hyp: "2.1", n: null },
@@ -10725,7 +11282,7 @@ const _LEGACY_STORYMAP_UNUSED = [
       releases: {
         mvp: [
           { story: "As a seeker, I can tap 'Tilpass' for an agentic Q&A — it's opt-in, not forced.", hyp: "2.2", n: 7, key: "pb" },
-          { story: "As a seeker, I can pick which CV to send from a clear picker (profile / tailored / uploaded / upload new).", hyp: "3.4", n: 11, key: "pc" },
+          { story: "As a seeker, I can pick which CV to send from a clear picker (profile / tailored / uploaded / upload new).", hyp: "3.2", n: 11, key: "pc" },
           { story: "As a seeker, I can choose 'Skriv selv' for the letter if I don't want AI.", hyp: "2.2", n: 6, key: "pb" },
         ],
         v1: [
@@ -10741,7 +11298,7 @@ const _LEGACY_STORYMAP_UNUSED = [
       step: "Step 5", title: "Submit",
       releases: {
         mvp: [
-          { story: "As a seeker, the Send button stays disabled with clear status while drafting.", hyp: "1.3", n: 2, key: "pa" },
+          { story: "As a seeker, the Send button stays disabled with clear status while drafting.", hyp: "1.2", n: 2, key: "pa" },
           { story: "As a seeker, I land on a confirmation screen with a reminder card.", hyp: null, n: null },
         ],
         v1: [
@@ -10756,12 +11313,12 @@ const _LEGACY_STORYMAP_UNUSED = [
       step: "Step 6", title: "Track & recover",
       releases: {
         mvp: [
-          { story: "As a seeker, my drafts live under Activity so I can resume anytime.", hyp: "3.2", n: 16, key: "pc" },
+          { story: "As a seeker, my drafts live under Activity so I can resume anytime.", hyp: "3.1", n: 16, key: "pc" },
           { story: "As a seeker, sent applications are listed with the company brand.", hyp: null, n: null },
         ],
         v1: [
           { story: "As a seeker, I see status updates — 'viewed by recruiter', 'shortlisted'.", hyp: null, n: null },
-          { story: "As a seeker, I get clearer error recovery on upload / video questions.", hyp: "3.3", n: null, mark: "needs" },
+          { story: "As a seeker, I get clearer error recovery on upload / video questions.", hyp: "3.1", n: null, mark: "needs" },
         ],
         v2: [
           { story: "As a seeker, I can schedule interviews directly from the application card.", hyp: null, n: null },
@@ -13719,6 +14276,32 @@ function OpportunityTreeBody({ business, outcome, problems, lastEdited, onEditTr
                 </div>
               )}
             </div>
+            {Array.isArray(outcome.measurables) && outcome.measurables.length > 0 && (
+              <div className="otree-measurables">
+                <div className="label">Measurable outcomes</div>
+                {outcome.measurables.map((raw, mi) => {
+                  // Split the trailing parenthetical off the description and
+                  // render it as a target pill on the right. Falls back to
+                  // showing the whole string if no target is found.
+                  const str = String(raw);
+                  const match = str.match(/^(.*?)[\s:]*\(([^()]+)\)\s*$/);
+                  const desc = match ? match[1].replace(/[\s:]+$/, "") : str;
+                  const target = match ? match[2].trim() : "";
+                  const isTbd = /^x$/i.test(target);
+                  return (
+                    <div key={mi} className="otree-measurable">
+                      <span className="otree-kr-chip">KR{mi + 1}</span>
+                      <span className="desc">{desc}</span>
+                      {target && (
+                        <span className={"otree-target" + (isTbd ? " is-tbd" : "")}>
+                          {isTbd ? "tbd" : target}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <div className="otree-spine" aria-hidden="true" />
             <div className="otree-cols">
               {problems.map((p, pi) => {
@@ -14573,6 +15156,18 @@ function App() {
   // running it locally without secrets still sees the app.
   if (!cloudStore.enabled) return <AppShell />;
 
+  // Local-dev bypass — when opened from file:// or localhost (or with
+  // ?nogate=1 in the URL), skip the Google sign-in gate so we can preview
+  // edits without OAuth bouncing us back to the live deployment. Keeps the
+  // full AppShell (site chrome + dev panel), unlike ?fullscreen=1.
+  const isLocalPreview = (typeof window !== "undefined") && (
+    window.location.protocol === "file:" ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    new URLSearchParams(window.location.search).get("nogate") === "1"
+  );
+  if (isLocalPreview) return <AppShell />;
+
   if (auth.status === "loading") {
     return (
       <div className="pwgate">
@@ -14634,10 +15229,12 @@ function solutionsAreCurrentShape(data) {
   return data.some(s => typeof s.release === "string");
 }
 function treeIsCurrentShape(data) {
-  // SCHEMA 5 — opportunity tree is now editable team state.
-  // Shape: { business, outcome: {text, meta}, problems: [...], lastEdited?: {who, when} }
+  // SCHEMA 6 — outcome now carries a `measurables` array (4 stacked KR
+  // cards). Reject the old shape so cloud-saved trees from before this
+  // change get reseeded from TREE_DATA on next load.
   if (!data || typeof data !== "object") return false;
   if (!data.outcome || typeof data.outcome.text !== "string") return false;
+  if (!Array.isArray(data.outcome.measurables)) return false;
   if (!Array.isArray(data.problems)) return false;
   return true;
 }
@@ -15327,7 +15924,9 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   //      from 1.0); added `release` tier field to SOLUTIONS.
   // v5 — opportunity tree is now editable team state (cloud-synced),
   //      shape: { business, outcome, problems, lastEdited }.
-  const SCHEMA = 5;
+  // v6 — outcome now carries a `measurables` array (4 stacked KR cards
+  //      replace the single inline meta line).
+  const SCHEMA = 6;
   const [stories, setStories] = useState(() => {
     try {
       const v = parseInt(localStorage.getItem("vend-storymap-v") || "0", 10);
@@ -15893,7 +16492,11 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     // and the in-sheet "Job ad" tab lets the seeker re-read the listing.
     bodyScreen = <JobDetailScreen job={JOB} onApply={() => {}} onBack={() => {}} userState={userState} />;
   } else if (screen === "confirmation") {
-    bodyScreen = <ConfirmationScreen job={JOB} onDone={() => openActivity("sent")} onReset={reset} magic={magicSent} />;
+    // Confirmation now renders as a bottom sheet (mounted further down).
+    // The job ad sits underneath so the user is visually anchored to what
+    // they just applied for — and the single "Back to FINN Jobs" CTA
+    // dismisses the sheet to the job ad below.
+    bodyScreen = <JobDetailScreen job={JOB} onApply={() => {}} onBack={() => {}} userState={userState} />;
   } else if (screen === "activity") {
     bodyScreen = (
       <ActivityScreen
@@ -16104,6 +16707,14 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
               onLogin={mockLogin}
             />
           )}
+          {screen === "confirmation" && (
+            <ConfirmationScreen
+              job={JOB}
+              onDone={() => openActivity("sent")}
+              onReset={reset}
+              magic={magicSent}
+            />
+          )}
           {overlay === "select-letter" && (
             <SelectLetterSheet
               onClose={() => setOverlay("letter")}
@@ -16121,6 +16732,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
                   : "cv"
               }
               showTailoredCV={showTailoredCV}
+              version={version}
               onClose={() => {
                 const rowId = (overlay && overlay.startsWith("edit:"))
                   ? overlay.split(":")[1] : "cv";
@@ -16277,33 +16889,10 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
             value={userState}
             lang={lang}
             onChange={(id) => {
-              // Pick a state → jump straight to the screen that demonstrates it.
               setUserState(id);
-              cancelMagic();
-              setMagicMode(false);
-              setMagicStep(0);
-              setMagicSent(false);
-              setApplicationStatus("draft");
-
-              if (id === "not-logged-in") {
-                // Land on the job ad with the login sheet already open.
-                setScreen("jobad");
-                setLoadingPhase("ready");
-                setOverlay("login");
-              } else if (id === "already-applied") {
-                setScreen("jobad");
-                setLoadingPhase("ready");
-                setOverlay(null);
-              } else if (id === "ready") {
-                setScreen("jobad");
-                setLoadingPhase("ready");
-                setOverlay(null);
-              } else {
-                // missing-personalia / missing-cv / missing-questions live on the preview screen.
-                setScreen("preview");
-                setLoadingPhase("ready");
-                setOverlay(null);
-              }
+              setOverlay(null);
+              if (id === "already-applied") setScreen("jobad");
+              if (id === "not-logged-in") { setScreen("jobad"); setOverlay("login"); }
             }}
             options={USER_STATES}
           />
