@@ -5923,31 +5923,53 @@ function NavBar({ title, onBack, onClose, trailing }) {
   // which matches Pixel reference). on-surface text colour for the back
   // arrow. No resting shadow per M3 — the small hairline below provides
   // separation without simulating elevation we don't actually have.
-  const rowH       = platform === "android" ? 56 : 44;
-  const backColor  = platform === "android" ? "#1d1d1d" : "#0063fb";
-  const backStroke = platform === "android" ? 2.2 : 2.5;
+  // iOS uses FINN's circular floating back/close bubble (white circle,
+  // soft shadow, dark icon) per the production Item Page treatment.
+  const rowH       = platform === "android" ? 56 : 56;
+  const backColor  = platform === "android" ? "#1d1d1d" : "#1d1d1d";
+  const backStroke = platform === "android" ? 2.2 : 2.4;
   return (
     <div style={{
       paddingTop: statusBarH, background: "#fff",
-      borderBottom: platform === "android" ? "1px solid rgba(0,0,0,0.06)" : "0.5px solid rgba(0,0,0,0.08)",
+      borderBottom: platform === "android" ? "1px solid rgba(0,0,0,0.06)" : "0",
       boxShadow: "none",
       flexShrink: 0, position: "relative", zIndex: 2,
     }}>
       <div style={{
         height: rowH, display: "flex", alignItems: "center",
-        padding: "0 4px", position: "relative",
+        padding: platform === "android" ? "0 4px" : "0 12px",
+        position: "relative",
       }}>
-        <button
-          className="press"
-          onClick={() => { haptic("tap"); (onBack || onClose)?.(); }}
-          aria-label={onBack ? "Back" : "Close"}
-          style={{
-            width: 44, height: 44, border: 0, background: "transparent", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}>
-          <Icon name={onBack ? "chevron-left" : "x"} size={24} color={backColor} stroke={backStroke} />
-        </button>
+        {platform === "android" ? (
+          <button
+            className="press"
+            onClick={() => { haptic("tap"); (onBack || onClose)?.(); }}
+            aria-label={onBack ? "Back" : "Close"}
+            style={{
+              width: 44, height: 44, border: 0, background: "transparent", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+            <Icon name={onBack ? "chevron-left" : "x"} size={24} color={backColor} stroke={backStroke} />
+          </button>
+        ) : (
+          /* iOS — circular floating bubble (FINN Item Page style). */
+          <button
+            className="press"
+            onClick={() => { haptic("tap"); (onBack || onClose)?.(); }}
+            aria-label={onBack ? "Back" : "Close"}
+            style={{
+              width: 40, height: 40, borderRadius: 9999,
+              background: "#fff",
+              border: "0",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.10), 0 0 0 0.5px rgba(0,0,0,0.06)",
+              cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+            <Icon name={onBack ? "chevron-left" : "x"} size={20} color={backColor} stroke={backStroke} />
+          </button>
+        )}
 
         {platform === "android" ? (
           /* Material 3 Small Top App Bar — left-aligned Title Large
@@ -5964,9 +5986,9 @@ function NavBar({ title, onBack, onClose, trailing }) {
         ) : (
           /* iOS / Web: absolutely-centered headline, safe clearance from edges */
           <div style={{
-            position: "absolute", left: 100, right: 100, top: 0, bottom: 0,
+            position: "absolute", left: 80, right: 80, top: 0, bottom: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 17, fontWeight: 600, color: "#000",
+            fontSize: 17, fontWeight: 700, color: "#1d1d1d",
             pointerEvents: "none",
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
             letterSpacing: -0.3,
@@ -6534,46 +6556,39 @@ function ApplicationPreviewSheet({
           position: "relative", overflow: "hidden",
           animation: "slideup 440ms var(--ease-modal)",
         }}>
-        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
-          <SheetDragHandle />
-        </div>
-
-        {/* Header — logo, title block, close. All vertically centered. */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 14,
-          padding: "10px 16px 14px",
-        }}>
-          <CompanyLogo size={48} initials={job.initials} color={job.brandColor} logo={job.logo} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{
-              fontSize: 11, fontWeight: 600, color: "#6b6b6b",
-              margin: "0 0 3px", letterSpacing: 0.6, textTransform: "uppercase",
-              lineHeight: 1,
-            }}>
-              {t({ en: "Applying as", no: "Søker som" })}
-            </p>
-            <p style={{
-              fontSize: 16, fontWeight: 700, color: "#1d1d1d",
-              margin: "0 0 2px", lineHeight: 1.2, letterSpacing: -0.2,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>{t({ en: job.title, no: job.titleNo })}</p>
-            <p style={{
-              fontSize: 13, color: "#6b6b6b", margin: 0, lineHeight: 1.3,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>{job.company}</p>
-          </div>
+        {/* FINN Item-Page drawer header — circular close button top-left,
+            company + title block below. Drag handle removed to match
+            production. */}
+        <div style={{ padding: "14px 16px 6px" }}>
           <button
             className="press"
             onClick={() => { haptic("tap"); close(); }}
             aria-label={t({ en: "Close", no: "Lukk" })}
             style={{
-              width: 44, height: 44, borderRadius: 9999,
+              width: 40, height: 40, borderRadius: 9999,
               background: "#f0f0f3", border: 0, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0,
             }}>
-            <Icon name="x" size={16} color="#1d1d1d" stroke={2.4} />
+            <Icon name="x" size={18} color="#1d1d1d" stroke={2.4} />
           </button>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 14,
+          padding: "8px 16px 14px",
+        }}>
+          <CompanyLogo size={56} initials={job.initials} color={job.brandColor} logo={job.logo} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              fontSize: 13, fontWeight: 500, color: "#6b6b6b",
+              margin: "0 0 2px", lineHeight: 1.2,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>{job.company}</p>
+            <p style={{
+              fontSize: 20, fontWeight: 700, color: "#1d1d1d",
+              margin: 0, lineHeight: 1.2, letterSpacing: -0.3,
+            }}>{t({ en: job.title, no: job.titleNo })}</p>
+          </div>
         </div>
 
         {showJobMatch && (
@@ -8671,33 +8686,38 @@ function ActivityCard({ job, statusPill, statusColor, statusBg, time, onClick })
   );
 }
 
-function ActivityEmpty({ title, hint }) {
+function ActivityEmpty({ title, hint, icon = "file" }) {
   return (
     <div style={{
-      padding: "56px 32px",
+      padding: "120px 32px 56px",
       textAlign: "center",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
     }}>
+      {/* Large grey circle wrapper — matches FINN's empty-state pattern
+          (≈120px circle, neutral grey, outlined icon centred). */}
       <div style={{
-        width: 56, height: 56, borderRadius: 14,
+        width: 120, height: 120, borderRadius: 9999,
         background: "#f0f0f3",
         display: "flex", alignItems: "center", justifyContent: "center",
-        marginBottom: 4,
+        marginBottom: 12,
       }}>
-        <Icon name="file" size={28} color="#6b6b6b" stroke={2} />
+        <Icon name={icon} size={44} color="#6b6b6b" stroke={2} />
       </div>
-      <p style={{ fontSize: 17, fontWeight: 700, color: "#1d1d1d", margin: 0, letterSpacing: -0.2 }}>{title}</p>
-      <p style={{ fontSize: 14, color: "#6b6b6b", margin: 0, maxWidth: 260, lineHeight: 1.45 }}>{hint}</p>
+      <p style={{ fontSize: 22, fontWeight: 700, color: "#1d1d1d", margin: 0, letterSpacing: -0.3 }}>{title}</p>
+      <p style={{ fontSize: 15, color: "#6b6b6b", margin: 0, maxWidth: 320, lineHeight: 1.45 }}>{hint}</p>
     </div>
   );
 }
 
-function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts", onOpenDraft }) {
+function ActivityScreen({ job, onBack, applicationStatus, initialTab = "soknader", onOpenDraft }) {
   const t = useT();
   const platform = usePlatform();
   const cardR = PLATFORM_RADII[platform].card;
   const { statusBarH } = useMetrics();
-  const [tab, setTab] = useState(initialTab);
+  // Map legacy "drafts" / "sent" entry-points onto the Søknader tab so
+  // existing callers (and the dev-panel shortcuts) still work.
+  const initial = (initialTab === "drafts" || initialTab === "sent") ? "soknader" : initialTab;
+  const [tab, setTab] = useState(initial);
 
   const hasDraft = applicationStatus === "draft";
   const hasSent  = applicationStatus === "sent";
@@ -8706,15 +8726,18 @@ function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts",
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#fff" }}>
       <NavBar onBack={onBack} title={t({ en: "Activity", no: "Aktivitet" })} />
 
-      {/* Segmented tabs */}
+      {/* FINN three-tab Aktivitet pattern: Favoritter / JobbMatch /
+          Søknader. Full-width segmented control, white pill behind the
+          selected tab, very subtle drop shadow. */}
       <div style={{ padding: "12px 16px 16px" }}>
         <div style={{
           display: "flex", padding: 3,
           background: "#ededed", borderRadius: 9999,
         }}>
           {[
-            { id: "drafts", label: t({ en: "Drafts", no: "Kladder" }), count: hasDraft ? 1 : 0 },
-            { id: "sent",   label: t({ en: "Sent",   no: "Sendt" }),   count: hasSent  ? 1 : 0 },
+            { id: "favoritter", label: t({ en: "Favourites", no: "Favoritter" }) },
+            { id: "jobbmatch",  label: t({ en: "JobMatch",   no: "JobbMatch" }) },
+            { id: "soknader",   label: t({ en: "Applications", no: "Søknader" }) },
           ].map(o => {
             const sel = tab === o.id;
             return (
@@ -8723,24 +8746,17 @@ function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts",
                 className="press"
                 onClick={() => { haptic("tap"); setTab(o.id); }}
                 style={{
-                  flex: 1, height: 34, borderRadius: 9999,
+                  flex: 1, height: 38, borderRadius: 9999,
                   background: sel ? "#fff" : "transparent",
                   color: sel ? "#1d1d1d" : "#404040",
-                  fontWeight: sel ? 600 : 500,
+                  fontWeight: 600,
                   border: 0, cursor: "pointer", fontFamily: "inherit",
                   fontSize: 14, letterSpacing: -0.1, lineHeight: 1,
-                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  boxShadow: sel ? "0 1px 2px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)" : "none",
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: sel ? "0 1px 2px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.04)" : "none",
                   transition: "background 200ms var(--ease-out), color 200ms var(--ease-out)",
                 }}>
                 {o.label}
-                <span style={{
-                  fontSize: 11, fontWeight: 600,
-                  padding: "1px 7px", borderRadius: 9999,
-                  background: sel ? "#eaf2ff" : "rgba(0,0,0,0.06)",
-                  color: sel ? "#0063fb" : "#6b6b6b",
-                  minWidth: 18, textAlign: "center",
-                }}>{o.count}</span>
               </button>
             );
           })}
@@ -8748,39 +8764,55 @@ function ActivityScreen({ job, onBack, applicationStatus, initialTab = "drafts",
       </div>
 
       <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 16px 32px" }}>
-        {tab === "drafts" ? (
-          hasDraft ? (
-            <ActivityCard
-              job={job}
-              statusPill={t({ en: "Draft", no: "Kladd" })}
-              statusColor="#1f8a3b" statusBg="#d4f4dd"
-              time={t({ en: "Saved 9:41 today", no: "Lagret 09:41 i dag" })}
-              onClick={onOpenDraft}
-            />
+        {tab === "favoritter" && (
+          <ActivityEmpty
+            icon="heart"
+            title={t({ en: "No favourites yet",         no: "Ingen favoritter ennå" })}
+            hint={t({
+              en: "Tap the heart on jobs to save them here",
+              no: "Trykk på hjertet på jobber for å lagre dem her",
+            })}
+          />
+        )}
+        {tab === "jobbmatch" && (
+          <ActivityEmpty
+            icon="sparkle"
+            title={t({ en: "No JobMatch suggestions yet", no: "Ingen JobbMatch-forslag ennå" })}
+            hint={t({
+              en: "Complete your Job profile and we'll surface roles that fit.",
+              no: "Fullfør Jobbprofilen din, så foreslår vi jobber som passer.",
+            })}
+          />
+        )}
+        {tab === "soknader" && (
+          (hasDraft || hasSent) ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {hasDraft && (
+                <ActivityCard
+                  job={job}
+                  statusPill={t({ en: "Draft", no: "Kladd" })}
+                  statusColor="#1f8a3b" statusBg="#d4f4dd"
+                  time={t({ en: "Saved 9:41 today", no: "Lagret 09:41 i dag" })}
+                  onClick={onOpenDraft}
+                />
+              )}
+              {hasSent && (
+                <ActivityCard
+                  job={job}
+                  statusPill={t({ en: "Sent", no: "Sendt" })}
+                  statusColor="#0063fb" statusBg="#eaf2ff"
+                  time={t({ en: "Sent just now", no: "Sendt akkurat nå" })}
+                  onClick={() => {}}
+                />
+              )}
+            </div>
           ) : (
             <ActivityEmpty
-              title={t({ en: "No drafts yet", no: "Ingen kladder ennå" })}
+              icon="file"
+              title={t({ en: "No applications yet", no: "Ingen søknader ennå" })}
               hint={t({
-                en: "Drafts you start will appear here so you can pick up where you left off.",
-                no: "Kladder du starter vises her, så du kan fortsette der du slapp.",
-              })}
-            />
-          )
-        ) : (
-          hasSent ? (
-            <ActivityCard
-              job={job}
-              statusPill={t({ en: "Sent", no: "Sendt" })}
-              statusColor="#0063fb" statusBg="#eaf2ff"
-              time={t({ en: "Sent just now", no: "Sendt akkurat nå" })}
-              onClick={() => {}}
-            />
-          ) : (
-            <ActivityEmpty
-              title={t({ en: "No sent applications yet", no: "Ingen sendte søknader ennå" })}
-              hint={t({
-                en: "Applications you send will appear here, along with any replies from employers.",
-                no: "Søknader du sender vises her, sammen med svar fra arbeidsgivere.",
+                en: "Drafts and sent applications will appear here.",
+                no: "Kladder og sendte søknader vises her.",
               })}
             />
           )
@@ -9653,44 +9685,40 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
           position: "relative", overflow: "hidden",
           animation: "slideup 440ms var(--ease-modal)",
         }}>
-        {/* Drag handle */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
-          <SheetDragHandle />
-        </div>
-
-        {/* Header — logo + "Applying as" + job title / company + close */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 14,
-          padding: "10px 16px 14px",
-        }}>
-          <CompanyLogo size={48} initials={job.initials} color={job.brandColor} logo={job.logo} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{
-              fontSize: 11, fontWeight: 600, color: "#6b6b6b",
-              margin: "0 0 3px", letterSpacing: 0.6, textTransform: "uppercase",
-              lineHeight: 1,
-            }}>{t({ en: "Applying as", no: "Søker som" })}</p>
-            <p style={{
-              fontSize: 16, fontWeight: 700, color: "#1d1d1d",
-              margin: "0 0 2px", lineHeight: 1.2, letterSpacing: -0.2,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>{t({ en: job.title, no: job.titleNo })}</p>
-            <p style={{
-              fontSize: 13, color: "#6b6b6b", margin: 0, lineHeight: 1.3,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>{job.company}</p>
-          </div>
+        {/* FINN Item-Page drawer header — close button sits top-left in a
+            small circular grey bubble; the company logo + title block
+            occupies its own row below. No drag handle (matches the live
+            FINN treatment). */}
+        <div style={{ padding: "14px 16px 6px" }}>
           <button className="press"
             onClick={() => { haptic("tap"); close(); }}
             aria-label={t({ en: "Close", no: "Lukk" })}
             style={{
-              width: 44, height: 44, borderRadius: 9999,
+              width: 40, height: 40, borderRadius: 9999,
               background: "#f0f0f3", border: 0, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0,
             }}>
-            <Icon name="x" size={16} color="#1d1d1d" stroke={2.4} />
+            <Icon name="x" size={18} color="#1d1d1d" stroke={2.4} />
           </button>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 14,
+          padding: "8px 16px 14px",
+        }}>
+          <CompanyLogo size={56} initials={job.initials} color={job.brandColor} logo={job.logo} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              fontSize: 13, fontWeight: 500, color: "#6b6b6b",
+              margin: "0 0 2px",
+              lineHeight: 1.2,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>{job.company}</p>
+            <p style={{
+              fontSize: 20, fontWeight: 700, color: "#1d1d1d",
+              margin: 0, lineHeight: 1.2, letterSpacing: -0.3,
+            }}>{t({ en: job.title, no: job.titleNo })}</p>
+          </div>
         </div>
 
         {/* In-sheet tabs: Application ↔ Job ad. Identical to MVP. */}
