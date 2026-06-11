@@ -8970,9 +8970,103 @@ function SourcePill({ source, explanation, variant = "ai" }) {
 // legacy callers don't blow up; renders nothing.
 function EditedChip() { return null; }
 
-function AgenticReviewScreen({ job, onClose, onSend }) {
+// Reusable backend-error banner. Two variants — "warning" (yellow, used
+// when the agent fails to prepare the application; comes with a Try again
+// + Back to job ad pair) and "critical" (red, used when send fails; only
+// Back to job ad).
+function ApplyErrorBanner({ variant, onTryAgain, onBack }) {
+  const t = useT();
+  const isWarning = variant === "warning";
+  const bg     = isWarning ? "#fff7d6" : "#fdecec";
+  const border = isWarning ? "#e08a00" : "#cc1414";
+  const iconColor = isWarning ? "#e08a00" : "#cc1414";
+  const title = isWarning
+    ? t({ en: "We couldn't prepare your application", no: "Vi kunne ikke klargjøre søknaden din" })
+    : t({ en: "Your application wasn't sent",          no: "Søknaden din ble ikke sendt" });
+  const body  = isWarning
+    ? t({ en: "Something went wrong while building your application.",
+          no: "Noe gikk galt mens vi prøvde å bygge søknaden din." })
+    : t({ en: "Something went wrong when sending your application.",
+          no: "Noe gikk galt da du forsøkte å sende inn søknaden din." });
+  return (
+    <div role="alert" style={{
+      position: "relative",
+      background: bg,
+      borderRadius: 14,
+      padding: "16px 18px 18px 22px",
+      overflow: "hidden",
+    }}>
+      <div aria-hidden="true" style={{
+        position: "absolute", left: 0, top: 0, bottom: 0, width: 5,
+        background: border,
+      }} />
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
+        <div style={{ flexShrink: 0, marginTop: 2 }}>
+          <Icon name="alert" size={22} color={iconColor} stroke={2.2} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            margin: 0,
+            font: "700 17px/1.3 var(--sys-text)",
+            letterSpacing: -0.2, color: "#1d1d1d",
+          }}>{title}</p>
+          <p style={{
+            margin: "4px 0 0",
+            font: "400 14px/1.4 var(--sys-text)",
+            color: "#1d1d1d",
+          }}>{body}</p>
+        </div>
+      </div>
+      <div style={{
+        display: "flex", gap: 8, marginTop: 12, paddingLeft: 34,
+        flexWrap: "wrap",
+      }}>
+        {onTryAgain && (
+          <button
+            className="press"
+            onClick={onTryAgain}
+            style={{
+              background: "transparent",
+              border: "1px solid #c9c9c9",
+              borderRadius: 10,
+              padding: "10px 16px",
+              cursor: "pointer", fontFamily: "inherit",
+              font: "600 14px/1 var(--sys-text)",
+              color: "#0063fb", letterSpacing: -0.1,
+            }}>
+            {t({ en: "Try again", no: "Prøv igjen" })}
+          </button>
+        )}
+        <button
+          className="press"
+          onClick={onBack}
+          style={{
+            background: "transparent",
+            border: onTryAgain ? "0" : "1px solid #c9c9c9",
+            borderRadius: 10,
+            padding: "10px 16px",
+            cursor: "pointer", fontFamily: "inherit",
+            font: "600 14px/1 var(--sys-text)",
+            color: "#0063fb", letterSpacing: -0.1,
+          }}>
+          {t({ en: "Back to job ad", no: "Tilbake til jobbannonsen" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
   const t = useT();
   const [exiting, close] = useDelayedClose(onClose, 320);
+  // Simulated backend errors. `prepare-error` aborts the preparing phase
+  // with a yellow warning banner + Try again / Back to job ad. `send-error`
+  // intercepts the Send tap and shows a red critical banner + Back to job
+  // ad. "Try again" resets to a fresh preparing run; "Back to job ad"
+  // closes the agentic sheet.
+  const isPrepareError = userState === "prepare-error";
+  const isSendErrorState = userState === "send-error";
+  const [sendFailed, setSendFailed] = useState(false);
   // Independent exit state for the inner section sheet (Personalia /
   // Vedlegg / Questions) so its slide-down doesn't share timing with the
   // outer agentic sheet's close.
@@ -9090,13 +9184,36 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
     questions:  "queued",
   });
 
+  // Re-run the preparing phase when this nonce bumps (used by the
+  // prepare-error banner's "Try again" button).
+  const [prepareNonce, setPrepareNonce] = useState(0);
+  function retryPrepare() {
+    haptic("tap");
+    setSectionPrep({ personalia: "working", vedlegg: "queued", questions: "queued" });
+    setPhase("preparing");
+    setPrepareNonce(n => n + 1);
+  }
+
   // Stage the preparing phase — each section ticks off one at a time.
   // 1s per section, 3s total. The Doherty Threshold (≤400ms feels instant,
   // ≥1s users start noticing) means we want this as tight as possible
   // without losing the visible "AI is working" reassurance. A short haptic
   // tick fires as each section lands so the user feels progress even if
-  // they're not watching the rows.
+  // they're not watching the rows. With `prepare-error`, the run fails
+  // partway and lands the user on a yellow warning banner.
   useEffect(() => {
+    if (isPrepareError) {
+      // Personalia gets through, then we fail before vedlegg can land.
+      const t1 = setTimeout(() => {
+        setSectionPrep({ personalia: "done", vedlegg: "working", questions: "queued" });
+        haptic("tap");
+      }, 900);
+      const t2 = setTimeout(() => {
+        setPhase("prepare-error");
+        haptic("err");
+      }, 1700);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
     const t1 = setTimeout(() => {
       setSectionPrep({ personalia: "done", vedlegg: "working", questions: "queued" });
       haptic("tap");
@@ -9111,7 +9228,7 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
       haptic("ok");
     }, 3000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
+  }, [isPrepareError, prepareNonce]);
 
   // Status-line copy per section while it's "working". When the section is
   // "queued" it shows the generic waiting line; when "done" it falls
@@ -9304,7 +9421,9 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
   // restructuring the body. This kills the "menu + text flashing" that
   // happened when the whole subtree swapped at phase=ready.
   const isPreparing = phase === "preparing";
-  const applicationBody = (
+  const showPrepareError = phase === "prepare-error";
+  const showSendError = sendFailed;
+  const normalApplicationBody = (
     <>
       {/* Header band — preparing notice ↔ lede live in the same grid cell
           and crossfade. The cell sizes to the taller of the two so the
@@ -9401,6 +9520,26 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
       </div>
     </>
   );
+
+  // Body swap — backend-error banners take over the full content area;
+  // the sheet's header (logo + close) and footer (Send button) stay so
+  // the user can dismiss or retry from either the banner CTAs or the X.
+  const applicationBody = showPrepareError ? (
+    <div style={{ padding: "20px" }}>
+      <ApplyErrorBanner
+        variant="warning"
+        onTryAgain={retryPrepare}
+        onBack={() => close()}
+      />
+    </div>
+  ) : showSendError ? (
+    <div style={{ padding: "20px" }}>
+      <ApplyErrorBanner
+        variant="critical"
+        onBack={() => close()}
+      />
+    </div>
+  ) : normalApplicationBody;
 
   // ─── Section sheet bodies ──────────────────────────────────────────
   // Each section's edit form lives in its own bottom drawer that
@@ -9633,8 +9772,17 @@ function AgenticReviewScreen({ job, onClose, onSend }) {
             transition: "opacity 400ms cubic-bezier(0.45, 0, 0.25, 1)",
           }}>
             <PrimaryButton
-              onClick={() => { if (phase === "ready" && confirmed && !questionsMissing) onSend(); }}
-              disabled={phase !== "ready" || !confirmed || questionsMissing}>
+              onClick={() => {
+                if (phase !== "ready" || !confirmed || questionsMissing) return;
+                if (isSendErrorState) {
+                  // Simulated send failure — swap the body for the red banner.
+                  haptic("err");
+                  setSendFailed(true);
+                  return;
+                }
+                onSend();
+              }}
+              disabled={phase !== "ready" || !confirmed || questionsMissing || showPrepareError || showSendError}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <Icon name="send" size={18} color="#fff" stroke={2.2} />
                 {t({ en: "Send application", no: "Send søknad" })}
@@ -10997,6 +11145,8 @@ const USER_STATES = [
   { id: "missing-questions",  label: { en: "Missing employer answer", no: "Mangler svar fra arbeidsgiver" } },
   { id: "not-logged-in",      label: { en: "Not logged in",          no: "Ikke logget inn" } },
   { id: "already-applied",    label: { en: "Already applied",        no: "Allerede søkt" } },
+  { id: "prepare-error",      label: { en: "Backend error — prepare", no: "Backend-feil — klargjøring" } },
+  { id: "send-error",         label: { en: "Backend error — send",    no: "Backend-feil — sending" } },
 ];
 
 // ─── Strategy data: opportunity tree + impact/effort scores ────────────────
@@ -16687,6 +16837,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
               job={JOB}
               onClose={() => setScreen("jobad")}
               onSend={send}
+              userState={userState}
               // No onOpenCV/onOpenLetter — the agentic flow now drills into
               // CV picker/preview and Cover letter/saved-letters via an
               // internal page stack inside the Vedlegg section sheet. The
@@ -16893,6 +17044,11 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
               setOverlay(null);
               if (id === "already-applied") setScreen("jobad");
               if (id === "not-logged-in") { setScreen("jobad"); setOverlay("login"); }
+              // Backend errors only matter inside the apply flow — drop the
+              // user straight onto agentic review so they see the banner.
+              if (id === "prepare-error" || id === "send-error") {
+                setScreen("agentic-review");
+              }
             }}
             options={USER_STATES}
           />
