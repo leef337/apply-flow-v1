@@ -1447,6 +1447,28 @@
     font-size: 12px; color: var(--ink-soft); margin-top: 4px;
   }
 
+  /* Lift-target card — second blue card under the strategy headline.
+     Single bold target line + optional meta/guardrail footnote in
+     lighter weight. Matches the new OST visual treatment. */
+  .otree-target-card {
+    background: linear-gradient(180deg, #f4f8ff 0%, #e8f0ff 100%);
+    border: 1px solid rgba(0,99,251,0.16);
+    border-radius: 16px;
+    padding: 18px 24px;
+    max-width: 760px;
+    margin: 14px auto 0;
+    text-align: center;
+  }
+  .otree-target-line {
+    margin: 0;
+    font-size: 15px; font-weight: 700; color: var(--ink);
+    letter-spacing: -0.2px; line-height: 1.35;
+  }
+  .otree-target-meta {
+    margin: 6px 0 0;
+    font-size: 12px; color: var(--ink-soft); line-height: 1.45;
+  }
+
   /* Measurable-outcomes card — single elevated container holding a
      metric table. Each row is a KR with a chip on the left, the
      description in the middle, and the target pill on the right. */
@@ -1541,6 +1563,10 @@
   }
   .otree-problem .pct {
     font-size: 11px; opacity: 0.9;
+  }
+  .otree-problem .sub {
+    font-size: 12px; font-style: italic; opacity: 0.95;
+    margin-top: 1px;
   }
   .otree-problem.pa { background: #0063fb; }
   .otree-problem.pb { background: #6f3bd0; }
@@ -6865,6 +6891,350 @@ function ApplicationPreviewSheet({
   );
 }
 
+// ===========================================================
+// SLOW-LOAD APPLY SHEET — the "co-draft" pattern
+// -----------------------------------------------------------
+// Demonstrates the dev "Slow load" user state. The AI fetch +
+// draft is deliberately slow (a real ~2-minute job), so instead
+// of trapping the seeker behind a spinner we render the whole
+// form instantly and let them fill it in while the agent works.
+//
+// Personal details carry the centrepiece interaction: the seeker
+// can type their own answer right away. When the AI's result
+// arrives, it NEVER overwrites what they wrote — it docks UNDER
+// their answer as a suggestion they can accept ("Bruk forslaget")
+// or dismiss ("Behold mitt"). If the field is still empty, the AI
+// result simply fills it as an editable draft.
+//
+// UX grounding:
+//  • Nielsen #1 visibility of system status — a live, honest AI
+//    status strip ("this can take up to 2 minutes").
+//  • Nielsen #3 user control & freedom — input is never clobbered;
+//    the user can send at any point without waiting.
+//  • Vend insight (HUB): latency = 31% of drop-outs and "fill it
+//    myself" control = 38%. Filling-while-waiting serves both.
+//  • iOS HIG — modal sheet, activity indicators, haptics on
+//    state changes, 44pt targets.
+// ===========================================================
+
+// Real, deliberately-long background timings (ms). The whole point
+// of this state is to validate the WAIT, so these are NOT
+// compressed — full data lands at ~2 min. Tune here if needed.
+const SLOW_LOAD_MS = {
+  syncContact:  12000,  // name + email arrive from the profile
+  cv:           35000,  // CV finishes syncing
+  phone:        55000,  // phone parsed from CV → suggestion / autofill
+  questions:    80000,  // employer-question answers drafted
+  letter:      115000,  // cover-letter draft lands (the slowest task)
+};
+
+// SlowLoadApplySheet is rebuilt to reuse the SAME building blocks as
+// ApplicationPreviewSheet so it reads as the same product, not a new
+// screen: identical sheet chrome + header, the shared FINN-AI banner
+// (same style as Magic Apply), the shared PreviewRow + RiveSpinner
+// status rows, the shared InputField cards for editing, and the same
+// footnote + footer button. The only net-new element is the co-draft
+// suggestion that docks under the user's phone answer — and it borrows
+// the established AI vocabulary (#f7f7f9 answer card, FINN AI mark,
+// blue text-actions like "Endre").
+//
+// UX grounding: Nielsen #1 visibility of status (live banner + per-row
+// status), #3 user control (input is never overwritten; send anytime),
+// and the HUB latency(31%)+control(38%) tracks — fill while the agent
+// works instead of staring at a spinner. iOS HIG: modal sheet, activity
+// indicators, haptics, 44pt targets.
+function SlowLoadApplySheet({ job, onSend, onClose }) {
+  const t = useT();
+  const [exiting, close] = useDelayedClose(onClose, 320);
+  const platform = usePlatform();
+  const sheetRadius = PLATFORM_RADII[platform].sheet;
+  const { statusBarH, homeArea } = useMetrics();
+  const backdropH = statusBarH + 16;
+
+  // ── Background AI / sync stages ──────────────────────────
+  const [contactReady, setContactReady]     = useState(false);
+  const [cvReady, setCvReady]               = useState(false);
+  const [questionsReady, setQuestionsReady] = useState(false);
+  const [letterReady, setLetterReady]       = useState(false);
+  const allReady = contactReady && cvReady && questionsReady && letterReady;
+
+  // ── User-editable personal details ───────────────────────
+  const [name, setName]   = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [nameSrc, setNameSrc]   = useState("pending"); // pending | synced | user | edited
+  const [emailSrc, setEmailSrc] = useState("pending");
+  const [phoneSrc, setPhoneSrc] = useState("empty");   // empty | user | ai | edited
+  const [phoneSug, setPhoneSug] = useState(null);      // docked AI suggestion
+  const phoneTouchedRef = useRef(false);
+  const nameTouchedRef  = useRef(false);
+  const emailTouchedRef = useRef(false);
+
+  const timersRef = useRef([]);
+  useEffect(() => {
+    const push = (fn, ms) => timersRef.current.push(setTimeout(fn, ms));
+    // Contact details quietly sync in from the saved profile.
+    push(() => {
+      setContactReady(true);
+      if (!nameTouchedRef.current)  { setName("Jonas Berg");            setNameSrc("synced"); }
+      if (!emailTouchedRef.current) { setEmail("jonas.berg@gmail.com"); setEmailSrc("synced"); }
+    }, SLOW_LOAD_MS.syncContact);
+    push(() => setCvReady(true), SLOW_LOAD_MS.cv);
+    // Phone parsed from the CV — the co-draft moment.
+    push(() => {
+      const parsed = "+47 412 90 312";
+      if (phoneTouchedRef.current) { setPhoneSug(parsed); haptic("tap"); } // user typed → dock, don't overwrite
+      else { setPhone(parsed); setPhoneSrc("ai"); }                        // empty → fill as editable draft
+    }, SLOW_LOAD_MS.phone);
+    push(() => setQuestionsReady(true), SLOW_LOAD_MS.questions);
+    push(() => { setLetterReady(true); haptic("ok"); }, SLOW_LOAD_MS.letter);
+    return () => { timersRef.current.forEach(clearTimeout); timersRef.current = []; };
+  }, []);
+
+  function editName(v)  { nameTouchedRef.current = true;  setName(v);  setNameSrc(s => s === "synced" ? "edited" : "user"); }
+  function editEmail(v) { emailTouchedRef.current = true; setEmail(v); setEmailSrc(s => s === "synced" ? "edited" : "user"); }
+  function editPhone(v) { phoneTouchedRef.current = true; setPhone(v); setPhoneSrc(s => s === "ai" ? "edited" : "user"); }
+  function acceptPhoneSug() { haptic("tap"); setPhone(phoneSug); setPhoneSrc("ai"); setPhoneSug(null); }
+  function dismissPhoneSug() { haptic("tap"); setPhoneSug(null); }
+
+  const srcNote = (src) =>
+    src === "synced" ? t({ en: "Synced from your profile", no: "Hentet fra profilen din" })
+    : src === "ai"   ? t({ en: "Found in your CV", no: "Funnet i CV-en din" })
+    : src === "edited" ? t({ en: "Edited by you", no: "Endret av deg" })
+    : null;
+
+  // Background-task rows reuse the shared PreviewRow vocabulary.
+  const prepRows = [
+    {
+      id: "cv", title: "CV", source: null, preview: false,
+      status: cvReady ? "done" : "loading",
+      sub: cvReady ? t({ en: "Synced from your profile", no: "Hentet fra profilen din" })
+                   : t({ en: "Fetching your CV…", no: "Henter CV-en din …" }),
+    },
+    {
+      id: "questions", title: t({ en: "Employer questions", no: "Spørsmål fra arbeidsgiver" }),
+      source: null, preview: false,
+      status: questionsReady ? "done" : "loading",
+      sub: questionsReady ? t({ en: "3 suggestions ready — review", no: "3 forslag klare – se over" })
+                          : t({ en: "Drafting answers…", no: "Skriver forslag til svar …" }),
+    },
+    {
+      id: "letter", title: t({ en: "Cover letter", no: "Søknadsbrev" }),
+      titleSuffix: letterReady ? <AILogo size={16} /> : null,
+      source: null, preview: false,
+      status: letterReady ? "ai" : "loading",
+      sub: letterReady ? t({ en: "AI draft · editable", no: "AI-utkast · kan endres" })
+                       : t({ en: "Writing for this role…", no: "Skriver for denne jobben …" }),
+    },
+  ];
+
+  // Send is allowed once the essentials the user controls are present —
+  // never blocked by the AI still drafting the letter.
+  const canSend = name.trim() && email.trim() && phone.trim() && cvReady;
+
+  const blueAction = {
+    background: "transparent", border: 0, padding: "8px 2px",
+    color: "#0063fb", fontFamily: "inherit", fontSize: 15, fontWeight: 600,
+    letterSpacing: -0.1, cursor: "pointer", minHeight: 44,
+  };
+  const greyAction = { ...blueAction, color: "#6b6b6b", fontWeight: 500 };
+
+  return (
+    <div
+      className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 50,
+        display: "flex", flexDirection: "column",
+        background: "rgba(0,0,0,.30)",
+        animation: "fadein 300ms var(--ease-modal)",
+      }}>
+      <div onClick={close} style={{ flex: `0 0 ${backdropH}px`, cursor: "pointer" }} />
+      <div
+        className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: sheetRadius, borderTopRightRadius: sheetRadius,
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 -4px 24px rgba(0,0,0,.10)",
+          position: "relative", overflow: "hidden",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
+        {/* Header — identical to ApplicationPreviewSheet */}
+        <div style={{ padding: "14px 16px 6px" }}>
+          <button
+            className="press"
+            onClick={() => { haptic("tap"); close(); }}
+            aria-label={t({ en: "Close", no: "Lukk" })}
+            style={{
+              width: 40, height: 40, borderRadius: 9999,
+              background: "#f0f0f3", border: 0, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+            <Icon name="x" size={18} color="#1d1d1d" stroke={2.4} />
+          </button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 16px 14px" }}>
+          <CompanyLogo size={56} initials={job.initials} color={job.brandColor} logo={job.logo} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              fontSize: 13, fontWeight: 500, color: "#6b6b6b",
+              margin: "0 0 2px", lineHeight: 1.2,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>{job.company}</p>
+            <p style={{
+              fontSize: 20, fontWeight: 700, color: "#1d1d1d",
+              margin: 0, lineHeight: 1.2, letterSpacing: -0.3,
+            }}>{t({ en: job.title, no: job.titleNo })}</p>
+          </div>
+        </div>
+
+        {/* FINN-AI working banner — same style as the Magic Apply banner. */}
+        {!allReady && (
+          <div style={{
+            margin: "0 16px 10px", padding: "10px 14px",
+            background: "linear-gradient(180deg, #f4f8ff 0%, #eaf2ff 100%)",
+            border: "1px solid rgba(0,99,251,0.18)",
+            borderRadius: PLATFORM_RADII[platform].card,
+            display: "flex", alignItems: "center", gap: 10,
+            animation: "fadein 300ms var(--ease-modal)",
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9, background: "#fff", padding: 2,
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              boxShadow: "0 4px 10px rgba(0,99,251,0.30)",
+              animation: "pulse 2.2s ease-in-out infinite",
+            }}>
+              <AILogo size={28} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0a3a8a", letterSpacing: -0.1 }}>
+                {t({ en: "FINN is working for you", no: "FINN jobber for deg" })}
+              </p>
+              <p style={{ margin: "2px 0 0", fontSize: 11, color: "#0063fb" }}>
+                {t({ en: "Fill in your details while you wait — up to 2 min",
+                    no: "Fyll inn mens du venter – opptil 2 min" })}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="scroll-area" style={{ flex: 1, overflowY: "auto" }}>
+          {/* Personal details — same row head as the list, expanded into
+              the shared InputField cards so the seeker can fill now. */}
+          <div style={{
+            borderTop: "0.5px solid #ededed",
+            display: "flex", alignItems: "flex-start", gap: 14, padding: "16px 16px 6px",
+          }}>
+            <div style={{ width: 32, height: 32, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {contactReady
+                ? <Icon name="check-circle" size={28} color="#1f8a3b" stroke={2} />
+                : <RiveSpinner size={32} src="assets/finn_ai_spinner_allstates.riv" />}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 16, fontWeight: 600, color: "#1d1d1d", margin: 0, lineHeight: 1.25, letterSpacing: -0.2 }}>
+                {t({ en: "Personal details", no: "Personalia" })}
+              </p>
+              <p style={{ fontSize: 13, color: "#6b6b6b", margin: 0, lineHeight: 1.35 }}>
+                {contactReady
+                  ? t({ en: "Synced from your profile — review", no: "Hentet fra profilen din – se over" })
+                  : t({ en: "Fill in now while FINN fetches the rest", no: "Fyll inn nå mens FINN henter resten" })}
+              </p>
+            </div>
+          </div>
+          <div style={{ padding: "8px 20px 18px" }}>
+            <InputField
+              label={t({ en: "Name", no: "Navn" })}
+              value={name} onChange={editName} autoComplete="name"
+              placeholder={t({ en: "Your name", no: "Navnet ditt" })}
+            />
+            <InputField
+              label={t({ en: "Email", no: "E-post" })}
+              value={email} onChange={editEmail} type="email" autoComplete="email"
+              placeholder={t({ en: "your@email.com", no: "din@epost.no" })}
+            />
+            <div>
+              <InputField
+                label={t({ en: "Phone", no: "Telefon" })}
+                value={phone} onChange={editPhone} type="tel" autoComplete="tel" last
+                placeholder={t({ en: "Type it, or wait for FINN", no: "Skriv det selv, eller vent på FINN" })}
+              />
+              {/* Co-draft suggestion — docks UNDER the user's own answer.
+                  Uses the established AI vocabulary (grey answer card +
+                  FINN AI mark + blue text-actions). Never overwrites input. */}
+              {phoneSug && (
+                <div style={{
+                  marginTop: 10, padding: "12px 14px",
+                  background: "#f7f7f9", borderRadius: 12,
+                  animation: "fadein 220ms var(--ease-out)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <AILogo size={14} />
+                    <span style={{ fontSize: 12, color: "#6b6b6b", letterSpacing: -0.05 }}>
+                      {t({ en: "FINN's suggestion · found in your CV", no: "Forslag fra FINN · funnet i CV-en din" })}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: 17, fontWeight: 500, color: "#1d1d1d", margin: "0 0 6px", letterSpacing: -0.2 }}>
+                    {phoneSug}
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                    <button className="press" onClick={acceptPhoneSug} style={blueAction}>
+                      {t({ en: "Use suggestion", no: "Bruk forslaget" })}
+                    </button>
+                    <button className="press" onClick={dismissPhoneSug} style={greyAction}>
+                      {t({ en: "Keep mine", no: "Behold mitt" })}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!phoneSug && srcNote(phoneSrc) && (
+                <p style={{ fontSize: 12, color: "#6b6b6b", margin: "8px 4px 0", lineHeight: 1.4 }}>
+                  {srcNote(phoneSrc)}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Background tasks — shared PreviewRow status rows. */}
+          {prepRows.map((r, i) => (
+            <PreviewRow
+              key={r.id} row={r} isLast={i === prepRows.length - 1}
+              hideEdit onEdit={() => {}} onPreview={null}
+            />
+          ))}
+
+          <p style={{
+            fontSize: 12, color: "#6b6b6b", lineHeight: 1.5,
+            margin: "20px 24px 8px", textAlign: "center", letterSpacing: -0.05,
+          }}>
+            {t({
+              en: <>Edit anything before you send.<br/>We'll keep a draft in your profile.</>,
+              no: <>Du kan endre alt før du sender.<br/>Vi lagrer kladden i profilen din.</>,
+            })}
+          </p>
+        </div>
+
+        {/* Footer — same as ApplicationPreviewSheet. Send is never blocked
+            by the AI; it enables as soon as the user's details are in. */}
+        <div style={{
+          padding: "12px 16px",
+          paddingBottom: `calc(12px + ${homeArea}px)`,
+          background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.06)",
+          display: "flex", flexDirection: "column", gap: 8,
+        }}>
+          <PrimaryButton onClick={() => { haptic("ok"); onSend(); }} disabled={!canSend}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Icon name="send" size={18} color="#fff" stroke={2.2} />
+              {t({ en: "Send application", no: "Send søknad" })}
+            </span>
+          </PrimaryButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PreviewRow({ row, onEdit, onPreview, isLast, editLabel, hideEdit = false }) {
   const t = useT();
   const isLoading = row.status === "loading";
@@ -9226,6 +9596,103 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
     setPrepareNonce(n => n + 1);
   }
 
+  // ─── Co-draft personalia (Figma 962:2855) ──────────────────────────
+  // When the Personal details editor opens, each text field streams in an
+  // AI answer: it shows a loading skeleton first, but the user can type at
+  // any time (override). When the AI answer lands, an empty/untouched field
+  // auto-fills; if the user has already typed something different, the AI
+  // answer appears beneath as a "From AI" suggestion with a "Use AI answer"
+  // swap. This is the co-draft pattern from the new design.
+  const AI_ANSWER = {
+    firstName: "George", lastName: "Town",
+    email: "georgetownt@gmail.com", phone: "98 73 88 21",
+    linkedin: "linkedin.com/in/georgetown",
+  };
+  const PD_KEYS = ["firstName", "lastName", "email", "phone", "linkedin"];
+  const [aiStatus, setAiStatus] = useState({}); // key -> "loading" | "ready"
+  const pdTouchedRef = useRef({});
+  const pdTimersRef = useRef([]);
+  useEffect(() => {
+    if (sectionSheet !== "personalia") return;
+    pdTouchedRef.current = {};
+    setAiStatus({ firstName: "loading", lastName: "loading", email: "loading", phone: "loading", linkedin: "loading" });
+    // Clear the values so the fields visibly load, then the AI streams them back.
+    setFields(prev => {
+      const n = { ...prev };
+      PD_KEYS.forEach(k => { n[k] = { ...prev[k], v: "", e: false }; });
+      return n;
+    });
+    pdTimersRef.current.forEach(clearTimeout);
+    pdTimersRef.current = PD_KEYS.map((k, i) => setTimeout(() => {
+      setAiStatus(s => ({ ...s, [k]: "ready" }));
+      if (!pdTouchedRef.current[k]) update(k, AI_ANSWER[k]); // auto-fill if still untouched
+      haptic("tap");
+    }, 1100 + i * 850));
+    return () => { pdTimersRef.current.forEach(clearTimeout); pdTimersRef.current = []; };
+  }, [sectionSheet]);
+
+  // One co-draft text field: skeleton while loading, editable input always,
+  // "From AI" swap row when the AI answer differs from the user's text.
+  function pdField(k, label, type = "text", ac, optional = false) {
+    const f = fields[k];
+    const loading = aiStatus[k] === "loading" && !f.v && !pdTouchedRef.current[k];
+    const ready = aiStatus[k] === "ready";
+    const showSug = ready && AI_ANSWER[k] && f.v && f.v !== AI_ANSWER[k];
+    return (
+      <div className="ar-rv" key={k}>
+        <p className="ar-rv-heading">
+          <span className="ar-rv-heading-label">
+            {label}
+            {optional && (
+              <span style={{ marginLeft: 8, fontSize: 14, fontWeight: 400, color: "#6b6b6b", letterSpacing: -0.05 }}>
+                {t({ en: "Optional", no: "Valgfri" })}
+              </span>
+            )}
+          </span>
+        </p>
+        {loading ? (
+          <div style={{ height: 50, borderRadius: 12, background: "#f7f7f9", display: "flex", alignItems: "center", padding: "0 16px" }}>
+            <div style={{ width: 154, height: 12, borderRadius: 6, background: "#dde5f3", animation: "arSkeletonPulse 1.4s ease-in-out infinite" }} />
+          </div>
+        ) : (
+          <input
+            type={type} autoComplete={ac} value={f.v}
+            placeholder={t({ en: "Type your answer", no: "Skriv svaret ditt" })}
+            onChange={(e) => { pdTouchedRef.current[k] = true; update(k, e.target.value); }}
+            style={{
+              width: "100%", boxSizing: "border-box",
+              background: "#f7f7f9", border: "1px solid transparent", borderRadius: 12,
+              padding: "13px 16px", fontFamily: "inherit", fontSize: 17, fontWeight: 500,
+              color: "#1d1d1d", letterSpacing: -0.2, outline: "none", caretColor: "#0063fb",
+            }}
+            onFocus={(e) => { e.target.style.border = "1px solid #0063fb"; }}
+            onBlur={(e) => { e.target.style.border = "1px solid transparent"; }}
+          />
+        )}
+        {showSug && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#1f8a3b", background: "#e3f5e9", padding: "3px 9px", borderRadius: 9999, whiteSpace: "nowrap" }}>
+              {t({ en: "From AI", no: "Fra AI" })}
+            </span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 15, color: "#1d1d1d", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {AI_ANSWER[k]}
+            </span>
+            <button
+              className="press"
+              onClick={() => { haptic("tap"); update(k, AI_ANSWER[k]); }}
+              style={{
+                flexShrink: 0, padding: "8px 12px", borderRadius: 8,
+                border: "1px solid #0063fb", background: "#fff", color: "#0063fb",
+                fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              }}>
+              {t({ en: "Use AI answer", no: "Bruk AI-svaret" })}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Stage the preparing phase — each section ticks off one at a time.
   // 1s per section, 3s total. The Doherty Threshold (≤400ms feels instant,
   // ≥1s users start noticing) means we want this as tight as possible
@@ -9585,59 +10052,39 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
 
   const sectionBody = sectionSheet === "personalia" ? (
     <>
-      <ReviewItem k="firstName" autoComplete="given-name" />
-      <ReviewItem k="lastName"  autoComplete="family-name" />
-      <ReviewItem k="email"     type="email" autoComplete="email" />
-      <ReviewItem k="phone"     type="tel"   autoComplete="tel" />
+      {/* Preparing banner — invites the user to fill in while the AI works. */}
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 16px", background: "#eaf2ff", borderRadius: 14, marginBottom: 20 }}>
+        <div style={{ flexShrink: 0, marginTop: 1 }}><AILogo size={24} /></div>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: "#1d1d1d", letterSpacing: -0.1 }}>
+          {t({
+            en: "We're preparing your application. In the meantime you're welcome to start filling in the application yourself.",
+            no: "Vi forbereder søknaden din. I mellomtiden kan du gjerne begynne å fylle ut søknaden selv.",
+          })}
+        </p>
+      </div>
+      {pdField("firstName", LABELS.firstName, "text", "given-name")}
+      {pdField("lastName", LABELS.lastName, "text", "family-name")}
+      {pdField("email", LABELS.email, "email", "email")}
+      {pdField("phone", LABELS.phone, "tel", "tel")}
       <ReviewItem k="gender" options={[
         { en: "Male",   no: "Mann" },
         { en: "Female", no: "Kvinne" },
         { en: "Other",  no: "Annet" },
       ]} />
       <div className="ar-rv">
-        <p className="ar-rv-heading" style={{
-          opacity: includeLinkedin ? 1 : 0.5,
-          transition: "opacity 200ms var(--ease-out)",
-        }}>
-          <span className="ar-rv-heading-label">
-            {LABELS.linkedin}
-            <span style={{
-              marginLeft: 8,
-              fontSize: 14, fontWeight: 400,
-              color: "#6b6b6b",
-              letterSpacing: -0.05,
-            }}>{t({ en: "Optional", no: "Valgfri" })}</span>
-          </span>
-        </p>
-        {/* LinkedIn is dimmed until "Add optional info" is toggled on.
-            The field still renders so the toggle has visible context, but
-            it's not interactive while opted out. */}
+        {/* LinkedIn is dimmed until "Add optional info" is toggled on. */}
         <div style={{
           opacity: includeLinkedin ? 1 : 0.5,
           pointerEvents: includeLinkedin ? "auto" : "none",
           transition: "opacity 200ms var(--ease-out)",
         }}>
-          {editing === "linkedin" ? (
-            <input className="ar-rv-input"
-              value={fields.linkedin.v} autoFocus
-              onChange={(e) => update("linkedin", e.target.value)}
-              onBlur={() => setEditing(null)}
-              onKeyDown={(e) => { if (e.key === "Enter") setEditing(null); }} />
-          ) : (
-            <button className="ar-rv-answer press"
-              onClick={() => { haptic("tap"); setEditing("linkedin"); }}>
-              {fields.linkedin.v}
-            </button>
-          )}
+          {pdField("linkedin", LABELS.linkedin, "url", "url", true)}
         </div>
         <div style={{ marginTop: 14, borderTop: "0.5px solid #ededed" }}>
           <IOSSwitch
             checked={includeLinkedin}
             onChange={setIncludeLinkedin}
-            label={t({
-              en: "Add optional info",
-              no: "Legg til valgfri info",
-            })}
+            label={t({ en: "Add optional info", no: "Legg til valgfri info" })}
             hint={includeLinkedin
               ? t({ en: "LinkedIn will be sent with your application", no: "LinkedIn sendes med søknaden" })
               : t({ en: "LinkedIn won't be included", no: "LinkedIn tas ikke med" })}
@@ -11168,6 +11615,7 @@ const JOB = {
 // User-state edge cases for dev mode
 const USER_STATES = [
   { id: "ready",              label: { en: "Default",                no: "Standard" } },
+  { id: "slow-load",          label: { en: "Slow load (co-draft)",   no: "Treg lasting (co-draft)" } },
   { id: "missing-personalia", label: { en: "Missing personal data",  no: "Mangler personalia" } },
   { id: "missing-cv",         label: { en: "Missing CV",             no: "Mangler CV" } },
   { id: "missing-questions",  label: { en: "Missing employer answer", no: "Mangler svar fra arbeidsgiver" } },
@@ -11187,68 +11635,81 @@ const TREE_DATA = {
   business: "Jobs Prio #2 2026",
   outcome: {
     text: "AI-native app-first experience",
+    // Single lift target sits below the strategy line, with the
+    // outcome / guardrail explanation in `measurablesMeta`.
     measurables: [
-      "Conversion view-form → confirmation (>50%)",
-      "Hotjar satisfaction score (all platforms): (> 4/5)",
-      "Usage of agentic apply button vs regular apply button (x)",
-      "CTR of agentic apply-button greater than CTR for ATS ads (x)",
+      "Lift agentic apply completion from 39% → 50%+",
     ],
+    measurablesMeta: "Outcome · view form → confirmation · guardrail: satisfaction ≥ 4/5",
   },
   problems: [
     {
       id: "1", key: "pa", title: "Latency",
-      pct: "39% drop out because processing takes too long",
+      sub: '"I\'m stuck waiting, is it still working?"',
+      pct: "32% drop at processing wait (median 83s)",
       hypotheses: [
         { id: "1.1",
-          text: "We can optimize our AI usage to increase processing speed",
+          text: "Cut real processing time",
           solutions: [
-            { n: 1, text: "Pre-fetch form at ad-import (once, not per user) ✅" },
-            { n: 2, text: "Use a faster model for simpler fields (Gemini)" },
-            { n: 3, text: "Background processing with push notification when ready" },
+            { n: 1, text: "Right-size the model to each subtask; heavy models only where needed." },
+            { n: 2, text: "Break the agent's task graph into specialised sub-graphs." },
+            { n: 3, text: "Detect the ad / form type up front and route it through a tailored flow." },
+            { n: 4, text: "Test on-device or hybrid (device + cloud) parsing to cut round-trips." },
+            { n: 5, text: "Test first: profile the slowest applications, benchmark models internally." },
           ] },
         { id: "1.2",
-          text: "Good design choices can change users' perception of speed, and increase conversions.",
+          text: "Improve perceived speed",
           solutions: [
-            { n: 4, text: "Add loading animations" },
-            { n: 5, text: "Side drawer on desktop keeps ad visible while AI works" },
-            { n: 6, text: "Ask questions during the loading state to 'fill' the time and activate the users" },
+            { n: 6, text: "Let people start filling immediately while AI works." },
+            { n: 7, text: "Process in the background, save a draft, notify when ready — so they can multitask." },
+            { n: 8, text: "Show lively progress states that make thinking and typing visible." },
+            { n: 9, text: "Keep a side / bottom drawer so the wait feels productive." },
           ] },
       ],
     },
     {
-      id: "2", key: "pb", title: "Trust / Control",
-      pct: "36% drop out - they prefer to fill out themselves",
+      id: "2", key: "pb", title: "UX - Trust / Control",
+      pct: "43% drop at review → submit · biggest leak",
       hypotheses: [
         { id: "2.1",
-          text: "Make the seekers trust the AI more and feel less of a need to manually intervene",
+          text: "Build trust through visibility",
           solutions: [
-            { n: 7, text: "Clearer guidance text to help users understand what is going on." },
-            { n: 8, text: "“Generate alternative” button users can control without manual typing" },
-            { n: 9, text: "Side-by-side view: ad requirement → AI's interpretation → editable field" },
+            { n: 10, text: "Narrate each step in plain language (\"Fetching your CV…\")." },
+            { n: 11, text: "Let users rate AI-filled fields (up / down) to correct and teach it." },
           ] },
         { id: "2.2",
-          text: "Seekers would like to feel like they are in control of the process",
+          text: "Give a sense of control",
           solutions: [
-            { n: 10, text: "Let people type their own cover letter and save it as an attached file" },
-            { n: 11, text: "Don't autofill simple questions (e.g. yes/no)" },
+            { n: 12, text: "Don't pre-fill the personal stuff — leave yes/no and the cover letter to the user." },
+            { n: 13, text: "Flag every AI-filled field on review for explicit confirmation." },
+            { n: 14, text: "Make it interactive — edit inline or ask the AI to improve an answer." },
+          ] },
+        { id: "2.3",
+          text: "Put seekers in control of their files",
+          solutions: [
+            { n: 15, text: "Support multiple file uploads within a single application." },
+            { n: 16, text: "Let users reuse files across their profile and previous applications." },
           ] },
       ],
     },
     {
       id: "3", key: "pc", title: "Tech Bugs",
-      pct: "17% drop out due to technical problems",
+      pct: "Defects feeding both leaks & the satisfaction guardrail",
       hypotheses: [
         { id: "3.1",
-          text: "If we persist progress and make errors recoverable, users won't abandon mid-flow.",
+          text: "Persist progress & recover",
           solutions: [
-            { n: 12, text: "Autosave drafts server-side + visible \"Utkast lagret\" indicator" },
-            { n: 13, text: "Per-field error messages with one-tap retry" },
+            { n: 17, text: "Auto-save drafts and reuse session data so steps aren't repeated." },
+            { n: 18, text: "Replace vague failures with clear, actionable error messages." },
+            { n: 19, text: "Log failures properly so we can see what to fix." },
           ] },
         { id: "3.2",
-          text: "If we fix the question types with known bugs, we close the biggest tech failure paths.",
+          text: "Fix the buggy question types",
           solutions: [
-            { n: 14, text: "Video question UX: recording guidance + text fallback" },
-            { n: 15, text: "File upload: chunked upload + clear size/type guidance up-front" },
+            { n: 20, text: "Fix broken field types: long / short text, video, multi-select, file upload." },
+            { n: 21, text: "Give the agent field-type-specific prompts per question type." },
+            { n: 22, text: "Re-evaluate the browser-automation approach (Playwright → alternative)." },
+            { n: 23, text: "Risk: these open bugs argue against releasing on mobile too early." },
           ] },
       ],
     },
@@ -11858,6 +12319,7 @@ const HANDOFF = {
   states: {
     user: [
       { id: "ready",              when: "Default. Profile + CV available, no missing data." },
+      { id: "slow-load",          when: "Deliberately slow (~2 min) AI fetch/draft. Form is editable immediately; AI results dock under the user's own answers as a replaceable suggestion." },
       { id: "missing-personalia", when: "Phone number missing — show red row + recovery CTA." },
       { id: "missing-cv",         when: "No CV attached — Send disabled until resolved." },
       { id: "missing-questions",  when: "Employer question unanswered — friendly banner + CTA." },
@@ -14455,29 +14917,13 @@ function OpportunityTreeBody({ business, outcome, problems, lastEdited, onEditTr
               )}
             </div>
             {Array.isArray(outcome.measurables) && outcome.measurables.length > 0 && (
-              <div className="otree-measurables">
-                <div className="label">Measurable outcomes</div>
-                {outcome.measurables.map((raw, mi) => {
-                  // Split the trailing parenthetical off the description and
-                  // render it as a target pill on the right. Falls back to
-                  // showing the whole string if no target is found.
-                  const str = String(raw);
-                  const match = str.match(/^(.*?)[\s:]*\(([^()]+)\)\s*$/);
-                  const desc = match ? match[1].replace(/[\s:]+$/, "") : str;
-                  const target = match ? match[2].trim() : "";
-                  const isTbd = /^x$/i.test(target);
-                  return (
-                    <div key={mi} className="otree-measurable">
-                      <span className="otree-kr-chip">KR{mi + 1}</span>
-                      <span className="desc">{desc}</span>
-                      {target && (
-                        <span className={"otree-target" + (isTbd ? " is-tbd" : "")}>
-                          {isTbd ? "tbd" : target}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="otree-target-card">
+                {outcome.measurables.map((raw, mi) => (
+                  <p key={mi} className="otree-target-line">{String(raw)}</p>
+                ))}
+                {outcome.measurablesMeta && (
+                  <p className="otree-target-meta">{outcome.measurablesMeta}</p>
+                )}
               </div>
             )}
             <div className="otree-spine" aria-hidden="true" />
@@ -14507,6 +14953,16 @@ function OpportunityTreeBody({ business, outcome, problems, lastEdited, onEditTr
                         onCommit={(v) => onEditTree(d => { d.problems[pi].title = v; },
                           { action: "edit-tree", detail: { op: "edit-problem-title", title: v } })}
                       />
+                      {(p.sub || isEditing) && (
+                        <EditableText
+                          value={p.sub || ""}
+                          editing={isEditing}
+                          className="sub"
+                          placeholder="(optional user voice)"
+                          onCommit={(v) => onEditTree(d => { d.problems[pi].sub = v; },
+                            { action: "edit-tree", detail: { op: "edit-problem-sub" } })}
+                        />
+                      )}
                       <EditableText
                         value={p.pct}
                         editing={isEditing}
@@ -15407,12 +15863,13 @@ function solutionsAreCurrentShape(data) {
   return data.some(s => typeof s.release === "string");
 }
 function treeIsCurrentShape(data) {
-  // SCHEMA 6 — outcome now carries a `measurables` array (4 stacked KR
-  // cards). Reject the old shape so cloud-saved trees from before this
-  // change get reseeded from TREE_DATA on next load.
+  // SCHEMA 7 — outcome carries `measurables` + `measurablesMeta`, and the
+  // first problem carries an optional `sub`. Reject the old shape so cloud
+  // copies from earlier builds get reseeded from TREE_DATA on next load.
   if (!data || typeof data !== "object") return false;
   if (!data.outcome || typeof data.outcome.text !== "string") return false;
   if (!Array.isArray(data.outcome.measurables)) return false;
+  if (typeof data.outcome.measurablesMeta !== "string") return false;
   if (!Array.isArray(data.problems)) return false;
   return true;
 }
@@ -16104,7 +16561,10 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   //      shape: { business, outcome, problems, lastEdited }.
   // v6 — outcome now carries a `measurables` array (4 stacked KR cards
   //      replace the single inline meta line).
-  const SCHEMA = 6;
+  // v7 — new OST: single lift target + measurablesMeta footnote;
+  //      problem columns rewritten (Latency 32%, UX 43%, Tech Bugs);
+  //      hypotheses + solutions replaced. Old cloud trees get reseeded.
+  const SCHEMA = 7;
   const [stories, setStories] = useState(() => {
     try {
       const v = parseInt(localStorage.getItem("vend-storymap-v") || "0", 10);
@@ -16833,7 +17293,14 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
             {bodyScreen}
           </div>
 
-          {screen === "preview" && (
+          {screen === "preview" && userState === "slow-load" && (
+            <SlowLoadApplySheet
+              job={JOB}
+              onClose={() => { setScreen("jobad"); }}
+              onSend={send}
+            />
+          )}
+          {screen === "preview" && userState !== "slow-load" && (
             <ApplicationPreviewSheet
               job={JOB}
               state={userState}
@@ -17072,6 +17539,9 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
               setOverlay(null);
               if (id === "already-applied") setScreen("jobad");
               if (id === "not-logged-in") { setScreen("jobad"); setOverlay("login"); }
+              // Slow load self-manages its own staged timers on mount —
+              // just drop the user straight into the preview sheet.
+              if (id === "slow-load") { cancelMagic(); setMagicMode(false); setScreen("preview"); }
               // Backend errors only matter inside the apply flow — drop the
               // user straight onto agentic review so they see the banner.
               if (id === "prepare-error" || id === "send-error") {
@@ -17104,64 +17574,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
           </div>
         </div>
 
-        <div className="dev-group">
-          <p className="dev-group-title">Screens</p>
-          <NavBtn active={screen === "jobad"} onClick={() => { reset(); }}>Job ad</NavBtn>
-          <NavBtn active={screen === "preview" && loadingPhase !== "ready" && !overlay}
-            onClick={() => { setOverlay(null); setUserState("ready"); setScreen("preview"); startProgressiveLoad(); }}>
-            Preview — loading
-          </NavBtn>
-          <NavBtn active={screen === "preview" && !overlay && userState === "ready" && loadingPhase === "ready"}
-            onClick={() => { setOverlay(null); setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); }}>
-            Preview — ready
-          </NavBtn>
-          <NavBtn active={screen === "preview" && userState === "missing-questions" && !overlay}
-            onClick={() => { setOverlay(null); setUserState("missing-questions"); setLoadingPhase("ready"); setScreen("preview"); }}>
-            Missing info
-          </NavBtn>
-          <NavBtn active={overlay === "edit:cv"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setCvPickerActive(true); setOverlay("edit:cv"); }}>
-            CV picker
-          </NavBtn>
-          <NavBtn active={overlay === "cv-preview"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("cv-preview"); }}>
-            CV preview
-          </NavBtn>
-          <NavBtn active={overlay === "letter"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("letter"); }}>
-            Cover letter
-          </NavBtn>
-          <NavBtn active={overlay === "select-letter"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("select-letter"); }}>
-            Select / upload letter
-          </NavBtn>
-          <NavBtn active={overlay === "edit:letter"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:letter"); }}>
-            Edit cover letter
-          </NavBtn>
-          <NavBtn active={overlay === "edit:personalia"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:personalia"); }}>
-            Personal details
-          </NavBtn>
-          <NavBtn active={overlay === "edit:questions"}
-            onClick={() => { setUserState("ready"); setLoadingPhase("ready"); setScreen("preview"); setOverlay("edit:questions"); }}>
-            Employer questions
-          </NavBtn>
-          <NavBtn active={screen === "confirmation"}
-            onClick={() => { setOverlay(null); setScreen("confirmation"); }}>
-            Confirmation
-          </NavBtn>
-          <NavBtn active={screen === "activity" && activityTab === "drafts"}
-            onClick={() => { setApplicationStatus("draft"); openActivity("drafts"); }}>
-            Activity — Drafts
-          </NavBtn>
-          <NavBtn active={screen === "activity" && activityTab === "sent"}
-            onClick={() => { setApplicationStatus("sent"); openActivity("sent"); }}>
-            Activity — Sent
-          </NavBtn>
-        </div>
-
-        <p className="hint">Tap through the iPhone, or jump using the list. Haptic feedback runs on supported devices.</p>
+        <p className="hint">Tap through the iPhone to navigate. Haptic feedback runs on supported devices.</p>
         <p className="hint" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #2e2e2e" }}>
           For engineers: open the <strong>Handoff</strong> tab for site map, tokens, motion timings, and platform mapping.
         </p>
