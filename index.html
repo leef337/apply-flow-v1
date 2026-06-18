@@ -12718,32 +12718,33 @@ const ROADMAP_CARDS = [
 // Impact/Effort assessment — placements mirror the team matrix. key = source
 // opportunity (pa Latency · pb Trust/Control · pc Tech). impact/effort 0–10;
 // quadrant split at 5. App-vs-backend splits (7.1/7.2/6.1) appear twice.
+// `jira` = live UCN Product-Discovery idea (nmp-jira), aligned with the storymap.
 const IE_SOLUTIONS = [
   // Quick wins — high impact · low effort
-  { n: 1,  id: "7.1", key: "pc", title: "Continuous auto-save (app)",            impact: 8.6, effort: 3.6 },
-  { n: 2,  id: "7.2", key: "pc", title: "Resume where left off (app)",           impact: 8.0, effort: 3.9 },
-  { n: 3,  id: "3.2", key: "pb", title: "Skip personal pre-fill",                impact: 7.6, effort: 2.2 },
-  { n: 4,  id: "2.2", key: "pa", title: "Process in background",                 impact: 6.9, effort: 3.6 },
-  { n: 5,  id: "6.1", key: "pc", title: "Fix field types (long / short text)",   impact: 6.0, effort: 3.0 },
+  { n: 1,  id: "7.1", key: "pc", problem: "Tech bugs",       title: "Continuous auto-save (app)",            impact: 8.6, effort: 3.6, jira: "UCN-11" },
+  { n: 2,  id: "7.2", key: "pc", problem: "Tech bugs",       title: "Resume where left off (app)",           impact: 8.0, effort: 3.9, jira: "UCN-12" },
+  { n: 3,  id: "3.2", key: "pb", problem: "Trust / Control", title: "Skip personal pre-fill",                impact: 7.6, effort: 2.2, jira: "UCN-8" },
+  { n: 4,  id: "2.2", key: "pa", problem: "Latency",         title: "Process in background",                 impact: 6.9, effort: 3.6, jira: "UCN-9" },
+  { n: 5,  id: "6.1", key: "pc", problem: "Tech bugs",       title: "Fix field types (long / short text)",   impact: 6.0, effort: 3.0, jira: "UCN-10" },
   // Big bets — high impact · high effort
-  { n: 6,  id: "1.1", key: "pa", title: "Right-size models",                     impact: 9.0, effort: 7.0 },
-  { n: 7,  id: "1.2", key: "pa", title: "Split into sub-graphs",                 impact: 8.6, effort: 7.3 },
-  { n: 8,  id: "2.1", key: "pa", title: "Fill while AI works",                   impact: 8.2, effort: 6.0 },
-  { n: 9,  id: "3.5", key: "pb", title: "AI cover letter writer",                impact: 7.7, effort: 6.4 },
-  { n: 10, id: "4.2", key: "pb", title: "Reuse past files",                      impact: 7.2, effort: 6.0 },
-  { n: 11, id: "2.4", key: "pa", title: "Side / bottom drawer",                  impact: 7.2, effort: 6.9 },
-  { n: 12, id: "7.1", key: "pc", title: "Continuous auto-save (backend)",        impact: 6.7, effort: 5.7 },
-  { n: 13, id: "7.2", key: "pc", title: "Resume where left off (backend)",       impact: 6.3, effort: 5.7 },
-  { n: 14, id: "6.1", key: "pc", title: "Fix field types (video & file uploads)",impact: 6.0, effort: 6.2 },
-  { n: 15, id: "6.3", key: "pc", title: "Rethink browser automation",            impact: 6.4, effort: 9.4 },
+  { n: 6,  id: "1.1", key: "pa", problem: "Latency",         title: "Right-size models",                     impact: 9.0, effort: 7.0, jira: "UCN-15" },
+  { n: 7,  id: "1.2", key: "pa", problem: "Latency",         title: "Split into sub-graphs",                 impact: 8.6, effort: 7.3, jira: "UCN-16" },
+  { n: 8,  id: "2.1", key: "pa", problem: "Latency",         title: "Fill while AI works",                   impact: 8.2, effort: 6.0, jira: "UCN-14" },
+  { n: 9,  id: "3.5", key: "pb", problem: "Trust / Control", title: "AI cover letter writer",                impact: 7.7, effort: 6.4, jira: "UCN-18" },
+  { n: 10, id: "4.2", key: "pb", problem: "Trust / Control", title: "Reuse past files",                      impact: 7.2, effort: 6.0, jira: "UCN-19" },
+  { n: 11, id: "2.4", key: "pa", problem: "Latency",         title: "Side / bottom drawer",                  impact: 7.2, effort: 6.9, jira: "UCN-17" },
+  { n: 12, id: "7.1", key: "pc", problem: "Tech bugs",       title: "Continuous auto-save (backend)",        impact: 6.7, effort: 5.7, jira: "UCN-20" },
+  { n: 13, id: "7.2", key: "pc", problem: "Tech bugs",       title: "Resume where left off (backend)",       impact: 6.3, effort: 5.7, jira: "UCN-21" },
+  { n: 14, id: "6.1", key: "pc", problem: "Tech bugs",       title: "Fix field types (video & file uploads)",impact: 6.0, effort: 6.2, jira: "UCN-25" },
+  { n: 15, id: "6.3", key: "pc", problem: "Tech bugs",       title: "Rethink browser automation",            impact: 6.4, effort: 9.4, jira: "UCN-24" },
   // Fill-ins — low impact · low effort
-  { n: 16, id: "6.2", key: "pc", title: "Field-specific prompts",                impact: 4.0, effort: 2.5 },
-  { n: 17, id: "2.3", key: "pa", title: "Narrate each step",                     impact: 3.6, effort: 4.1 },
-  { n: 18, id: "3.1", key: "pb", title: "Rate AI fields",                        impact: 2.2, effort: 4.2 },
+  { n: 16, id: "6.2", key: "pc", problem: "Tech bugs",       title: "Field-specific prompts",                impact: 4.0, effort: 2.5, jira: "UCN-13" },
+  { n: 17, id: "2.3", key: "pa", problem: "Latency",         title: "Narrate each step",                     impact: 3.6, effort: 4.1, jira: "UCN-22" },
+  { n: 18, id: "3.1", key: "pb", problem: "Trust / Control", title: "Rate AI fields",                        impact: 2.2, effort: 4.2, jira: "UCN-23" },
   // Thankless tasks — low impact · high effort
-  { n: 19, id: "5.1", key: "pc", title: "Clear error messages",                  impact: 4.2, effort: 6.2 },
-  { n: 20, id: "5.2", key: "pc", title: "Log failures",                          impact: 3.6, effort: 6.2 },
-  { n: 21, id: "1.5", key: "pa", title: "Benchmark first",                       impact: 3.2, effort: 6.4 },
+  { n: 19, id: "5.1", key: "pc", problem: "Tech bugs",       title: "Clear error messages",                  impact: 4.2, effort: 6.2, jira: "UCN-26" },
+  { n: 20, id: "5.2", key: "pc", problem: "Tech bugs",       title: "Log failures",                          impact: 3.6, effort: 6.2, jira: "UCN-27" },
+  { n: 21, id: "1.5", key: "pa", problem: "Latency",         title: "Benchmark first",                       impact: 3.2, effort: 6.4, jira: "UCN-28" },
 ];
 
 function RoadmapCard({ card, draggable, editing, onDragStart, onDragEnd, onStartEdit, onTitleChange, onCommit, onRemove }) {
@@ -15691,7 +15692,7 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
             {selected ? (
               <>
                 <div className={"pill " + selected.key}>Problem {selected.problem}</div>
-                <div className="title">#{selected.n} · {selected.title}</div>
+                <div className="title">{selected.id || selected.n} · {selected.title}</div>
                 <div className="scores">
                   <span>Impact <b>{selected.impact}/10</b></span>
                   <span>Effort <b>{selected.effort}/10</b></span>
@@ -15762,7 +15763,7 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
             <tr key={s.n}
                 onMouseEnter={() => setHoverN(s.n)}
                 onMouseLeave={() => setHoverN(null)}>
-              <td><span className={"ref " + s.key}>{s.n}</span></td>
+              <td><span className={"ref " + s.key}>{s.id || s.n}</span></td>
               <td>{s.title}</td>
               <td>{s.problem}</td>
               <td>
