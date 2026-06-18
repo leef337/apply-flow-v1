@@ -9610,6 +9610,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
   };
   const PD_KEYS = ["firstName", "lastName", "email", "phone", "linkedin"];
   const [aiStatus, setAiStatus] = useState({}); // key -> "loading" | "ready"
+  const [aiRated, setAiRated] = useState({});   // key -> "up" | "down" (3.1 rate AI fields)
   const pdTouchedRef = useRef({});
   const pdTimersRef = useRef([]);
   useEffect(() => {
@@ -9638,6 +9639,8 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
     const loading = aiStatus[k] === "loading" && !f.v && !pdTouchedRef.current[k];
     const ready = aiStatus[k] === "ready";
     const showSug = ready && AI_ANSWER[k] && f.v && f.v !== AI_ANSWER[k];
+    const aiFilled = ready && !pdTouchedRef.current[k] && f.v && f.v === AI_ANSWER[k];
+    const rated = aiRated[k];
     return (
       <div className="ar-rv" key={k}>
         <p className="ar-rv-heading">
@@ -9686,6 +9689,40 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
                 fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer",
               }}>
               {t({ en: "Use AI answer", no: "Bruk AI-svaret" })}
+            </button>
+          </div>
+        )}
+        {aiFilled && !showSug && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#1f8a3b", background: "#e3f5e9", padding: "3px 9px", borderRadius: 9999, whiteSpace: "nowrap" }}>
+              {t({ en: "From AI", no: "Fra AI" })}
+            </span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: "#6b6b6b" }}>
+              {rated === "up"   ? t({ en: "Thanks — noted", no: "Takk – notert" })
+             : rated === "down" ? t({ en: "Thanks — we'll improve it", no: "Takk – vi forbedrer det" })
+             : t({ en: "Good answer?", no: "Godt svar?" })}
+            </span>
+            <button className="press" aria-label={t({ en: "Good answer", no: "Bra svar" })}
+              onClick={() => { haptic("tap"); setAiRated(s => ({ ...s, [k]: s[k] === "up" ? null : "up" })); }}
+              style={{ width: 32, height: 32, borderRadius: 9999, flexShrink: 0,
+                border: "1px solid " + (rated === "up" ? "#1f8a3b" : "#e0e0e0"),
+                background: rated === "up" ? "#e3f5e9" : "#fff", cursor: "pointer",
+                display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M7 22V11M2 13v7a2 2 0 0 0 2 2h13.5a2 2 0 0 0 2-1.7l1.3-8a2 2 0 0 0-2-2.3H14l1-4.5A2.5 2.5 0 0 0 12.5 1L7 11"
+                  stroke={rated === "up" ? "#1f8a3b" : "#6b6b6b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button className="press" aria-label={t({ en: "Needs work", no: "Bør forbedres" })}
+              onClick={() => { haptic("tap"); setAiRated(s => ({ ...s, [k]: s[k] === "down" ? null : "down" })); }}
+              style={{ width: 32, height: 32, borderRadius: 9999, flexShrink: 0,
+                border: "1px solid " + (rated === "down" ? "#cc1414" : "#e0e0e0"),
+                background: rated === "down" ? "#fadddd" : "#fff", cursor: "pointer",
+                display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M17 2v11M22 11V4a2 2 0 0 0-2-2H6.5a2 2 0 0 0-2 1.7l-1.3 8A2 2 0 0 0 5.2 14H10l-1 4.5A2.5 2.5 0 0 0 11.5 23L17 13"
+                  stroke={rated === "down" ? "#cc1414" : "#6b6b6b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
           </div>
         )}
@@ -12625,6 +12662,215 @@ function EdgeText({ value, onChange, tag = "p", editable, placeholder, style }) 
   );
 }
 
+// ─── Roadmap (Now/Next/Later × journey steps) ─────────────────────────────
+// Replaces the old version-sliced storymap. Mirrors the team OST roadmap board.
+// Cards link to live UCN Product-Discovery ideas (nmp-jira) — synced 2026-06-15.
+const RM_JIRA_BASE = "https://nmp-jira.atlassian.net/browse/";
+const ROADMAP_STEPS = [
+  { n: 1, title: "Find and open job ad" },
+  { n: 2, title: "AI processes – the wait" },
+  { n: 3, title: "Fill while AI works" },
+  { n: 4, title: "Review and correct" },
+  { n: 5, title: "Manage files" },
+  { n: 6, title: "Submit and confirm" },
+  { n: 7, title: "Reliability & persistence" },
+];
+const ROADMAP_OPPS = [
+  { span: 1, title: "Comparable CTR from ad item page", sub: "13.8% Agentic / 10% EA / 8.7% ATS" },
+  { span: 2, title: "Latency", sub: "32% drop at processing wait (median 83s)" },
+  { span: 3, title: "Trust / Control", sub: "41% “Preferred to fill out everything myself” — exit survey (Hotjar)" },
+  { span: 1, title: "Tech Bugs", sub: null },
+];
+const ROADMAP_LANES = ["Now", "Next", "Later"];
+const RM_TIER = {
+  "Quick Win":       { bg: "#e3f5e9", fg: "#1f7a37", border: "#bfe6cb" },
+  "Big Bet":         { bg: "#ece9fd", fg: "#5b43c4", border: "#d7d0f7" },
+  "Fill ins":        { bg: "#fdf3c8", fg: "#8a6d0a", border: "#f0e2a0" },
+  "Thankless tasks": { bg: "#fbe0e0", fg: "#b3261e", border: "#f3c4c4" },
+};
+const RM_OWNER = {
+  BE:  { bg: "#1f4fd1", fg: "#fff" },
+  FE:  { bg: "#f06a6a", fg: "#fff" },
+  UX:  { bg: "#1f9d57", fg: "#fff" },
+  APP: { bg: "#7a4fd1", fg: "#fff" },
+};
+const ROADMAP_CARDS = [
+  { lane: "Now",  step: 1, id: "x.x", title: "Look at messaging and labelling on item page · Apply button", tier: "Quick Win", owners: ["FE","UX"], jira: null },
+  { lane: "Now",  step: 2, id: "2.2", title: "Process in the background, notify when ready — so they can multitask", tier: "Quick Win", owners: ["BE","FE","UX"], jira: "UCN-9" },
+  { lane: "Now",  step: 2, id: "1.1", title: "Right-size the model to each subtask; heavy models only where needed", tier: "Big Bet", owners: ["BE"], jira: "UCN-15" },
+  { lane: "Now",  step: 2, id: "1.2", title: "Break the agent's task graph into specialised sub-graphs", tier: "Big Bet", owners: ["BE"], jira: "UCN-16" },
+  { lane: "Now",  step: 3, id: "2.1", title: "Let people start filling immediately while AI works", tier: "Big Bet", owners: ["FE","UX"], jira: "UCN-14" },
+  { lane: "Now",  step: 5, id: "4.1", title: "Support multiple file uploads within a single application", tier: "Quick Win", owners: ["BE"], jira: null },
+  { lane: "Now",  step: 7, id: "6.1", title: "Fix broken field types: long/short text, video, multi-select, file upload", tier: "Quick Win", owners: ["BE"], jira: "UCN-10" },
+  { lane: "Now",  step: 7, id: "7.1", title: "Auto-save the application continuously", tier: "Quick Win", owners: ["APP"], jira: "UCN-11" },
+  { lane: "Now",  step: 7, id: "7.2", title: "Resume exactly where they left off", tier: "Quick Win", owners: ["APP"], jira: "UCN-12" },
+  { lane: "Next", step: 2, id: "2.4", title: "Keep a side / bottom drawer so the wait feels productive", tier: "Big Bet", owners: ["FE","UX"], jira: "UCN-17" },
+  { lane: "Next", step: 2, id: "1.4", title: "Test on-device or hybrid (device + cloud) parsing to cut round-trips", tier: "Big Bet", owners: ["BE"], jira: null },
+  { lane: "Next", step: 4, id: "3.5", title: "AI cover letter writer (save as document and upload)", tier: "Big Bet", owners: ["BE","FE","UX","APP"], jira: "UCN-18" },
+  { lane: "Next", step: 7, id: "6.2", title: "Give the agent field-type-specific prompts per question type", tier: "Fill ins", owners: ["BE"], jira: "UCN-13" },
+  { lane: "Later", step: 2, id: "1.5", title: "Benchmark first: profile the slowest applications, benchmark models internally", tier: "Big Bet", owners: ["BE"], jira: "UCN-28" },
+  { lane: "Later", step: 5, id: "4.2", title: "Let users reuse files across their profile and previous applications", tier: "Big Bet", owners: ["BE","FE","APP"], jira: "UCN-19" },
+  { lane: "Later", step: 7, id: "6.3", title: "Re-evaluate the browser-automation approach (Playwright → alternative)", tier: "Big Bet", owners: ["BE"], jira: "UCN-24" },
+  { lane: "Later", step: 7, id: "5.1", title: "Replace vague failures with clear, actionable error messages", tier: "Thankless tasks", owners: [], jira: "UCN-26" },
+  { lane: "Later", step: 7, id: "5.2", title: "Log failures properly so we can see what to fix", tier: "Thankless tasks", owners: [], jira: "UCN-27" },
+];
+
+// Impact/Effort assessment — placements mirror the team matrix. key = source
+// opportunity (pa Latency · pb Trust/Control · pc Tech). impact/effort 0–10;
+// quadrant split at 5. App-vs-backend splits (7.1/7.2/6.1) appear twice.
+const IE_SOLUTIONS = [
+  // Quick wins — high impact · low effort
+  { n: 1,  id: "7.1", key: "pc", title: "Continuous auto-save (app)",            impact: 8.6, effort: 3.6 },
+  { n: 2,  id: "7.2", key: "pc", title: "Resume where left off (app)",           impact: 8.0, effort: 3.9 },
+  { n: 3,  id: "3.2", key: "pb", title: "Skip personal pre-fill",                impact: 7.6, effort: 2.2 },
+  { n: 4,  id: "2.2", key: "pa", title: "Process in background",                 impact: 6.9, effort: 3.6 },
+  { n: 5,  id: "6.1", key: "pc", title: "Fix field types (long / short text)",   impact: 6.0, effort: 3.0 },
+  // Big bets — high impact · high effort
+  { n: 6,  id: "1.1", key: "pa", title: "Right-size models",                     impact: 9.0, effort: 7.0 },
+  { n: 7,  id: "1.2", key: "pa", title: "Split into sub-graphs",                 impact: 8.6, effort: 7.3 },
+  { n: 8,  id: "2.1", key: "pa", title: "Fill while AI works",                   impact: 8.2, effort: 6.0 },
+  { n: 9,  id: "3.5", key: "pb", title: "AI cover letter writer",                impact: 7.7, effort: 6.4 },
+  { n: 10, id: "4.2", key: "pb", title: "Reuse past files",                      impact: 7.2, effort: 6.0 },
+  { n: 11, id: "2.4", key: "pa", title: "Side / bottom drawer",                  impact: 7.2, effort: 6.9 },
+  { n: 12, id: "7.1", key: "pc", title: "Continuous auto-save (backend)",        impact: 6.7, effort: 5.7 },
+  { n: 13, id: "7.2", key: "pc", title: "Resume where left off (backend)",       impact: 6.3, effort: 5.7 },
+  { n: 14, id: "6.1", key: "pc", title: "Fix field types (video & file uploads)",impact: 6.0, effort: 6.2 },
+  { n: 15, id: "6.3", key: "pc", title: "Rethink browser automation",            impact: 6.4, effort: 9.4 },
+  // Fill-ins — low impact · low effort
+  { n: 16, id: "6.2", key: "pc", title: "Field-specific prompts",                impact: 4.0, effort: 2.5 },
+  { n: 17, id: "2.3", key: "pa", title: "Narrate each step",                     impact: 3.6, effort: 4.1 },
+  { n: 18, id: "3.1", key: "pb", title: "Rate AI fields",                        impact: 2.2, effort: 4.2 },
+  // Thankless tasks — low impact · high effort
+  { n: 19, id: "5.1", key: "pc", title: "Clear error messages",                  impact: 4.2, effort: 6.2 },
+  { n: 20, id: "5.2", key: "pc", title: "Log failures",                          impact: 3.6, effort: 6.2 },
+  { n: 21, id: "1.5", key: "pa", title: "Benchmark first",                       impact: 3.2, effort: 6.4 },
+];
+
+function RoadmapCard({ card, draggable, editing, onDragStart, onDragEnd, onStartEdit, onTitleChange, onCommit, onRemove }) {
+  const tier = RM_TIER[card.tier] || RM_TIER["Big Bet"];
+  return (
+    <div
+      draggable={draggable && !editing}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      style={{ border: `1px solid ${tier.border}`, background: "#fff", borderRadius: 12, padding: 12, display: "flex", flexDirection: "column", gap: 10, cursor: draggable && !editing ? "grab" : "default" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <span style={{ flexShrink: 0, minWidth: 30, height: 30, padding: "0 6px", borderRadius: 9999, background: tier.bg, color: tier.fg, fontWeight: 700, fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{card.id}</span>
+        {editing ? (
+          <input
+            autoFocus value={card.title}
+            onChange={e => onTitleChange(e.target.value)}
+            onBlur={onCommit}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onCommit(); } }}
+            style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontFamily: "inherit", border: "1px solid #0063fb", borderRadius: 6, padding: "4px 6px", outline: "none" }} />
+        ) : (
+          <span onClick={onStartEdit} title={onStartEdit ? "Click to rename" : undefined}
+            style={{ flex: 1, fontSize: 12.5, color: "#1d1d1d", lineHeight: 1.35, cursor: onStartEdit ? "text" : "default" }}>{card.title}</span>
+        )}
+        {onRemove && !editing && (
+          <button className="press" onClick={(e) => { e.stopPropagation(); onRemove(); }} aria-label="Remove card"
+            style={{ flexShrink: 0, width: 20, height: 20, borderRadius: 9999, border: 0, background: "#f0f0f3", color: "#6b6b6b", cursor: "pointer", fontSize: 13, lineHeight: 1, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>×</button>
+        )}
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+        <span style={{ fontSize: 10.5, fontWeight: 700, color: tier.fg, background: tier.bg, padding: "2px 8px", borderRadius: 9999 }}>{card.tier}</span>
+        {(card.owners || []).map(o => {
+          const oc = RM_OWNER[o] || { bg: "#888", fg: "#fff" };
+          return <span key={o} style={{ fontSize: 10, fontWeight: 700, color: oc.fg, background: oc.bg, padding: "2px 7px", borderRadius: 9999 }}>{o}</span>;
+        })}
+        {card.jira
+          ? <a className="jira-chip" href={RM_JIRA_BASE + card.jira} target="_blank" rel="noopener noreferrer" draggable={false} onClick={e => e.stopPropagation()}>{card.jira}</a>
+          : <span className="jira-missing">needs ticket</span>}
+      </div>
+    </div>
+  );
+}
+
+function RoadmapView({ cards = ROADMAP_CARDS, onMove, onAdd, onEditTitle, onRemove, onReset, cloudStatus, cloudLastSyncedAt }) {
+  const COLW = 248, GAP = 16;
+  const n = ROADMAP_STEPS.length;
+  const gridW = n * COLW + (n - 1) * GAP;
+  const editable = !!onMove;
+  const cardsFor = (lane, step) => cards.filter(c => c.lane === lane && c.step === step);
+  const dragUid = useRef(null);
+  const [dropKey, setDropKey] = useState(null);
+  const [editingUid, setEditingUid] = useState(null);
+  const dropOn = (lane, step) => (e) => {
+    e.preventDefault();
+    setDropKey(null);
+    const uid = dragUid.current || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+    if (uid && onMove) onMove(uid, lane, step);
+    dragUid.current = null;
+  };
+  return (
+    <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", background: "#fff", padding: "8px 16px 24px" }}>
+      <div style={{ width: gridW, minWidth: gridW, boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 14 }}>
+        {editable && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <span style={{ fontSize: 12, color: "#6b6b6b" }}>Drag cards between lanes · click a title to rename · “+ Add card” to create</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {cloudStatus !== undefined && <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />}
+              {onReset && <button onClick={onReset} style={{ appearance: "none", border: "1px solid #e0e0e0", background: "#fff", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 600, color: "#6b6b6b", cursor: "pointer", fontFamily: "inherit" }}>Reset</button>}
+            </div>
+          </div>
+        )}
+        <div style={{ background: "#4c7ef3", color: "#fff", borderRadius: 10, padding: "14px 18px", textAlign: "center" }}>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>Lift agentic apply completion from 39% → 50%+</div>
+          <div style={{ fontSize: 12, opacity: 0.95, marginTop: 3 }}>Outcome · view form → confirmation · guardrail: satisfaction ≥ 4/5</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${n}, ${COLW}px)`, gap: GAP }}>
+          {ROADMAP_STEPS.map(s => (
+            <div key={s.n} style={{ background: "#eaf2ff", borderRadius: 8, padding: "10px 12px", textAlign: "center", fontWeight: 700, fontSize: 12, color: "#1d3a6b" }}>{s.n}. {s.title}</div>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${n}, ${COLW}px)`, gap: GAP }}>
+          {ROADMAP_OPPS.map((o, i) => (
+            <div key={i} style={{ gridColumn: `span ${o.span}`, background: "#fdf3c8", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+              <div style={{ fontWeight: 700, fontSize: 12, color: "#5c4a05" }}>{o.title}</div>
+              {o.sub && <div style={{ fontSize: 11, color: "#6b5a13", marginTop: 2 }}>{o.sub}</div>}
+            </div>
+          ))}
+        </div>
+        {ROADMAP_LANES.map(lane => (
+          <div key={lane} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ background: "#bfe6cb", borderRadius: 8, padding: "6px 12px", textAlign: "center", fontWeight: 700, fontSize: 12, color: "#1f5b34", textTransform: "uppercase", letterSpacing: 0.6 }}>{lane}</div>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${n}, ${COLW}px)`, gap: GAP, alignItems: "start" }}>
+              {ROADMAP_STEPS.map(s => {
+                const key = lane + "#" + s.n;
+                return (
+                  <div key={s.n}
+                    onDragOver={editable ? (e) => { e.preventDefault(); if (dropKey !== key) setDropKey(key); } : undefined}
+                    onDragLeave={editable ? () => setDropKey(k => (k === key ? null : k)) : undefined}
+                    onDrop={editable ? dropOn(lane, s.n) : undefined}
+                    style={{ display: "flex", flexDirection: "column", gap: 10, minHeight: 48, borderRadius: 10, padding: 4, outline: dropKey === key ? "2px dashed #0063fb" : "2px dashed transparent", outlineOffset: -2, background: dropKey === key ? "#f4f8ff" : "transparent", transition: "background 120ms" }}>
+                    {cardsFor(lane, s.n).map(c => (
+                      <RoadmapCard key={c.uid} card={c}
+                        draggable={editable}
+                        editing={editingUid === c.uid}
+                        onDragStart={(e) => { dragUid.current = c.uid; try { e.dataTransfer.setData("text/plain", c.uid); e.dataTransfer.effectAllowed = "move"; } catch (_) {} }}
+                        onDragEnd={() => { dragUid.current = null; setDropKey(null); }}
+                        onStartEdit={editable ? () => setEditingUid(c.uid) : undefined}
+                        onTitleChange={(v) => onEditTitle && onEditTitle(c.uid, v)}
+                        onCommit={() => setEditingUid(null)}
+                        onRemove={editable ? () => onRemove && onRemove(c.uid) : undefined}
+                      />
+                    ))}
+                    {editable && onAdd && (
+                      <button className="press"
+                        onClick={() => { const uid = onAdd(lane, s.n); if (uid) setEditingUid(uid); }}
+                        style={{ marginTop: 2, border: "1px dashed #cfd6e4", background: "transparent", color: "#6b7280", borderRadius: 8, padding: "6px 8px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>+ Add card</button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HandoffView({ edges, onEditEdges, onResetEdges }) {
   // Five tabs — Site map / Tokens / Components / Edge cases / Metrics.
   // Edge cases moved in here (was a top-level tab) because it's part of
@@ -15376,11 +15622,9 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
       )}
       {!embedded && (
       <p className="sub">
-        Every solution from the opportunity tree, plotted by estimated lift on apply-step conversion (impact)
-        and shipping cost (effort). Each one is also tagged against the T2 OKR window —
-        <strong> 1.0 must</strong> ships for 30.06.26, <strong>1.2 can wait</strong> is polish, and
-        <strong> Post-2.0</strong> sits outside this cycle. <strong>Drag any dot</strong> to update its scores;
-        tap the table to focus. Edits persist on this device.
+        Every initiative from the opportunity tree, plotted by estimated lift on apply-step conversion (impact)
+        against shipping cost (effort). Colour = source opportunity (Latency · Trust/Control · Tech bugs);
+        quadrant = the priority call. App-vs-backend splits (7.1 / 7.2 / 6.1) appear in both their quadrants.
       </p>
       )}
 
@@ -15403,7 +15647,7 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
               low impact · low effort
             </div>
             <div className="matrix-quad" style={{ bottom: "8%", right: "8%", textAlign: "right" }}>
-              <span className="q-title">Money pit</span>
+              <span className="q-title">Thankless tasks</span>
               low impact · high effort
             </div>
 
@@ -15421,8 +15665,8 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
                 onMouseEnter={() => setHoverN(s.n)}
                 onMouseLeave={() => { if (draggingN === null) setHoverN(null); }}
                 onFocus={() => setHoverN(s.n)}
-                aria-label={"Solution " + s.n + ": " + s.title + ". Impact " + s.impact + ", effort " + s.effort + "."}>
-                {s.n}
+                aria-label={"Solution " + (s.id || s.n) + ": " + s.title + ". Impact " + s.impact + ", effort " + s.effort + "."}>
+                {s.id || s.n}
               </button>
             ))}
           </div>
@@ -15438,9 +15682,9 @@ function ImpactEffortView({ solutions = SOLUTIONS, onMoveSolution, onReset, embe
         <aside className="matrix-side">
           <div className="matrix-legend">
             <h4>Source problem</h4>
-            <div className="row"><span className="swatch" style={{ background: "#0063fb" }} /><span>A · Latency (39% drop-off)</span></div>
-            <div className="row"><span className="swatch" style={{ background: "#6f3bd0" }} /><span>B · Trust / control (36%)</span></div>
-            <div className="row"><span className="swatch" style={{ background: "#1f8a3b" }} /><span>C · Tech friction (17%)</span></div>
+            <div className="row"><span className="swatch" style={{ background: "#0063fb" }} /><span>A · Latency (32% · median 83s)</span></div>
+            <div className="row"><span className="swatch" style={{ background: "#6f3bd0" }} /><span>B · Trust / control (41%)</span></div>
+            <div className="row"><span className="swatch" style={{ background: "#1f8a3b" }} /><span>C · Tech bugs</span></div>
           </div>
 
           <div className="matrix-detail">
@@ -16616,6 +16860,22 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     } catch (_) {}
     return deepCloneJSON(INITIAL_EDGES);
   });
+  // Roadmap (Now/Next/Later storymap) — editable, drag-reorderable, cloud-synced.
+  // Each card carries a stable `uid` for moving/removing; defaults seed uids
+  // from their id + index. Shape guard: array of {uid, lane, step, tier}.
+  const roadmapIsCurrentShape = (d) => Array.isArray(d) && d.every(c => c && c.uid && c.lane && typeof c.step === "number" && c.tier);
+  const seedRoadmap = () => ROADMAP_CARDS.map((c, i) => ({ ...c, uid: c.id + "#" + i }));
+  const [roadmapCards, setRoadmapCards] = useState(() => {
+    try {
+      const v = parseInt(localStorage.getItem("vend-roadmap-v") || "0", 10);
+      const saved = localStorage.getItem("vend-roadmap");
+      if (saved && v === SCHEMA) {
+        const parsed = JSON.parse(saved);
+        if (roadmapIsCurrentShape(parsed)) return parsed;
+      }
+    } catch (_) {}
+    return seedRoadmap();
+  });
 
   // Cloud sync status — shown in the dev panel + on the matrix/storymap.
   // 'off'      → no Supabase keys configured, local-only
@@ -16681,11 +16941,20 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
       } else if (cloudEdges && cloudEdges.data) {
         await cloudStore.set("edges", deepCloneJSON(INITIAL_EDGES));
       }
+      // Roadmap — same legacy-shape guard.
+      const cloudRoadmap = await cloudStore.get("roadmap");
+      if (cancelled) return;
+      if (cloudRoadmap && cloudRoadmap.data && roadmapIsCurrentShape(cloudRoadmap.data)) {
+        setRoadmapCards(cloudRoadmap.data);
+      } else if (cloudRoadmap && cloudRoadmap.data) {
+        await cloudStore.set("roadmap", seedRoadmap());
+      }
       // If cloud was completely empty, seed it from whatever we have locally.
       if (!cloudStories) await cloudStore.set("storymap", stories);
       if (!cloudSolutions) await cloudStore.set("matrix", solutions);
       if (!cloudTree) await cloudStore.set("tree", tree);
       if (!cloudEdges) await cloudStore.set("edges", edges);
+      if (!cloudRoadmap) await cloudStore.set("roadmap", roadmapCards);
       cloudReadyRef.current = true;
       setCloudStatus("synced");
       setCloudLastSyncedAt(new Date());
@@ -16736,6 +17005,15 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
       if (ok) setCloudLastSyncedAt(new Date());
     }, 400)
   ).current;
+  const saveRoadmapToCloud = useRef(
+    debounce(async (next) => {
+      if (!cloudStore.enabled || !cloudReadyRef.current) return;
+      setCloudStatus("saving");
+      const ok = await cloudStore.set("roadmap", next);
+      setCloudStatus(ok ? "synced" : "error");
+      if (ok) setCloudLastSyncedAt(new Date());
+    }, 600)
+  ).current;
 
   // Persist storymap on change — local immediate, cloud debounced.
   useEffect(() => {
@@ -16772,6 +17050,38 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     } catch (_) {}
     saveSolutionsToCloud(solutions);
   }, [solutions, saveSolutionsToCloud]);
+
+  // Persist roadmap on change — local immediate, cloud debounced.
+  useEffect(() => {
+    try {
+      localStorage.setItem("vend-roadmap", JSON.stringify(roadmapCards));
+      localStorage.setItem("vend-roadmap-v", String(SCHEMA));
+    } catch (_) {}
+    saveRoadmapToCloud(roadmapCards);
+  }, [roadmapCards, saveRoadmapToCloud]);
+
+  // Roadmap mutations — move (drag between lanes/steps), add, rename, remove, reset.
+  function moveRoadmapCard(uid, lane, step) {
+    setRoadmapCards(prev => prev.map(c => (c.uid === uid ? { ...c, lane, step } : c)));
+    haptic("tap");
+  }
+  function addRoadmapCard(lane, step) {
+    const uid = "rm-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+    setRoadmapCards(prev => [...prev, { uid, id: "•", title: "New initiative", tier: "Big Bet", owners: [], jira: null, lane, step }]);
+    haptic("tap");
+    return uid;
+  }
+  function editRoadmapTitle(uid, title) {
+    setRoadmapCards(prev => prev.map(c => (c.uid === uid ? { ...c, title } : c)));
+  }
+  function removeRoadmapCard(uid) {
+    setRoadmapCards(prev => prev.filter(c => c.uid !== uid));
+    haptic("tap");
+  }
+  function resetRoadmap() {
+    setRoadmapCards(seedRoadmap());
+    haptic("ok");
+  }
 
   // Derived feature flags (live across renders).
   const features = featuresInVersion(stories, version);
@@ -17199,31 +17509,20 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
       )}
       {view === "matrix" && (
         <div key="matrix-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
-          <div className="view-toolbar">
-            <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
-            <ActivityFeed enabled={cloudStore.enabled} actorName={actorName} />
-          </div>
-          <ImpactEffortView
-            solutions={solutions}
-            onMoveSolution={moveSolution}
-            onReset={resetMatrix}
-          />
+          <ImpactEffortView solutions={IE_SOLUTIONS} />
         </div>
       )}
       {view === "storymap" && (
         <div key="storymap-view" style={{ animation: "fadeup 420ms var(--ease-modal)" }}>
-          <div className="view-toolbar">
-            <CloudStatusPill status={cloudStatus} lastSyncedAt={cloudLastSyncedAt} />
-            <ActivityFeed enabled={cloudStore.enabled} actorName={actorName} />
-          </div>
-          <StorymapView
-            version={storyVersion}
-            onVersionChange={setStoryVersion}
-            stories={stories}
-            onMoveStory={moveStory}
-            onReset={resetStorymap}
-            actorName={actorName}
-            ensureActor={ensureActor}
+          <RoadmapView
+            cards={roadmapCards}
+            onMove={moveRoadmapCard}
+            onAdd={addRoadmapCard}
+            onEditTitle={editRoadmapTitle}
+            onRemove={removeRoadmapCard}
+            onReset={resetRoadmap}
+            cloudStatus={cloudStatus}
+            cloudLastSyncedAt={cloudLastSyncedAt}
           />
         </div>
       )}
