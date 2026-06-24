@@ -9458,7 +9458,7 @@ function ApplyErrorBanner({ variant, onTryAgain, onBack }) {
   );
 }
 
-function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
+function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initialSection = null }) {
   const t = useT();
   const [exiting, close] = useDelayedClose(onClose, 320);
   // Simulated backend errors. `prepare-error` aborts the preparing phase
@@ -9575,7 +9575,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
   // Which section's child edit sheet is currently open. The agentic review
   // sheet stays visible behind it; the section sheet stacks on top at a
   // higher z-index. Null = no child sheet open.
-  const [sectionSheet, setSectionSheet] = useState(null); // null | "personalia" | "vedlegg" | "questions"
+  const [sectionSheet, setSectionSheet] = useState(initialSection || null); // null | "personalia" | "vedlegg" | "questions"
   // Per-section preparing state. Sections complete one at a time —
   // Personal details first ("Analysing application…"), then Attachments
   // ("Reading documents…"), then Additional questions ("Building
@@ -9610,13 +9610,14 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
   };
   const PD_KEYS = ["firstName", "lastName", "email", "phone", "linkedin"];
   const [aiStatus, setAiStatus] = useState({}); // key -> "loading" | "ready"
-  const [aiRated, setAiRated] = useState({});   // key -> "up" | "down" (3.1 rate AI fields)
+  const [pdReplaced, setPdReplaced] = useState({}); // key -> user's original value, kept after "Use AI answer" so they can Undo
   const pdTouchedRef = useRef({});
   const pdTimersRef = useRef([]);
   useEffect(() => {
     if (sectionSheet !== "personalia") return;
     pdTouchedRef.current = {};
     setAiStatus({ firstName: "loading", lastName: "loading", email: "loading", phone: "loading", linkedin: "loading" });
+    setPdReplaced({});
     // Clear the values so the fields visibly load, then the AI streams them back.
     setFields(prev => {
       const n = { ...prev };
@@ -9638,9 +9639,10 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
     const f = fields[k];
     const loading = aiStatus[k] === "loading" && !f.v && !pdTouchedRef.current[k];
     const ready = aiStatus[k] === "ready";
-    const showSug = ready && AI_ANSWER[k] && f.v && f.v !== AI_ANSWER[k];
-    const aiFilled = ready && !pdTouchedRef.current[k] && f.v && f.v === AI_ANSWER[k];
-    const rated = aiRated[k];
+    const replacedFrom = pdReplaced[k];                 // user's original value, kept after they accept the AI answer
+    const applied = replacedFrom !== undefined;
+    const showSug = ready && AI_ANSWER[k] && f.v && f.v !== AI_ANSWER[k] && !applied;
+    const showRow = showSug || applied;
     return (
       <div className="ar-rv" key={k}>
         <p className="ar-rv-heading">
@@ -9654,14 +9656,15 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
           </span>
         </p>
         {loading ? (
-          <div style={{ height: 50, borderRadius: 12, background: "#f7f7f9", display: "flex", alignItems: "center", padding: "0 16px" }}>
+          <div style={{ height: 50, borderRadius: 12, background: "#f7f7f9", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 10px 0 16px" }}>
             <div style={{ width: 154, height: 12, borderRadius: 6, background: "#dde5f3", animation: "arSkeletonPulse 1.4s ease-in-out infinite" }} />
+            <AILogo size={28} />
           </div>
         ) : (
           <input
             type={type} autoComplete={ac} value={f.v}
             placeholder={t({ en: "Type your answer", no: "Skriv svaret ditt" })}
-            onChange={(e) => { pdTouchedRef.current[k] = true; update(k, e.target.value); }}
+            onChange={(e) => { pdTouchedRef.current[k] = true; if (pdReplaced[k] !== undefined) setPdReplaced(s => { const n = { ...s }; delete n[k]; return n; }); update(k, e.target.value); }}
             style={{
               width: "100%", boxSizing: "border-box",
               background: "#f7f7f9", border: "1px solid transparent", borderRadius: 12,
@@ -9672,58 +9675,37 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready" }) {
             onBlur={(e) => { e.target.style.border = "1px solid transparent"; }}
           />
         )}
-        {showSug && (
+        {showRow && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: "#1f8a3b", background: "#e3f5e9", padding: "3px 9px", borderRadius: 9999, whiteSpace: "nowrap" }}>
-              {t({ en: "From AI", no: "Fra AI" })}
+              {t({ en: "AI suggestion", no: "AI-forslag" })}
             </span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 15, color: "#1d1d1d", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {AI_ANSWER[k]}
+            <span style={{ flex: 1, minWidth: 0, fontSize: 15, color: applied ? "#6b6b6b" : "#1d1d1d", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {applied ? t({ en: "Using AI answer", no: "Bruker AI-svaret" }) : AI_ANSWER[k]}
             </span>
-            <button
-              className="press"
-              onClick={() => { haptic("tap"); update(k, AI_ANSWER[k]); }}
-              style={{
-                flexShrink: 0, padding: "8px 12px", borderRadius: 8,
-                border: "1px solid #0063fb", background: "#fff", color: "#0063fb",
-                fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer",
-              }}>
-              {t({ en: "Use AI answer", no: "Bruk AI-svaret" })}
-            </button>
-          </div>
-        )}
-        {aiFilled && !showSug && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#1f8a3b", background: "#e3f5e9", padding: "3px 9px", borderRadius: 9999, whiteSpace: "nowrap" }}>
-              {t({ en: "From AI", no: "Fra AI" })}
-            </span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: "#6b6b6b" }}>
-              {rated === "up"   ? t({ en: "Thanks — noted", no: "Takk – notert" })
-             : rated === "down" ? t({ en: "Thanks — we'll improve it", no: "Takk – vi forbedrer det" })
-             : t({ en: "Good answer?", no: "Godt svar?" })}
-            </span>
-            <button className="press" aria-label={t({ en: "Good answer", no: "Bra svar" })}
-              onClick={() => { haptic("tap"); setAiRated(s => ({ ...s, [k]: s[k] === "up" ? null : "up" })); }}
-              style={{ width: 32, height: 32, borderRadius: 9999, flexShrink: 0,
-                border: "1px solid " + (rated === "up" ? "#1f8a3b" : "#e0e0e0"),
-                background: rated === "up" ? "#e3f5e9" : "#fff", cursor: "pointer",
-                display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M7 22V11M2 13v7a2 2 0 0 0 2 2h13.5a2 2 0 0 0 2-1.7l1.3-8a2 2 0 0 0-2-2.3H14l1-4.5A2.5 2.5 0 0 0 12.5 1L7 11"
-                  stroke={rated === "up" ? "#1f8a3b" : "#6b6b6b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button className="press" aria-label={t({ en: "Needs work", no: "Bør forbedres" })}
-              onClick={() => { haptic("tap"); setAiRated(s => ({ ...s, [k]: s[k] === "down" ? null : "down" })); }}
-              style={{ width: 32, height: 32, borderRadius: 9999, flexShrink: 0,
-                border: "1px solid " + (rated === "down" ? "#cc1414" : "#e0e0e0"),
-                background: rated === "down" ? "#fadddd" : "#fff", cursor: "pointer",
-                display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M17 2v11M22 11V4a2 2 0 0 0-2-2H6.5a2 2 0 0 0-2 1.7l-1.3 8A2 2 0 0 0 5.2 14H10l-1 4.5A2.5 2.5 0 0 0 11.5 23L17 13"
-                  stroke={rated === "down" ? "#cc1414" : "#6b6b6b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            {applied ? (
+              <button
+                className="press"
+                onClick={() => { haptic("tap"); update(k, replacedFrom); setPdReplaced(s => { const n = { ...s }; delete n[k]; return n; }); }}
+                style={{
+                  flexShrink: 0, padding: "8px 12px", borderRadius: 8,
+                  border: "1px solid #d4d4d4", background: "#fff", color: "#404040",
+                  fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                }}>
+                {t({ en: "Undo", no: "Angre" })}
+              </button>
+            ) : (
+              <button
+                className="press"
+                onClick={() => { haptic("tap"); setPdReplaced(s => ({ ...s, [k]: f.v })); update(k, AI_ANSWER[k]); }}
+                style={{
+                  flexShrink: 0, padding: "8px 12px", borderRadius: 8,
+                  border: "1px solid #0063fb", background: "#fff", color: "#0063fb",
+                  fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                }}>
+                {t({ en: "Use AI answer", no: "Bruk AI-svaret" })}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -11688,65 +11670,65 @@ const TREE_DATA = {
         { id: "1.1",
           text: "Cut real processing time",
           solutions: [
-            { n: 1, text: "Right-size the model to each subtask; heavy models only where needed." },
-            { n: 2, text: "Break the agent's task graph into specialised sub-graphs." },
-            { n: 3, text: "Detect the ad / form type up front and route it through a tailored flow." },
-            { n: 4, text: "Test on-device or hybrid (device + cloud) parsing to cut round-trips." },
-            { n: 5, text: "Test first: profile the slowest applications, benchmark models internally." },
+            { n: "1.1", owners: ["BE"], text: "Right-size the model to each subtask; heavy models only where needed." },
+            { n: "1.2", owners: ["BE"], text: "Break the agent's task graph into specialised sub-graphs." },
+            { n: "1.4", owners: ["BE"], text: "Test on-device or hybrid (device + cloud) parsing to cut round-trips." },
+            { n: "1.5", owners: ["BE"], text: "Benchmark first: profile the slowest applications, benchmark models internally." },
           ] },
         { id: "1.2",
           text: "Improve perceived speed",
           solutions: [
-            { n: 6, text: "Let people start filling immediately while AI works." },
-            { n: 7, text: "Process in the background, save a draft, notify when ready — so they can multitask." },
-            { n: 8, text: "Show lively progress states that make thinking and typing visible." },
-            { n: 9, text: "Keep a side / bottom drawer so the wait feels productive." },
+            { n: "2.1", owners: ["FE","UX"], text: "Let people start filling immediately while AI works." },
+            { n: "2.2", owners: ["BE","FE","UX"], text: "Process in the background, notify when ready — so they can multitask." },
+            { n: "2.3", owners: ["FE","UX"], text: "Narrate each step in plain language (\"Fetching your CV…\")." },
+            { n: "2.4", owners: ["FE","UX"], text: "Keep a side / bottom drawer so the wait feels productive." },
           ] },
       ],
     },
     {
-      id: "2", key: "pb", title: "UX - Trust / Control",
+      id: "2", key: "pb", title: "Trust & control",
       pct: "43% drop at review → submit · biggest leak",
       hypotheses: [
         { id: "2.1",
-          text: "Build trust through visibility",
+          text: "Review and correct AI output",
           solutions: [
-            { n: 10, text: "Narrate each step in plain language (\"Fetching your CV…\")." },
-            { n: 11, text: "Let users rate AI-filled fields (up / down) to correct and teach it." },
+            { n: "3.5", owners: ["BE","FE","UX","APP"], text: "AI Cover letter writer (save as document and upload)." },
           ] },
         { id: "2.2",
-          text: "Give a sense of control",
-          solutions: [
-            { n: 12, text: "Don't pre-fill the personal stuff — leave yes/no and the cover letter to the user." },
-            { n: 13, text: "Flag every AI-filled field on review for explicit confirmation." },
-            { n: 14, text: "Make it interactive — edit inline or ask the AI to improve an answer." },
-          ] },
-        { id: "2.3",
           text: "Put seekers in control of their files",
           solutions: [
-            { n: 15, text: "Support multiple file uploads within a single application." },
-            { n: 16, text: "Let users reuse files across their profile and previous applications." },
+            { n: "4.1", owners: ["BE","UX"], text: "Support multiple file uploads within a single application." },
+            { n: "4.2", owners: ["BE","FE","APP"], text: "Let users reuse files across their profile and previous applications." },
+          ] },
+        { id: "2.3",
+          text: "Improve Agentic labelling",
+          solutions: [
+            { n: "x.x", owners: ["FE","UX"], text: "Look at messaging and labelling on item page · Apply button." },
           ] },
       ],
     },
     {
-      id: "3", key: "pc", title: "Tech Bugs",
+      id: "3", key: "pc", title: "Reliability & persistence",
       pct: "Defects feeding both leaks & the satisfaction guardrail",
       hypotheses: [
         { id: "3.1",
-          text: "Persist progress & recover",
+          text: "Fail gracefully & diagnose",
           solutions: [
-            { n: 17, text: "Auto-save drafts and reuse session data so steps aren't repeated." },
-            { n: 18, text: "Replace vague failures with clear, actionable error messages." },
-            { n: 19, text: "Log failures properly so we can see what to fix." },
+            { n: "5.1", text: "Replace vague failures with clear, actionable error messages." },
+            { n: "5.2", text: "Log failures properly so we can see what to fix." },
           ] },
         { id: "3.2",
           text: "Fix the buggy question types",
           solutions: [
-            { n: 20, text: "Fix broken field types: long / short text, video, multi-select, file upload." },
-            { n: 21, text: "Give the agent field-type-specific prompts per question type." },
-            { n: 22, text: "Re-evaluate the browser-automation approach (Playwright → alternative)." },
-            { n: 23, text: "Risk: these open bugs argue against releasing on mobile too early." },
+            { n: "6.1", owners: ["BE"], text: "Fix broken field types: long / short text, video, multi-select, file upload." },
+            { n: "6.2", owners: ["BE"], text: "Give the agent field-type-specific prompts per question type." },
+            { n: "6.3", owners: ["BE"], text: "Re-evaluate the browser-automation approach (Playwright → alternative)." },
+          ] },
+        { id: "3.3",
+          text: "Persist & recover progress",
+          solutions: [
+            { n: "7.1", owners: ["APP"], text: "Auto-save the application continuously." },
+            { n: "7.2", owners: ["APP"], text: "Resume exactly where they left off." },
           ] },
       ],
     },
@@ -12356,7 +12338,7 @@ const HANDOFF = {
   states: {
     user: [
       { id: "ready",              when: "Default. Profile + CV available, no missing data." },
-      { id: "slow-load",          when: "Deliberately slow (~2 min) AI fetch/draft. Form is editable immediately; AI results dock under the user's own answers as a replaceable suggestion." },
+      { id: "slow-load",          when: "Opens the agentic Personal-details co-draft (Figma 952/962): fields load with an AI-sparkle, stay editable, then show 'From AI · Use AI answer' once the agent's value lands." },
       { id: "missing-personalia", when: "Phone number missing — show red row + recovery CTA." },
       { id: "missing-cv",         when: "No CV attached — Send disabled until resolved." },
       { id: "missing-questions",  when: "Employer question unanswered — friendly banner + CTA." },
@@ -12682,6 +12664,7 @@ const ROADMAP_OPPS = [
   { span: 1, title: "Tech Bugs", sub: null },
 ];
 const ROADMAP_LANES = ["Now", "Next", "Later"];
+const RM_LANE_LABEL = { Now: "Now → Aug", Next: "Next · T2 (Aug → Sept)", Later: "Later · T3 →" };
 const RM_TIER = {
   "Quick Win":       { bg: "#e3f5e9", fg: "#1f7a37", border: "#bfe6cb" },
   "Big Bet":         { bg: "#ece9fd", fg: "#5b43c4", border: "#d7d0f7" },
@@ -12695,24 +12678,28 @@ const RM_OWNER = {
   APP: { bg: "#7a4fd1", fg: "#fff" },
 };
 const ROADMAP_CARDS = [
-  { lane: "Now",  step: 1, id: "x.x", title: "Look at messaging and labelling on item page · Apply button", tier: "Quick Win", owners: ["FE","UX"], jira: null },
-  { lane: "Now",  step: 2, id: "2.2", title: "Process in the background, notify when ready — so they can multitask", tier: "Quick Win", owners: ["BE","FE","UX"], jira: "UCN-9" },
-  { lane: "Now",  step: 2, id: "1.1", title: "Right-size the model to each subtask; heavy models only where needed", tier: "Big Bet", owners: ["BE"], jira: "UCN-15" },
-  { lane: "Now",  step: 2, id: "1.2", title: "Break the agent's task graph into specialised sub-graphs", tier: "Big Bet", owners: ["BE"], jira: "UCN-16" },
-  { lane: "Now",  step: 3, id: "2.1", title: "Let people start filling immediately while AI works", tier: "Big Bet", owners: ["FE","UX"], jira: "UCN-14" },
-  { lane: "Now",  step: 5, id: "4.1", title: "Support multiple file uploads within a single application", tier: "Quick Win", owners: ["BE"], jira: null },
-  { lane: "Now",  step: 7, id: "6.1", title: "Fix broken field types: long/short text, video, multi-select, file upload", tier: "Quick Win", owners: ["BE"], jira: "UCN-10" },
-  { lane: "Now",  step: 7, id: "7.1", title: "Auto-save the application continuously", tier: "Quick Win", owners: ["APP"], jira: "UCN-11" },
-  { lane: "Now",  step: 7, id: "7.2", title: "Resume exactly where they left off", tier: "Quick Win", owners: ["APP"], jira: "UCN-12" },
-  { lane: "Next", step: 2, id: "2.4", title: "Keep a side / bottom drawer so the wait feels productive", tier: "Big Bet", owners: ["FE","UX"], jira: "UCN-17" },
-  { lane: "Next", step: 2, id: "1.4", title: "Test on-device or hybrid (device + cloud) parsing to cut round-trips", tier: "Big Bet", owners: ["BE"], jira: null },
-  { lane: "Next", step: 4, id: "3.5", title: "AI cover letter writer (save as document and upload)", tier: "Big Bet", owners: ["BE","FE","UX","APP"], jira: "UCN-18" },
-  { lane: "Next", step: 7, id: "6.2", title: "Give the agent field-type-specific prompts per question type", tier: "Fill ins", owners: ["BE"], jira: "UCN-13" },
-  { lane: "Later", step: 2, id: "1.5", title: "Benchmark first: profile the slowest applications, benchmark models internally", tier: "Big Bet", owners: ["BE"], jira: "UCN-28" },
-  { lane: "Later", step: 5, id: "4.2", title: "Let users reuse files across their profile and previous applications", tier: "Big Bet", owners: ["BE","FE","APP"], jira: "UCN-19" },
+  // NOW → Aug
+  { lane: "Now",  step: 2, id: "2.2",  title: "Process in the background, notify when ready — so they can multitask", tier: "Quick Win", owners: ["UX","APP"], jira: "UCN-9",  prios: ["1 · UX"] },
+  { lane: "Now",  step: 2, id: "1.1",  title: "Right-size the model to each subtask; heavy models only where needed", tier: "Big Bet", owners: ["BE"], jira: "UCN-15", prios: ["2 · BE"] },
+  { lane: "Now",  step: 2, id: "1.2",  title: "Break the agent's task graph into specialised sub-graphs", tier: "Big Bet", owners: ["BE"], jira: "UCN-16" },
+  { lane: "Now",  step: 2, id: "2.3",  title: "Narrate each step in plain language (“Fetching your CV…”)", tier: "Fill ins", owners: ["FE","UX","APP"], jira: "UCN-22" },
+  { lane: "Now",  step: 3, id: "7.1a", title: "Auto-save the application continuously — client side", tier: "Quick Win", owners: ["APP"], jira: "UCN-11", prios: ["1 · Apps (almost done)"] },
+  { lane: "Now",  step: 3, id: "2.1",  title: "Let people start filling immediately while AI works", tier: "Big Bet", owners: ["FE","UX","APP"], jira: "UCN-14", prios: ["1 · FE","2 · Apps"] },
+  { lane: "Now",  step: 4, id: "6.1",  title: "Fix broken field types: long/short text, video, multi-select, file upload", tier: "Quick Win", owners: ["BE","FE","APP"], jira: "UCN-10", prios: ["1 · BE","2 · FE"] },
+  // NEXT · T2 (Aug → Sept)
+  { lane: "Next", step: 1, id: "0.1",  title: "Look at messaging and labelling on item page · Apply button", tier: "Quick Win", owners: ["FE","UX","APP"], jira: null },
+  { lane: "Next", step: 3, id: "7.1b", title: "Auto-save the application continuously — across device", tier: "Quick Win", owners: ["APP","BE","FE"], jira: "UCN-20" },
+  { lane: "Next", step: 3, id: "2.4",  title: "Keep a side / bottom drawer so the wait feels productive", tier: "Big Bet", owners: ["FE","UX"], jira: "UCN-17" },
+  { lane: "Next", step: 4, id: "6.2",  title: "Give the agent field-type-specific prompts per question type", tier: "Fill ins", owners: ["BE"], jira: "UCN-13" },
+  { lane: "Next", step: 5, id: "3.5",  title: "AI cover letter writer (save as document and upload)", tier: "Big Bet", owners: ["BE","FE","UX","APP"], jira: "UCN-18" },
+  { lane: "Next", step: 5, id: "4.2",  title: "Let users reuse files across their profile and previous applications", tier: "Big Bet", owners: ["BE","FE","APP"], jira: "UCN-19" },
+  { lane: "Next", step: 7, id: "5.1",  title: "Replace vague failures with clear, actionable error messages", tier: "Thankless tasks", owners: [], jira: "UCN-26" },
+  { lane: "Next", step: 7, id: "5.2",  title: "Log failures properly so we can see what to fix", tier: "Thankless tasks", owners: [], jira: "UCN-27" },
+  { lane: "Next", step: 7, id: "1.5",  title: "Benchmark first: profile the slowest applications, benchmark models internally", tier: "Big Bet", owners: ["BE"], jira: "UCN-28" },
+  // LATER · T3 →
+  { lane: "Later", step: 2, id: "1.4", title: "Investigation: test on-device or hybrid (device + cloud) parsing to cut round-trips", tier: "Big Bet", owners: ["APP"], jira: null },
+  { lane: "Later", step: 5, id: "4.1", title: "Support multiple file uploads within a single application", tier: "Quick Win", owners: ["BE","UX"], jira: null },
   { lane: "Later", step: 7, id: "6.3", title: "Re-evaluate the browser-automation approach (Playwright → alternative)", tier: "Big Bet", owners: ["BE"], jira: "UCN-24" },
-  { lane: "Later", step: 7, id: "5.1", title: "Replace vague failures with clear, actionable error messages", tier: "Thankless tasks", owners: [], jira: "UCN-26" },
-  { lane: "Later", step: 7, id: "5.2", title: "Log failures properly so we can see what to fix", tier: "Thankless tasks", owners: [], jira: "UCN-27" },
 ];
 
 // Impact/Effort assessment — placements mirror the team matrix. key = source
@@ -12755,6 +12742,13 @@ function RoadmapCard({ card, draggable, editing, onDragStart, onDragEnd, onStart
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       style={{ border: `1px solid ${tier.border}`, background: "#fff", borderRadius: 12, padding: 12, display: "flex", flexDirection: "column", gap: 10, cursor: draggable && !editing ? "grab" : "default" }}>
+      {Array.isArray(card.prios) && card.prios.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {card.prios.map((p, i) => (
+            <span key={i} style={{ fontSize: 10, fontWeight: 700, color: "#7a5b00", background: "#ffe9a8", padding: "2px 7px", borderRadius: 6, whiteSpace: "nowrap" }}>Prio {p}</span>
+          ))}
+        </div>
+      )}
       <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
         <span style={{ flexShrink: 0, minWidth: 30, height: 30, padding: "0 6px", borderRadius: 9999, background: tier.bg, color: tier.fg, fontWeight: 700, fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{card.id}</span>
         {editing ? (
@@ -12834,7 +12828,7 @@ function RoadmapView({ cards = ROADMAP_CARDS, onMove, onAdd, onEditTitle, onRemo
         </div>
         {ROADMAP_LANES.map(lane => (
           <div key={lane} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ background: "#bfe6cb", borderRadius: 8, padding: "6px 12px", textAlign: "center", fontWeight: 700, fontSize: 12, color: "#1f5b34", textTransform: "uppercase", letterSpacing: 0.6 }}>{lane}</div>
+            <div style={{ background: "#bfe6cb", borderRadius: 8, padding: "6px 12px", textAlign: "center", fontWeight: 700, fontSize: 12, color: "#1f5b34", textTransform: "uppercase", letterSpacing: 0.6 }}>{RM_LANE_LABEL[lane] || lane}</div>
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${n}, ${COLW}px)`, gap: GAP, alignItems: "start" }}>
               {ROADMAP_STEPS.map(s => {
                 const key = lane + "#" + s.n;
@@ -15308,6 +15302,11 @@ function OpportunityTreeBody({ business, outcome, problems, lastEdited, onEditTr
                                       onCommit={(v) => onEditTree(d => { d.problems[pi].hypotheses[hi].solutions[si].text = v; },
                                         { action: "edit-tree", detail: { op: "edit-solution" } })}
                                     />
+                                    {(s.owners && s.owners.length > 0) && (
+                                      <span style={{ display: "inline-flex", flexWrap: "wrap", gap: 4, marginLeft: 8, verticalAlign: "middle" }}>
+                                        {s.owners.map(o => { const oc = RM_OWNER[o] || { bg: "#888", fg: "#fff" }; return <span key={o} style={{ fontSize: 9, fontWeight: 700, color: oc.fg, background: oc.bg, padding: "1px 6px", borderRadius: 9999 }}>{o}</span>; })}
+                                      </span>
+                                    )}
                                     {isEditing && (
                                       <button className="ot-remove" aria-label="Remove solution"
                                         style={{ position: "absolute", top: 6, right: 6 }}
@@ -16840,8 +16839,8 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   // the header can render "Last edited by X · Y ago".
   const [tree, setTree] = useState(() => {
     try {
-      const v = parseInt(localStorage.getItem("vend-tree-v") || "0", 10);
-      const saved = localStorage.getItem("vend-tree");
+      const v = parseInt(localStorage.getItem("vend-tree2-v") || "0", 10);
+      const saved = localStorage.getItem("vend-tree2");
       if (saved && v === SCHEMA) {
         const parsed = JSON.parse(saved);
         if (treeIsCurrentShape(parsed)) return parsed;
@@ -16868,8 +16867,8 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   const seedRoadmap = () => ROADMAP_CARDS.map((c, i) => ({ ...c, uid: c.id + "#" + i }));
   const [roadmapCards, setRoadmapCards] = useState(() => {
     try {
-      const v = parseInt(localStorage.getItem("vend-roadmap-v") || "0", 10);
-      const saved = localStorage.getItem("vend-roadmap");
+      const v = parseInt(localStorage.getItem("vend-roadmap2-v") || "0", 10);
+      const saved = localStorage.getItem("vend-roadmap2");
       if (saved && v === SCHEMA) {
         const parsed = JSON.parse(saved);
         if (roadmapIsCurrentShape(parsed)) return parsed;
@@ -16927,12 +16926,12 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
         await cloudStore.set("matrix", SOLUTIONS.map(s => ({ ...s })));
       }
       // Opportunity tree — same legacy-shape guard.
-      const cloudTree = await cloudStore.get("tree");
+      const cloudTree = await cloudStore.get("tree2");
       if (cancelled) return;
       if (cloudTree && cloudTree.data && treeIsCurrentShape(cloudTree.data)) {
         setTree(cloudTree.data);
       } else if (cloudTree && cloudTree.data) {
-        await cloudStore.set("tree", deepCloneJSON(TREE_DATA));
+        await cloudStore.set("tree2", deepCloneJSON(TREE_DATA));
       }
       // Edge cases — same legacy-shape guard.
       const cloudEdges = await cloudStore.get("edges");
@@ -16943,19 +16942,19 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
         await cloudStore.set("edges", deepCloneJSON(INITIAL_EDGES));
       }
       // Roadmap — same legacy-shape guard.
-      const cloudRoadmap = await cloudStore.get("roadmap");
+      const cloudRoadmap = await cloudStore.get("roadmap2");
       if (cancelled) return;
       if (cloudRoadmap && cloudRoadmap.data && roadmapIsCurrentShape(cloudRoadmap.data)) {
         setRoadmapCards(cloudRoadmap.data);
       } else if (cloudRoadmap && cloudRoadmap.data) {
-        await cloudStore.set("roadmap", seedRoadmap());
+        await cloudStore.set("roadmap2", seedRoadmap());
       }
       // If cloud was completely empty, seed it from whatever we have locally.
       if (!cloudStories) await cloudStore.set("storymap", stories);
       if (!cloudSolutions) await cloudStore.set("matrix", solutions);
-      if (!cloudTree) await cloudStore.set("tree", tree);
+      if (!cloudTree) await cloudStore.set("tree2", tree);
       if (!cloudEdges) await cloudStore.set("edges", edges);
-      if (!cloudRoadmap) await cloudStore.set("roadmap", roadmapCards);
+      if (!cloudRoadmap) await cloudStore.set("roadmap2", roadmapCards);
       cloudReadyRef.current = true;
       setCloudStatus("synced");
       setCloudLastSyncedAt(new Date());
@@ -16991,7 +16990,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     debounce(async (next) => {
       if (!cloudStore.enabled || !cloudReadyRef.current) return;
       setCloudStatus("saving");
-      const ok = await cloudStore.set("tree", next);
+      const ok = await cloudStore.set("tree2", next);
       setCloudStatus(ok ? "synced" : "error");
       if (ok) setCloudLastSyncedAt(new Date());
     }, 400)
@@ -17010,7 +17009,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     debounce(async (next) => {
       if (!cloudStore.enabled || !cloudReadyRef.current) return;
       setCloudStatus("saving");
-      const ok = await cloudStore.set("roadmap", next);
+      const ok = await cloudStore.set("roadmap2", next);
       setCloudStatus(ok ? "synced" : "error");
       if (ok) setCloudLastSyncedAt(new Date());
     }, 600)
@@ -17028,8 +17027,8 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   // Persist tree on change — local immediate, cloud debounced.
   useEffect(() => {
     try {
-      localStorage.setItem("vend-tree", JSON.stringify(tree));
-      localStorage.setItem("vend-tree-v", String(SCHEMA));
+      localStorage.setItem("vend-tree2", JSON.stringify(tree));
+      localStorage.setItem("vend-tree2-v", String(SCHEMA));
     } catch (_) {}
     saveTreeToCloud(tree);
   }, [tree, saveTreeToCloud]);
@@ -17055,8 +17054,8 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   // Persist roadmap on change — local immediate, cloud debounced.
   useEffect(() => {
     try {
-      localStorage.setItem("vend-roadmap", JSON.stringify(roadmapCards));
-      localStorage.setItem("vend-roadmap-v", String(SCHEMA));
+      localStorage.setItem("vend-roadmap2", JSON.stringify(roadmapCards));
+      localStorage.setItem("vend-roadmap2-v", String(SCHEMA));
     } catch (_) {}
     saveRoadmapToCloud(roadmapCards);
   }, [roadmapCards, saveRoadmapToCloud]);
@@ -17229,9 +17228,9 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     ensureActor((who) => {
       const fresh = deepCloneJSON(TREE_DATA);
       setTree(fresh);
-      try { localStorage.removeItem("vend-tree"); } catch (_) {}
+      try { localStorage.removeItem("vend-tree2"); } catch (_) {}
       if (cloudStore.enabled) {
-        cloudStore.set("tree", fresh);
+        cloudStore.set("tree2", fresh);
         cloudStore.logEvent({ action: "reset-tree", actor: who });
       }
     });
@@ -17593,14 +17592,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
             {bodyScreen}
           </div>
 
-          {screen === "preview" && userState === "slow-load" && (
-            <SlowLoadApplySheet
-              job={JOB}
-              onClose={() => { setScreen("jobad"); }}
-              onSend={send}
-            />
-          )}
-          {screen === "preview" && userState !== "slow-load" && (
+          {screen === "preview" && (
             <ApplicationPreviewSheet
               job={JOB}
               state={userState}
@@ -17633,6 +17625,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
               onClose={() => setScreen("jobad")}
               onSend={send}
               userState={userState}
+              initialSection={userState === "slow-load" ? "personalia" : null}
               // No onOpenCV/onOpenLetter — the agentic flow now drills into
               // CV picker/preview and Cover letter/saved-letters via an
               // internal page stack inside the Vedlegg section sheet. The
@@ -17841,7 +17834,9 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
               if (id === "not-logged-in") { setScreen("jobad"); setOverlay("login"); }
               // Slow load self-manages its own staged timers on mount —
               // just drop the user straight into the preview sheet.
-              if (id === "slow-load") { cancelMagic(); setMagicMode(false); setScreen("preview"); }
+              // Slow load = view the co-draft Personal-details editor (Figma 952/962):
+              // open the agentic review with the personalia section sheet up.
+              if (id === "slow-load") { cancelMagic(); setMagicMode(false); setVersion("agentic"); setScreen("agentic-review"); }
               // Backend errors only matter inside the apply flow — drop the
               // user straight onto agentic review so they see the banner.
               if (id === "prepare-error" || id === "send-error") {
