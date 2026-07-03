@@ -3348,11 +3348,71 @@
     font-weight: 600;
   }
   .ar-radio-pill.on:hover { background: #0058e0; border-color: #0058e0; }
+  /* Multi-select filter chips — same pill silhouette as the single-select
+     radios, but a deliberately DIFFERENT selected treatment so "pick
+     several" reads before the first tap: a leading check glyph plus a
+     tonal light-blue fill (not the solid-blue fill the radios use). This
+     mirrors Material 3 filter chips and iOS multi-select lists — the
+     check-mark is the shared cross-platform signal for "checkbox". Native
+     checkbox kept but visually hidden for a11y + form semantics. */
+  .ar-check-pills {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .ar-check-pill {
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px;
+    background: #f7f7f9;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 16px;
+    font-family: var(--sys-text);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.1px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out);
+  }
+  .ar-check-pill input {
+    position: absolute; top: 0; left: 0;
+    width: 1px; height: 1px;
+    opacity: 0; pointer-events: none;
+    overflow: hidden; clip: rect(0 0 0 0);
+  }
+  .ar-check-pill:hover { background: #f0f0f3; }
+  .ar-check-pill.on {
+    background: #eaf2ff;
+    border-color: var(--finn-blue);
+    color: var(--finn-blue);
+    font-weight: 600;
+  }
+  .ar-check-pill.on:hover { background: #ddeaff; }
+  .ar-check-hint {
+    font: 400 12px/1.4 var(--sys-text); color: #6b6b6b;
+    margin: 8px 2px 0;
+  }
   .ar-confirm-card {
     margin: 4px 0 0;
     padding: 4px 14px;
     background: #f7f7f9;
     border-radius: 14px;
+  }
+  /* Confirm checkbox — same WARP checkbox spec as .drawer-checkrow
+     (regular FINNType, --ink text, FINN-blue accent), sized to sit
+     with the confirm toggle it pairs with. */
+  .ar-confirm-check {
+    display: flex; align-items: flex-start; gap: 10px;
+    font: 400 15px/1.35 var(--sys-text); color: #1d1d1d;
+    letter-spacing: -0.1px; cursor: pointer;
+    padding: 6px 0;
+  }
+  .ar-confirm-check input[type="checkbox"] {
+    width: 18px; height: 18px; margin: 1px 0 0;
+    accent-color: #0063fb; cursor: pointer; flex-shrink: 0;
   }
 
   /* ─── Pin-on-screen layer (Figma-style click-anywhere comments) ─── */
@@ -9546,6 +9606,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
     letter:    t({ en: "Cover letter", no: "Søknadsbrev" }),
     qNorsk:    t({ en: "Do you speak fluent Norwegian?", no: "Behersker du norsk flytende?" }),
     qExp:      t({ en: "How many years of relevant experience do you have?", no: "Hvor mange års relevant erfaring har du?" }),
+    qSkills:   t({ en: "Which of these skills do you have?", no: "Hvilke av disse ferdighetene har du?" }),
   };
 
   // Value-field initial state. For free-text fields these are stored as-is;
@@ -9565,12 +9626,17 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
     // in MVP (Hypothesis 2.2 — seekers want control on user-answered Qs).
     qNorsk:    { v: "",                      e: false },
     qExp:      { v: "",                      e: false },
+    // Multi-select: value is an array of chosen (English canonical) options.
+    qSkills:   { v: [],                      e: false },
   };
   const [fields, setFields] = useState(initial);
   // Optional info (LinkedIn) is opt-in. Defaults off so the linked-in field
   // reads as a deliberate add-on rather than implicit profile data.
   const [includeLinkedin, setIncludeLinkedin] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  // Extra confirmation checkbox — unchecked by default, sits above the
+  // main confirm toggle beneath the section rows.
+  const [extraConfirmed, setExtraConfirmed] = useState(false);
   const [editing, setEditing] = useState(null); // field key currently inline-edited
   // Which section's child edit sheet is currently open. The agentic review
   // sheet stays visible behind it; the section sheet stacks on top at a
@@ -9765,6 +9831,18 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
     }));
   }
 
+  // Multi-select toggle — adds/removes an option from an array-valued field
+  // (qSkills). Edited once anything is chosen.
+  function toggleMulti(key, option) {
+    setFields(prev => {
+      const cur = prev[key].v;
+      const next = cur.includes(option)
+        ? cur.filter(x => x !== option)
+        : [...cur, option];
+      return { ...prev, [key]: { ...prev[key], v: next, e: next.length > 0 } };
+    });
+  }
+
   // A small "Edited" / "Redigert" chip — appears next to a field label
   // EditedChip lives at module scope now (see top of file) so its function
   // reference is stable across re-renders of AgenticReviewScreen.
@@ -9803,14 +9881,40 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
   // becomes a PillRadio group. If the stored value is empty, a red
   // "Missing" tag replaces the source tag and a "This field is required"
   // line shows under the answer.
-  function ReviewItem({ k, type = "text", autoComplete, options }) {
+  function ReviewItem({ k, type = "text", autoComplete, options, multi = false }) {
     const f = fields[k];
     const isEditing = editing === k;
     const src = SOURCE_BY_KEY[k]; // undefined for employer questions
-    const isMissing = !f.v;
+    // Multi-select is optional here, so it never shows the required "Missing"
+    // tag; single-value fields are missing when empty.
+    const isMissing = multi ? false : !f.v;
 
     let control;
-    if (options) {
+    if (multi && options) {
+      // Multi-select — filter chips. Several can be active; each selected
+      // chip carries a leading check glyph (the cross-platform "checkbox"
+      // signal) and a tonal fill, distinct from the solid-fill radios.
+      control = (
+        <>
+          <div className="ar-check-pills" role="group" aria-label={LABELS[k]}>
+            {options.map(o => {
+              const on = f.v.includes(o.en);
+              return (
+                <label key={o.en} className={"ar-check-pill press" + (on ? " on" : "")}>
+                  <input type="checkbox" name={k} value={o.en} checked={on}
+                    onChange={() => { haptic("tap"); toggleMulti(k, o.en); }} />
+                  {on && <Icon name="check" size={16} color="#0063fb" stroke={2.6} />}
+                  {t(o)}
+                </label>
+              );
+            })}
+          </div>
+          <p className="ar-check-hint">
+            {t({ en: "Select all that apply", no: "Velg alle som passer" })}
+          </p>
+        </>
+      );
+    } else if (options) {
       control = (
         <div className="ar-radio-pills" role="radiogroup" aria-label={LABELS[k]}>
           {options.map(o => (
@@ -9896,7 +10000,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
   const personaliaEdited = fields.firstName.e || fields.lastName.e || fields.email.e
                         || fields.phone.e || fields.gender.e || fields.linkedin.e;
   const vedleggEdited    = fields.cv.e || fields.letter.e;
-  const questionsEdited  = fields.qNorsk.e || fields.qExp.e;
+  const questionsEdited  = fields.qNorsk.e || fields.qExp.e || fields.qSkills.e;
 
   // Subtitle summaries (what the agent prepared, in plain text). Enum
   // values are stored canonically in English (Yes/No, Male/Female/Other)
@@ -10014,6 +10118,24 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
           onTap={setSectionSheet} />
       </div>
 
+      {/* Extra confirmation checkbox — unchecked by default. Sits beneath
+          the section rows and above the main confirm toggle. */}
+      <div style={{
+        padding: "8px 20px 0",
+        opacity: isPreparing ? 0 : 1,
+        transition: "opacity 420ms cubic-bezier(0.45, 0, 0.25, 1) 160ms",
+        pointerEvents: isPreparing ? "none" : "auto",
+      }}>
+        <label className="ar-confirm-check">
+          <input
+            type="checkbox"
+            checked={extraConfirmed}
+            onChange={(e) => setExtraConfirmed(e.target.checked)}
+          />
+          <span>Jeg bekrefter at all informasjonen ovenfor er korrekt</span>
+        </label>
+      </div>
+
       {/* Confirm card — fades in at phase=ready but its container reserves
           space so the rows above don't shift down when it appears. */}
       <div style={{
@@ -10123,6 +10245,17 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
         { en: "No",  no: "Nei" },
       ]} />
       <ReviewItem k="qExp" />
+      {/* Multi-select demo — several skills can be chosen at once. Filter-chip
+          treatment (leading check + tonal fill) distinguishes it from the
+          single-select radios above. */}
+      <ReviewItem k="qSkills" multi options={[
+        { en: "Leadership",       no: "Ledelse" },
+        { en: "Cloud (AWS/Azure)", no: "Sky (AWS/Azure)" },
+        { en: "Kubernetes",       no: "Kubernetes" },
+        { en: "CI/CD",            no: "CI/CD" },
+        { en: "Security",         no: "Sikkerhet" },
+        { en: "Agile",            no: "Smidig" },
+      ]} />
     </>
   ) : null;
 
@@ -10312,31 +10445,31 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
             overflow: "hidden",
             animation: "slideup 440ms var(--ease-modal)",
           }}>
-          {/* Drag handle */}
-          <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 6px" }}>
-            <SheetDragHandle />
-          </div>
-          {/* Title bar — back chevron when navigated into a sub-page of
-              the Vedlegg section (cv-picker, cv-preview, letter, select-
-              letter). Title swaps to the sub-page's name. */}
+          {/* Title bar — single leading control, top-left. The section sheet
+              is always a sub-page of the review sheet, so it shows a back ◁,
+              never a close ✕ (the close ✕ lives only on the root review
+              sheet). Inside an Attachments sub-page the back arrow pops that
+              page first; otherwise it returns to the review list. Swipe-down /
+              backdrop still dismisses the whole sheet. */}
+          {(() => {
+            const inSubPage = sectionSheet === "vedlegg" && vedleggCanGoBack;
+            return (
           <div style={{
-            padding: "10px 16px 14px",
+            padding: "14px 16px 14px",
             borderBottom: "0.5px solid #ededed",
             display: "flex", alignItems: "center", gap: 12,
           }}>
-            {sectionSheet === "vedlegg" && vedleggCanGoBack && (
-              <button className="press"
-                onClick={() => { haptic("tap"); popVedleggPage(); }}
-                aria-label={t({ en: "Back", no: "Tilbake" })}
-                style={{
-                  width: 44, height: 44, borderRadius: 9999,
-                  background: "#f0f0f3", border: 0, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                }}>
-                <Icon name="chevron-left" size={18} color="#1d1d1d" stroke={2.4} />
-              </button>
-            )}
+            <button className="press"
+              onClick={() => { haptic("tap"); if (inSubPage) popVedleggPage(); else closeSectionSheet(); }}
+              aria-label={t({ en: "Back", no: "Tilbake" })}
+              style={{
+                width: 40, height: 40, borderRadius: 9999,
+                background: "#f0f0f3", border: 0, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+              <Icon name="chevron-left" size={18} color="#1d1d1d" stroke={2.4} />
+            </button>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1d", margin: 0,
                 letterSpacing: -0.2, lineHeight: 1.2 }}>
@@ -10347,18 +10480,9 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
                  : t(SECTION_TITLES[sectionSheet])}
               </p>
             </div>
-            <button className="press"
-              onClick={() => { haptic("tap"); closeSectionSheet(); }}
-              aria-label={t({ en: "Close", no: "Lukk" })}
-              style={{
-                width: 32, height: 32, borderRadius: 9999,
-                background: "#f0f0f3", border: 0, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-              }}>
-              <Icon name="x" size={16} color="#1d1d1d" stroke={2.4} />
-            </button>
           </div>
+            );
+          })()}
           {/* Body — Personalia/Questions render inline; Vedlegg uses an
               internal page stack so we don't have to stack a second sheet
               on top. */}
