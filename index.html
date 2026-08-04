@@ -9387,9 +9387,11 @@ function SectionRow({ id, title, sub, edited, status = "done", onTap }) {
               }}><EditedChip /></span>
             )}
           </span>
-          <span className="ar-row-sub" style={missing ? { color: "#cc1414" } : null}>
-            {sub}
-          </span>
+          {sub ? (
+            <span className="ar-row-sub" style={missing ? { color: "#cc1414" } : null}>
+              {sub}
+            </span>
+          ) : null}
         </span>
         <span className="ar-row-edit" style={{
           opacity: idle ? 0 : 1,
@@ -9568,6 +9570,14 @@ function ApplyErrorBanner({ variant, onTryAgain, onBack }) {
   );
 }
 
+// Real sends take 10–30s+ while the application is delivered to the
+// employer's ATS. Simulate a realistic wait so the sending state (spinner
+// button + reassurance line) can be reviewed in the prototype.
+const AGENTIC_SEND_MS = 12000;
+// Simulated send failure lands after a few seconds of "sending" so the
+// error feels like a real backend timeout, not an instant rejection.
+const AGENTIC_SEND_FAIL_MS = 4000;
+
 function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initialSection = null }) {
   const t = useT();
   const [exiting, close] = useDelayedClose(onClose, 320);
@@ -9579,6 +9589,12 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
   const isPrepareError = userState === "prepare-error";
   const isSendErrorState = userState === "send-error";
   const [sendFailed, setSendFailed] = useState(false);
+  // Timer for the simulated send round-trip — cleared on unmount so a
+  // dismissed sheet can't fire a stale onSend()/failure.
+  const sendTimerRef = useRef(null);
+  useEffect(() => () => {
+    if (sendTimerRef.current) clearTimeout(sendTimerRef.current);
+  }, []);
   // Independent exit state for the inner section sheet (Personalia /
   // Vedlegg / Questions) so its slide-down doesn't share timing with the
   // outer agentic sheet's close.
@@ -9639,7 +9655,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
   const sheetRadius = PLATFORM_RADII[platform].sheet;
   const backdropH = statusBarH + 16;
   const [sheetTab, setSheetTab] = useState("application"); // application | ad
-  const [phase, setPhase] = useState("preparing"); // preparing | ready
+  const [phase, setPhase] = useState("preparing"); // preparing | ready | sending
 
   // Labels are re-computed every render so a language toggle relabels the
   // form without resetting user edits. Initial values for "value" fields
@@ -10067,17 +10083,9 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
   const vedleggEdited    = fields.cv.e || fields.letter.e;
   const questionsEdited  = fields.qNorsk.e || fields.qExp.e || fields.qSkills.e;
 
-  // Subtitle summaries (what the agent prepared, in plain text). Enum
-  // values are stored canonically in English (Yes/No, Male/Female/Other)
-  // so we translate them locally for display.
-  const yesNoDisplay = fields.qNorsk.v
-    ? t({ en: fields.qNorsk.v, no: fields.qNorsk.v === "Yes" ? "Ja" : "Nei" })
-    : "";
-  const personaliaSub = `${fields.firstName.v} ${fields.lastName.v} · ${fields.email.v}`;
-  const vedleggSub    = [fields.cv.v, fields.letter.v].filter(Boolean).join(" · ")
-                        || t({ en: "No attachments", no: "Ingen vedlegg" });
-  // Count which additional questions are still unanswered so the row can
-  // show "2 questions need answers" instead of an awkward empty summary.
+  // Section rows carry no summary sub-text in the ready state — only
+  // error messages (unanswered questions) and the preparing-phase status
+  // lines are shown under the titles.
   const questionsMissingCount = (fields.qNorsk.v ? 0 : 1) + (fields.qExp.v ? 0 : 1);
   const questionsMissing = questionsMissingCount > 0;
   const questionsSub = questionsMissing
@@ -10085,7 +10093,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
         en: questionsMissingCount === 1 ? "1 question needs an answer" : `${questionsMissingCount} questions need answers`,
         no: questionsMissingCount === 1 ? "Ett spørsmål mangler svar"   : `${questionsMissingCount} spørsmål mangler svar`,
       })
-    : `${t({ en: "Norwegian", no: "Norsk" })}: ${yesNoDisplay} · ${fields.qExp.v}`;
+    : null;
 
   // SectionRow lives at module scope (see top of file). The inner copy used
   // to redeclare on every parent re-render, which caused React to unmount/
@@ -10157,19 +10165,22 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
       {/* Rows — same JSX shape in both phases. Sub-text picks up the
           preparing-phase copy automatically; once done, it falls through
           to the section's final summary. */}
-      <div className="ar-rows">
+      <div className="ar-rows" style={{
+        // Lock editing while the application is being sent.
+        pointerEvents: phase === "sending" ? "none" : "auto",
+      }}>
         <SectionRow id="personalia"
           status={isPreparing ? sectionPrep.personalia : "done"}
           title={t({ en: "Personal details", no: "Personopplysninger" })}
           sub={(isPreparing && sectionPrep.personalia !== "done")
-            ? prepSub("personalia") : personaliaSub}
+            ? prepSub("personalia") : null}
           edited={!isPreparing && personaliaEdited}
           onTap={setSectionSheet} />
         <SectionRow id="vedlegg"
           status={isPreparing ? sectionPrep.vedlegg : "done"}
           title={t({ en: "Attachments", no: "Vedlegg" })}
           sub={(isPreparing && sectionPrep.vedlegg !== "done")
-            ? prepSub("vedlegg") : vedleggSub}
+            ? prepSub("vedlegg") : null}
           edited={!isPreparing && vedleggEdited}
           onTap={setSectionSheet} />
         <SectionRow id="questions"
@@ -10189,7 +10200,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
         padding: "8px 20px 0",
         opacity: isPreparing ? 0 : 1,
         transition: "opacity 420ms cubic-bezier(0.45, 0, 0.25, 1) 160ms",
-        pointerEvents: isPreparing ? "none" : "auto",
+        pointerEvents: (isPreparing || phase === "sending") ? "none" : "auto",
       }}>
         <label className="ar-confirm-check">
           <input
@@ -10207,7 +10218,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
         padding: "20px 20px 12px",
         opacity: isPreparing ? 0 : 1,
         transition: "opacity 420ms cubic-bezier(0.45, 0, 0.25, 1) 160ms",
-        pointerEvents: isPreparing ? "none" : "auto",
+        pointerEvents: (isPreparing || phase === "sending") ? "none" : "auto",
       }}>
         <div className="ar-confirm-card">
           <IOSSwitch
@@ -10460,19 +10471,63 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
             background: "#fff",
             borderTop: "0.5px solid rgba(0,0,0,0.06)",
             display: "flex", flexDirection: "column", gap: 8,
-            opacity: phase === "ready" ? 1 : 0.4,
+            opacity: (phase === "ready" || phase === "sending") ? 1 : 0.4,
             transition: "opacity 400ms cubic-bezier(0.45, 0, 0.25, 1)",
           }}>
+            {/* Sending reassurance line — real sends take 10–30s+, so the
+                wait needs words. aria-live announces it to screen readers. */}
+            {phase === "sending" && (
+              <p role="status" aria-live="polite" className="ar-soft-fade" style={{
+                margin: 0, textAlign: "center",
+                font: "400 13px/1.4 var(--sys-text)",
+                color: "#6b6b6b", letterSpacing: -0.1,
+              }}>
+                {t({
+                  en: "Sending your application — this can take a little while.",
+                  no: "Vi sender søknaden din — det kan ta litt tid.",
+                })}
+              </p>
+            )}
+            {phase === "sending" ? (
+              // Button swaps to an in-progress indicator (same pattern as the
+              // Magic Apply auto-send pill) instead of a dimmed disabled button.
+              <div style={{
+                minHeight: 52,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                gap: 10, padding: "0 16px",
+                background: "#0063fb", color: "#fff",
+                borderRadius: PLATFORM_RADII[platform].button,
+                fontWeight: 600, fontSize: 15, letterSpacing: -0.1,
+                opacity: 0.92,
+              }}>
+                <span style={{
+                  width: 16, height: 16, borderRadius: 9999,
+                  border: "2px solid rgba(255,255,255,0.4)",
+                  borderTopColor: "#fff",
+                  animation: "spin 1.6s cubic-bezier(0.5, 0, 0.5, 1) infinite",
+                  display: "inline-block",
+                }} />
+                {t({ en: "Sending…", no: "Sender …" })}
+              </div>
+            ) : (
             <PrimaryButton
               onClick={() => {
                 if (phase !== "ready" || !confirmed || questionsMissing) return;
+                // Enter the sending phase — spinner button + reassurance
+                // line — then resolve after a realistic wait.
+                haptic("ok");
+                setPhase("sending");
                 if (isSendErrorState) {
-                  // Simulated send failure — swap the body for the red banner.
-                  haptic("err");
-                  setSendFailed(true);
+                  // Simulated send failure — fail mid-send, like a real
+                  // backend timeout, then swap the body for the red banner.
+                  sendTimerRef.current = setTimeout(() => {
+                    haptic("err");
+                    setPhase("ready");
+                    setSendFailed(true);
+                  }, AGENTIC_SEND_FAIL_MS);
                   return;
                 }
-                onSend();
+                sendTimerRef.current = setTimeout(() => { onSend(); }, AGENTIC_SEND_MS);
               }}
               disabled={phase !== "ready" || !confirmed || questionsMissing || showPrepareError || showSendError}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
@@ -10480,6 +10535,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
                 {t({ en: "Send application", no: "Send søknad" })}
               </span>
             </PrimaryButton>
+            )}
           </div>
         )}
       </div>
