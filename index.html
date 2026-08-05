@@ -10484,13 +10484,15 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
                 wait needs words. aria-live announces it to screen readers. */}
             {phase === "sending" && (
               <p role="status" aria-live="polite" className="ar-soft-fade" style={{
-                margin: 0, textAlign: "center",
-                font: "400 13px/1.4 var(--sys-text)",
+                margin: "4px 0 6px", textAlign: "center",
+                padding: "0 12px",
+                font: "400 13px/1.5 var(--sys-text)",
                 color: "#6b6b6b", letterSpacing: -0.1,
+                textWrap: "balance",
               }}>
                 {t({
-                  en: "Sending your application — this can take a little while.",
-                  no: "Vi sender søknaden din — det kan ta litt tid.",
+                  en: "We're sending your application — this can take a little while. We'll let you know when it's delivered.",
+                  no: "Vi sender søknaden din — det kan ta litt tid. Vi gir deg beskjed når den er levert.",
                 })}
               </p>
             )}
