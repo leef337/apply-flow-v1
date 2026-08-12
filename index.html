@@ -10200,44 +10200,56 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
           onTap={setSectionSheet} />
       </div>
 
-      {/* Extra confirmation checkbox — unchecked by default. Sits beneath
-          the section rows and above the main confirm toggle. */}
+      {/* Confirmation group — iOS inset-grouped card with two toggle rows
+          (HIG: related switches share one group; WARP: IOSSwitch over
+          checkboxes). Hairline separator sits at the text inset, and the
+          shared "Required before sending" footnote lives INSIDE the card
+          so status reads as part of the group. Both toggles gate Send. */}
       <div style={{
-        padding: "8px 20px 0",
+        padding: "16px 20px 12px",
         opacity: isPreparing ? 0 : 1,
         transition: "opacity 420ms cubic-bezier(0.45, 0, 0.25, 1) 160ms",
         pointerEvents: (isPreparing || phase === "sending") ? "none" : "auto",
       }}>
-        <label className="ar-confirm-check">
-          <input
-            type="checkbox"
+        <div className="ar-confirm-card" style={{ padding: "2px 14px 12px" }}>
+          <IOSSwitch
             checked={extraConfirmed}
-            onChange={(e) => setExtraConfirmed(e.target.checked)}
+            onChange={setExtraConfirmed}
+            label={
+              <>
+                {t({
+                  en: "I confirm that I have read the Privacy Policy",
+                  no: "Jeg bekrefter at jeg har lest personvernerklæringen",
+                })}{" "}
+                <span role="link" tabIndex={0}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.stopPropagation(); }}
+                  style={{ color: "#0063fb", textDecoration: "underline", whiteSpace: "nowrap", cursor: "pointer" }}>
+                  {t({ en: "(Read more)", no: "(Les mer)" })}
+                </span>
+              </>
+            }
           />
-          <span>Jeg bekrefter at all informasjonen ovenfor er korrekt</span>
-        </label>
-      </div>
-
-      {/* Confirm card — fades in at phase=ready but its container reserves
-          space so the rows above don't shift down when it appears. */}
-      <div style={{
-        padding: "20px 20px 12px",
-        opacity: isPreparing ? 0 : 1,
-        transition: "opacity 420ms cubic-bezier(0.45, 0, 0.25, 1) 160ms",
-        pointerEvents: (isPreparing || phase === "sending") ? "none" : "auto",
-      }}>
-        <div className="ar-confirm-card">
+          {/* Separator — 0.5px at the text inset (≈ #ededed on the grey card) */}
+          <div aria-hidden="true" style={{ borderTop: "0.5px solid rgba(0,0,0,0.07)" }} />
           <IOSSwitch
             checked={confirmed}
             onChange={setConfirmed}
             label={t({
               en: "I confirm all the information above is correct",
-              no: "Jeg bekrefter at informasjonen ovenfor er korrekt",
+              no: "Jeg bekrefter at all informasjonen ovenfor er korrekt",
             })}
-            hint={confirmed
+          />
+          <p aria-live="polite" style={{
+            margin: "-6px 0 0",
+            font: "400 12px/1.4 var(--sys-text)",
+            color: (confirmed && extraConfirmed) ? "#1f8a3b" : "#6b6b6b",
+            transition: "color 200ms var(--ease-out)",
+          }}>
+            {(confirmed && extraConfirmed)
               ? t({ en: "Ready to send", no: "Klar til å sendes" })
               : t({ en: "Required before sending", no: "Må bekreftes før du sender" })}
-          />
+          </p>
         </div>
       </div>
     </>
@@ -10520,7 +10532,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
             ) : (
             <PrimaryButton
               onClick={() => {
-                if (phase !== "ready" || !confirmed || questionsMissing) return;
+                if (phase !== "ready" || !confirmed || !extraConfirmed || questionsMissing) return;
                 // Enter the sending phase — spinner button + reassurance
                 // line — then resolve after a realistic wait.
                 haptic("ok");
@@ -10537,7 +10549,7 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
                 }
                 sendTimerRef.current = setTimeout(() => { onSend(); }, AGENTIC_SEND_MS);
               }}
-              disabled={phase !== "ready" || !confirmed || questionsMissing || showPrepareError || showSendError}>
+              disabled={phase !== "ready" || !confirmed || !extraConfirmed || questionsMissing || showPrepareError || showSendError}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <Icon name="send" size={18} color="#fff" stroke={2.2} />
                 {t({ en: "Send application", no: "Send søknad" })}
