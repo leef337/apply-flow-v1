@@ -3465,6 +3465,231 @@
     accent-color: #0063fb; cursor: pointer; flex-shrink: 0;
   }
 
+  /* ─── 2.0 One Apply — stepped wizard (Figma: User-Connect-Agentic,
+     "Booking flow" frame 1592-28765). Tokens straight from the design:
+     text #1b1b1f / subtle #5c5c66 / negative #d91f0a / link #0063fb;
+     toast #eff5ff r8; progress fill #0063fb on #e1edfe; cards #f0f0f2 r14;
+     floating footer card rgba(255,255,255,.8) r16 over bottom gradient. */
+  .oa-progress {
+    display: flex; gap: 8px; width: 100%;
+  }
+  .oa-progress-seg {
+    flex: 1; height: 8px; border-radius: 16px;
+    background: #e1edfe; position: relative; overflow: hidden;
+  }
+  .oa-progress-seg::after {
+    content: ""; position: absolute; inset: 0;
+    background: #0063fb; border-radius: 16px;
+    transform: scaleX(0); transform-origin: left center;
+    transition: transform 420ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .oa-progress-seg.fill::after { transform: scaleX(1); }
+  .oa-step-title {
+    margin: 0; text-align: center;
+    font: 600 20px/25px var(--sys-text); letter-spacing: -0.45px; color: #000;
+  }
+  .oa-toast {
+    background: #eff5ff; border-radius: 8px; padding: 16px;
+    font: 300 14px/18px var(--sys-text); color: #1b1b1f;
+  }
+  .oa-field-label {
+    font: 500 15px/1.3 var(--sys-text); color: #1b1b1f;
+    display: flex; align-items: baseline; gap: 6px; margin: 0 0 8px;
+  }
+  .oa-field-label .opt { font: 300 13px/1.3 var(--sys-text); color: #5c5c66; }
+  .oa-input, .oa-textarea {
+    width: 100%; box-sizing: border-box;
+    border: 1px solid #c3c3c6; border-radius: 6px;
+    padding: 12px 14px; background: #fff;
+    font: 400 16px/22px var(--sys-text); font-family: inherit;
+    color: #1b1b1f; caret-color: #0063fb; outline: 0;
+    transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), background 400ms var(--ease-out);
+  }
+  .oa-input::placeholder, .oa-textarea::placeholder { color: #b7b7bd; }
+  .oa-input:focus, .oa-textarea:focus { border-color: #0063fb; box-shadow: 0 0 0 1px #0063fb; }
+  .oa-textarea { min-height: 110px; resize: none; }
+  .oa-input.oa-landing { background: #eff5ff; }
+  /* AI-restore row under an edited prefilled field */
+  .oa-restore {
+    display: flex; align-items: center; gap: 8px; margin-top: 8px;
+    animation: fadeup 320ms var(--ease-modal) both;
+  }
+  .oa-badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 8px; border-radius: 4px; flex-shrink: 0;
+    background: #d4f4dd; color: #1f8a3b;
+    font: 500 12px/1.3 var(--sys-text);
+  }
+  .oa-restore-val {
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font: 300 14px/18px var(--sys-text); color: #1b1b1f;
+  }
+  .oa-btn-small {
+    appearance: none; flex-shrink: 0;
+    background: #fff; color: #0063fb;
+    border: 1px solid rgba(0,99,251,0.5); border-radius: 8px;
+    padding: 7px 12px; min-height: 32px;
+    font: 500 14px/1 var(--sys-text); font-family: inherit;
+    cursor: pointer; letter-spacing: -0.1px;
+    transition: background 140ms var(--ease-out), border-color 140ms var(--ease-out);
+  }
+  .oa-footer {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 16px 16px 0;
+    background: linear-gradient(to top, rgba(252,252,252,0.9) 46%, rgba(252,252,252,0));
+    z-index: 5;
+  }
+  .oa-footer-card {
+    background: rgba(255,255,255,0.8);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border-radius: 16px; padding: 12px;
+    box-shadow: 0px 6px 12px rgba(0,0,0,0.2), 0px 10px 20px rgba(0,0,0,0.1);
+    display: flex; flex-direction: column; gap: 16px; align-items: stretch;
+  }
+  .oa-btn {
+    appearance: none; width: 100%;
+    border-radius: 8px; padding: 12px 16px; min-height: 44px;
+    font: 500 16px/22px var(--sys-text); font-family: inherit;
+    cursor: pointer; letter-spacing: -0.1px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 200ms var(--ease-out), color 200ms var(--ease-out),
+                box-shadow 200ms var(--ease-out), transform 120ms var(--ease-tap);
+  }
+  .oa-btn.primary   { background: #0063fb; color: #fff; border: 0; }
+  .oa-btn.primary:disabled { background: #dedee3; color: #fff; cursor: default; }
+  .oa-btn.secondary { background: #fff; color: #0063fb; border: 1px solid rgba(0,99,251,0.5); }
+  .oa-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; border: 0; cursor: pointer; font-family: inherit;
+    padding: 16px; font: 300 14px/18px var(--sys-text); color: #0063fb;
+    border-radius: 8px;
+    transition: background 140ms var(--ease-out);
+  }
+  .oa-section-h {
+    font: 700 22px/1.2 var(--sys-text); color: #1b1b1f; margin: 0;
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  }
+  .oa-section-h .opt { font: 300 14px/1.3 var(--sys-text); color: #5c5c66; font-weight: 300; }
+  .oa-section-h .req {
+    font: 400 12px/1.3 var(--sys-text); color: #d91f0a;
+    animation: fadein 300ms var(--ease-out);
+  }
+  .oa-opt-row {
+    display: flex; align-items: center; gap: 14px; width: 100%;
+    padding: 14px 0; background: transparent; border: 0;
+    border-bottom: 0.5px solid #ededed;
+    text-align: left; cursor: pointer; font-family: inherit;
+    transition: background 140ms var(--ease-out);
+  }
+  .oa-doc-card {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: #fff; border: 1px solid #ededed; border-radius: 12px;
+    padding: 16px; text-align: left; cursor: pointer; font-family: inherit;
+    transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  }
+  .oa-doc-card.selected { border-color: #0063fb; box-shadow: 0 0 0 0.5px #0063fb; }
+  .oa-doc-title { font: 500 16px/1.3 var(--sys-text); color: #1b1b1f; margin: 0; }
+  .oa-doc-meta  { font: 400 12px/1.4 var(--sys-text); color: #5c5c66; margin: 2px 0 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .oa-doc-pill  { display: inline-flex; font: 500 11px/1 var(--sys-text); padding: 3px 6px; border-radius: 4px; }
+  .oa-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 9999px; padding: 10px 16px;
+    font: 400 15px/1 var(--sys-text); font-family: inherit;
+    background: #eff5ff; color: #1b1b1f; border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 140ms var(--ease-out), color 140ms var(--ease-out), border-color 140ms var(--ease-out), transform 120ms var(--ease-tap);
+  }
+  .oa-chip.on { background: #0063fb; color: #fff; }
+  .oa-chip.outline { background: #fff; border-color: #c3c3c6; }
+  .oa-chip.outline.on { background: #eff5ff; border-color: #0063fb; color: #0063fb; font-weight: 500; }
+  /* Review screen */
+  .oa-match {
+    border: 1px solid rgba(5,158,111,0.45); background: #e9f8f1;
+    border-radius: 8px; padding: 12px 16px; text-align: center;
+    animation: fadeup 420ms var(--ease-modal) both;
+  }
+  .oa-match-title { margin: 0; font: 600 16px/22px var(--sys-text); color: #059e6f; }
+  .oa-match-sub   { margin: 2px 0 0; font: 300 13px/18px var(--sys-text); color: #059e6f; }
+  .oa-row {
+    display: flex; align-items: center; gap: 16px;
+    height: 76px; padding-left: 8px;
+    border-bottom: 0.5px solid #ededed;
+  }
+  .oa-row:first-child { border-top: 0.5px solid #ededed; }
+  .oa-row-title { font: 400 17px/22px var(--sys-text); letter-spacing: -0.43px; color: #000; }
+  .oa-row-sub {
+    font: 400 12px/1.3 var(--sys-text); color: #5c5c66;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .oa-row-sub.neg { color: #d91f0a; }
+  .oa-edit {
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 400 17px/22px var(--sys-text); letter-spacing: -0.43px;
+    color: #0063fb; background: transparent; border: 0;
+    padding: 8px 0 8px 8px; cursor: pointer; font-family: inherit;
+    flex-shrink: 0; min-height: 44px; border-radius: 8px;
+  }
+  .oa-legals {
+    background: #f0f0f2; border-radius: 14px; padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .oa-req {
+    font: 400 12px/1.3 var(--sys-text); color: #d91f0a; margin: 0;
+    overflow: hidden; max-height: 18px; opacity: 1;
+    transition: max-height 260ms var(--ease-out), opacity 200ms var(--ease-out);
+  }
+  .oa-req.hidden-req { max-height: 0; opacity: 0; }
+  .oa-gdpr {
+    background: #f0f0f2; border-radius: 8px; padding: 16px;
+    font: 300 13px/1.5 var(--sys-text); color: #474750; margin: 0;
+  }
+  .oa-gdpr a, .oa-gdpr .lnk { color: #0063fb; text-decoration: underline; cursor: pointer; }
+  .oa-shake { animation: oaShake 420ms cubic-bezier(.36,.07,.19,.97); }
+  @keyframes oaShake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-3px); }
+    40%, 60% { transform: translateX(3px); }
+  }
+  @keyframes oaPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(0.92); opacity: 0.75; }
+  }
+  .oa-ai-working { animation: oaPulse 1.4s ease-in-out infinite; }
+  @keyframes oaIconLand {
+    from { transform: scale(0.6); opacity: 0; }
+    60%  { transform: scale(1.08); }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .oa-icon-land { animation: oaIconLand 420ms cubic-bezier(.2,1.1,.3,1.15) both; }
+  .oa-sub-in { animation: fadeup 360ms var(--ease-modal) both; }
+  /* Draft-saved toast on the job ad */
+  .oa-draft-toast {
+    position: absolute; left: 16px; right: 16px;
+    display: flex; align-items: center; gap: 10px;
+    background: #e9f8f1; border: 1px solid rgba(5,158,111,0.45);
+    border-radius: 10px; padding: 12px 14px;
+    font: 400 14px/1.35 var(--sys-text); color: #1b1b1f;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+    animation: slideup 360ms var(--ease-modal);
+    z-index: 40;
+  }
+  .oa-draft-toast.leaving { animation: fadeout 260ms var(--ease-out) both; }
+  /* Hover / rollover states — pointer devices only */
+  @media (hover: hover) {
+    .oa-btn.primary:hover:not(:disabled) { background: #0058e0; }
+    .oa-btn.primary:active:not(:disabled) { transform: scale(0.985); }
+    .oa-btn.secondary:hover { background: #f0f5ff; }
+    .oa-btn-small:hover { background: #f0f5ff; border-color: #0063fb; }
+    .oa-opt-row:hover { background: #f7f7f9; }
+    .oa-doc-card:hover:not(.selected) { border-color: #c3c3c6; }
+    .oa-doc-card.selected:hover { box-shadow: 0 0 0 0.5px #0063fb, 0 2px 10px rgba(0,99,251,0.12); }
+    .oa-chip:hover:not(.on) { background: #e1edfe; }
+    .oa-chip.outline:hover:not(.on) { background: #f7f7f9; border-color: #a8a8b3; }
+    .oa-edit:hover { background: #f0f5ff; }
+    .oa-link:hover { background: #f0f5ff; }
+  }
+
   /* ─── Pin-on-screen layer (Figma-style click-anywhere comments) ─── */
   .pin-layer {
     position: absolute; inset: 0;
@@ -4879,6 +5104,13 @@ function Icon({ name, size = 24, color = "currentColor", stroke = 1.8, fill = "n
     "message-square":"M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z",
     "user-circle":   "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM5.5 19.5a7 7 0 0 1 13 0M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
     "play-circle":   "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM10 8l6 4-6 4V8z",
+    "grad-cap":      "M22 10 12 5 2 10l10 5 10-5zM6 12.5V17c3 2.6 9 2.6 12 0v-4.5",
+    "thumbs-up":     "M7 11v10M15 5.9 14 10h5.8a2 2 0 0 1 1.9 2.6l-2.3 7A2 2 0 0 1 17.5 21H7V11l4-8a3 3 0 0 1 4 2.9z",
+    "external":      "M15 3h6v6M21 3l-9 9M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6",
+    "dots":          "M5 12h.01M12 12h.01M19 12h.01",
+    "user-card":     "M16 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM12 11a2.2 2.2 0 1 0 0-4.4A2.2 2.2 0 0 0 12 11zM8.5 16.5a3.5 3.5 0 0 1 7 0",
+    "checklist":     "M10.5 6h10.5M10.5 12h10.5M10.5 18h10.5M3 6.5 4.5 8 7.5 4.5M3 12.5 4.5 14 7.5 10.5M3 18.5 4.5 20 7.5 16.5",
+    "arrow-right":   "M5 12h14M13 6l6 6-6 6",
   };
   const d = paths[name];
   if (!d) return null;
@@ -6296,7 +6528,7 @@ function SheetDragHandle() {
 // Pure job-ad body (header, facts, role copy). No NavBar, no apply CTA —
 // so it can be reused both as a screen body and inside the preview sheet's "Job ad" tab.
 // `embedded` skips the logo + company + title block (the sheet header already shows them).
-function JobAdContent({ job, embedded = false }) {
+function JobAdContent({ job, embedded = false, quickApply = null }) {
   const t = useT();
   const platform = usePlatform();
   const cardR = PLATFORM_RADII[platform].card;
@@ -6344,6 +6576,10 @@ function JobAdContent({ job, embedded = false }) {
         </Fact>
       </div>
 
+      {/* 2.0 One Apply — inline "Rask søknad" block sits IN the ad flow
+          (between the facts and the body), exactly as the Figma job ad. */}
+      {quickApply}
+
       <div style={{ padding: "0 20px" }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1d", margin: "0 0 10px", letterSpacing: -0.2 }}>
           {t({ en: "About the role", no: "Om stillingen" })}
@@ -6375,7 +6611,7 @@ function JobAdContent({ job, embedded = false }) {
   );
 }
 
-function JobDetailScreen({ job, onApply, onBack, userState }) {
+function JobDetailScreen({ job, onApply, onBack, userState, oneApply = false }) {
   const t = useT();
   const platform = usePlatform();
   const { homeArea } = useMetrics();
@@ -6385,6 +6621,33 @@ function JobDetailScreen({ job, onApply, onBack, userState }) {
   // matches the FINN Item Page treatment (square outline button beside
   // the primary "Søk på stillingen" CTA).
   const [favourited, setFavourited] = useState(false);
+  // 2.0 One Apply — the CTA lives INLINE in the ad (Figma job ad) and only
+  // docks as a sticky bar once the user scrolls past it.
+  const inlineCtaRef = useRef(null);
+  const adScrollRef = useRef(null);
+  const [ctaDocked, setCtaDocked] = useState(false);
+  const onAdScroll = () => {
+    if (!oneApply || !inlineCtaRef.current || !adScrollRef.current) return;
+    const c = adScrollRef.current.getBoundingClientRect();
+    const b = inlineCtaRef.current.getBoundingClientRect();
+    setCtaDocked(b.bottom < c.top + 4);
+  };
+  const quickApplyBlock = oneApply ? (
+    <div ref={inlineCtaRef} style={{ padding: "0 20px", marginBottom: 24 }}>
+      <h2 style={{ margin: "0 0 4px", font: "700 16px/1.3 var(--sys-text)", color: "#1b1b1f", letterSpacing: -0.2 }}>
+        {t({ en: "Quick apply", no: "Rask søknad" })}
+      </h2>
+      <p style={{ margin: "0 0 12px", font: "400 14px/1.45 var(--sys-text)", color: "#474750" }}>
+        {t({
+          en: <>We fill it in for you using your <span style={{ color: "#0063fb", fontWeight: 600 }}>Job Profile</span>. You can review and edit before you send.</>,
+          no: <>Vi fyller ut for deg med din <span style={{ color: "#0063fb", fontWeight: 600 }}>Jobbprofil</span>. Du kan se over og redigere før du sender.</>,
+        })}
+      </p>
+      <button className="oa-btn primary press" onClick={() => { haptic("ok"); onApply?.(); }}>
+        {t({ en: "Apply for this Position", no: "Søk på stillingen" })}
+      </button>
+    </div>
+  ) : null;
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#fff" }}>
       <NavBar
@@ -6397,11 +6660,11 @@ function JobDetailScreen({ job, onApply, onBack, userState }) {
           </div>
         } />
 
-      <div className="scroll-area" style={{
+      <div className="scroll-area" ref={adScrollRef} onScroll={onAdScroll} style={{
         flex: 1, overflowY: "auto",
-        paddingBottom: isAndroid ? 120 : 140,
+        paddingBottom: oneApply ? 150 : isAndroid ? 120 : 140,
       }}>
-        <JobAdContent job={job} />
+        <JobAdContent job={job} quickApply={quickApplyBlock} />
       </div>
 
       {isApplied ? (
@@ -6438,6 +6701,31 @@ function JobDetailScreen({ job, onApply, onBack, userState }) {
             <Icon name="chevron-right" size={18} color="#1f8a3b" stroke={2.4} />
           </div>
         </div>
+      ) : oneApply ? (
+        /* 2.0 One Apply — FINN action bar at the bottom; the Apply CTA is
+           inline in the ad and docks here only after scrolling past it. */
+        <>
+          <div aria-hidden={!ctaDocked} style={{
+            position: "absolute", left: 16, right: 16,
+            bottom: `calc(86px + ${homeArea}px)`, zIndex: 4,
+            transform: ctaDocked ? "translateY(0)" : "translateY(14px)",
+            opacity: ctaDocked ? 1 : 0,
+            pointerEvents: ctaDocked ? "auto" : "none",
+            transition: "opacity 240ms var(--ease-out), transform 300ms var(--ease-modal)",
+          }}>
+            <div style={{
+              background: "rgba(255,255,255,0.85)",
+              WebkitBackdropFilter: "blur(14px)", backdropFilter: "blur(14px)",
+              borderRadius: 14, padding: 10,
+              boxShadow: "0 6px 16px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.08)",
+            }}>
+              <button className="oa-btn primary press" onClick={() => { haptic("ok"); onApply?.(); }}>
+                {t({ en: "Apply for this Position", no: "Søk på stillingen" })}
+              </button>
+            </div>
+          </div>
+          <OATabBar homeArea={homeArea} />
+        </>
       ) : isAndroid ? (
         /* Material 3 Extended FAB — 56dp tall, 16dp corner radius, Level 3
            elevation, Label Large (14sp / 500 / 0.1 tracking). Padding:
@@ -7640,12 +7928,31 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
   const [style, setStyle] = useState("formal");
   const [text, setText] = useState(LETTER_VARIANTS.formal);
   const [edited, setEdited] = useState(false);
+  // Keyboard focus — while the textarea is focused the simulated keyboard
+  // covers the footer CTA, so a "Done/Ferdig" affordance appears in the
+  // header (native iOS pattern) to dismiss it and reveal the CTA again.
+  const [focused, setFocused] = useState(false);
+  // Style chips are quietly destructive over hand-written text: stash the
+  // user's own words before overwriting so they're always one tap away
+  // (same restore pattern as the AI-forslag chip in the Figma flow).
+  const [stash, setStash] = useState(null);
+  // Helper line earns its place on first open, then gets out of the way.
+  const [chipUsed, setChipUsed] = useState(false);
 
   function applyStyle(id) {
     haptic("tap");
+    setChipUsed(true);
+    if (edited && text.trim()) setStash(text);
     setStyle(id);
     setText(LETTER_VARIANTS[id]);
     setEdited(false);
+  }
+
+  function restoreOwn() {
+    haptic("tap");
+    setText(stash);
+    setStash(null);
+    setEdited(true);
   }
 
   function onTextChange(v) {
@@ -7704,10 +8011,42 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
             {t({ en: "Writing Assistant", no: "Skriveassistent" })}
             <AILogo size={18} />
           </h2>
-          {/* Invisible spacer keeps the title optically centred */}
-          <div style={{ width: 36, height: 36, flexShrink: 0 }} aria-hidden="true" />
+          {/* While the keyboard is up, the footer CTA is covered — "Ferdig"
+              takes its place in the nav bar (iOS convention). pointerDown +
+              preventDefault so the tap lands before the textarea's blur
+              unmounts the button. */}
+          {focused ? (
+            <button
+              className="press"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                haptic("tap");
+                try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (_) {}
+              }}
+              style={{
+                minWidth: 36, height: 36, flexShrink: 0,
+                background: "transparent", border: 0, cursor: "pointer",
+                color: "#0063fb", fontFamily: "inherit",
+                font: "600 15px/1 var(--sys-text)", letterSpacing: -0.1,
+                padding: "0 4px",
+                animation: "fadein 160ms var(--ease-out)",
+              }}>
+              {t({ en: "Done", no: "Ferdig" })}
+            </button>
+          ) : (
+            /* Invisible spacer keeps the title optically centred */
+            <div style={{ width: 36, height: 36, flexShrink: 0 }} aria-hidden="true" />
+          )}
         </div>
 
+        {/* Helper line — visible until the first chip interaction, then it
+            collapses and gives the height back to the letter. */}
+        <div style={{
+          overflow: "hidden",
+          maxHeight: chipUsed ? 0 : 64,
+          opacity: chipUsed ? 0 : 1,
+          transition: "max-height 320ms var(--ease-modal), opacity 220ms var(--ease-out)",
+        }}>
         <p style={{
           margin: "0 24px 18px",
           fontSize: 14, color: "#6b6b6b", lineHeight: 1.5,
@@ -7719,6 +8058,7 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
             no: "Velg en stil – eller skriv selv nedenfor.",
           })}
         </p>
+        </div>
 
         <div style={{
           padding: "0 16px 14px",
@@ -7797,6 +8137,8 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
           <textarea
             value={text}
             onChange={(e) => onTextChange(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             style={{
               width: "100%", minHeight: "100%",
               border: 0, outline: 0, resize: "none",
@@ -7810,7 +8152,35 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
           />
         </div>
 
-        {edited && (
+        {stash ? (
+          /* A style chip replaced the user's own words — keep them one tap
+             away instead of silently discarding them. */
+          <div style={{
+            margin: "0 16px 8px",
+            display: "inline-flex", alignSelf: "center", alignItems: "center", gap: 8,
+            animation: "fadein 200ms",
+          }}>
+            <span style={{
+              padding: "7px 12px", borderRadius: 9999,
+              background: "#f0f0f3", color: "#474750",
+              fontSize: 12, fontWeight: 500, letterSpacing: -0.05,
+            }}>
+              {t({ en: "Your own text is saved", no: "Din egen tekst er tatt vare på" })}
+            </span>
+            <button
+              className="press"
+              onClick={restoreOwn}
+              style={{
+                padding: "7px 14px", borderRadius: 9999,
+                background: "#fff", color: "#0063fb",
+                border: "1px solid rgba(0,99,251,0.5)",
+                fontSize: 12, fontWeight: 600, fontFamily: "inherit",
+                letterSpacing: -0.05, cursor: "pointer",
+              }}>
+              {t({ en: "Use my version", no: "Bruk min versjon" })}
+            </button>
+          </div>
+        ) : edited && (
           <div style={{
             margin: "0 16px 8px", padding: "8px 12px",
             background: "#eaf2ff", borderRadius: 9999,
@@ -7828,7 +8198,7 @@ function CoverLetterSheet({ onClose, onOpenSelectFile }) {
           paddingBottom: `calc(12px + ${homeArea}px)`,
           background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.06)",
         }}>
-          <PrimaryButton onClick={() => { haptic("ok"); onClose?.(); }}>
+          <PrimaryButton onClick={() => { haptic("ok"); onClose?.(); }} disabled={!text.trim()}>
             {t({ en: "Use this cover letter", no: "Bruk dette søknadsbrevet" })}
           </PrimaryButton>
         </div>
@@ -10240,15 +10610,16 @@ function AgenticReviewScreen({ job, onClose, onSend, userState = "ready", initia
               no: "Jeg bekrefter at all informasjonen ovenfor er korrekt",
             })}
           />
-          <p aria-live="polite" style={{
+          {/* Static footnote — describes the group's rule only. It must NOT
+              claim overall readiness ("Ready to send"): the questions row
+              and the Send button own that state, and a toggles-only check
+              would contradict them while questions are still unanswered. */}
+          <p style={{
             margin: "-6px 0 0",
             font: "400 12px/1.4 var(--sys-text)",
-            color: (confirmed && extraConfirmed) ? "#1f8a3b" : "#6b6b6b",
-            transition: "color 200ms var(--ease-out)",
+            color: "#6b6b6b",
           }}>
-            {(confirmed && extraConfirmed)
-              ? t({ en: "Ready to send", no: "Klar til å sendes" })
-              : t({ en: "Required before sending", no: "Må bekreftes før du sender" })}
+            {t({ en: "Required before sending", no: "Må bekreftes før du sender" })}
           </p>
         </div>
       </div>
@@ -11857,8 +12228,11 @@ function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
               en: <>Application <strong style={{ color: "#1d1d1d" }}>automatically optimised</strong> based on your role and experience — and sent for you. We'll let you know when the employer responds.</>,
               no: <>Søknaden er <strong style={{ color: "#1d1d1d" }}>automatisk tilpasset</strong> rollen og erfaringen din — og sendt for deg. Vi sier ifra når arbeidsgiver svarer.</>,
             }) : t({
-              en: <>You'll find this in <strong style={{ color: "#1d1d1d" }}>My applications</strong>. We'll let you know when the employer responds.</>,
-              no: <>Du finner søknaden under <strong style={{ color: "#1d1d1d" }}>Mine søknader</strong>. Vi sier ifra når arbeidsgiver svarer.</>,
+              // No application history at launch — no "My applications"
+              // reference. Point the seeker to the employer for changes
+              // or questions instead (matches production confirmation).
+              en: "Your application for this position has been sent. If you need to make changes or have questions about your application, you can contact the employer directly.",
+              no: "Søknaden din på stillingen er nå sendt inn. Hvis du trenger å gjøre endringer eller har spørsmål om søknaden din, kan du kontakte arbeidsgiver direkte.",
             })}
           </p>
         </div>
@@ -11873,6 +12247,1218 @@ function ConfirmationScreen({ job, onDone, onReset, magic = false }) {
           </PrimaryButton>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// 2.0 ONE APPLY — stepped wizard, built 1:1 from Figma
+// User-Connect-Agentic "Booking flow" (node 1592-28765):
+// job-ad one-button CTA → Step 1 Personal Details (AI prefill,
+// per-field AI-forslag restore) → Step 2 Attachments (CV required
+// state, My Documents / Document Details, cover-letter editors) →
+// Step 3 Additional Questions (user-answered, never AI-filled) →
+// Review (job-match banner, legals toggles, GDPR note, missing
+// states) → Confirmation. Closing mid-flow saves a draft (toast on
+// the job ad; reopening resumes). Gated on version === "v2" —
+// no other version renders any of this.
+// ═══════════════════════════════════════════════════════════
+
+// Demo content exactly as in the Figma flow (Erik Andersen persona,
+// Mattilsynet UX-/UI-designer ad). Single swap-point.
+const OA_JOB = {
+  title: "UX-/UI-designer",
+  company: "Mattilsynet",
+  initials: "MT",
+  brandColor: "#0b5c50",
+  match: 87,
+};
+const OA_PROFILE = {
+  first: "Erik", last: "Andersen",
+  email: "erik.andersen@gmail.com",
+  area: "+47", phone: "+47 912 34 567",
+  linkedin: "erik.linkedinaddress.andersen",
+  subLine: "Erik Andersen · 76 54 43 21 · +1 til",
+  cvName: "Erik Andersen CV 2025",
+};
+const OA_DOCS = [
+  { id: "cv",         icon: "user-card", title: "Erik Andersen CV 2025", pill: "CV",              meta: "PDF · 2 MB · Last week" },
+  { id: "soknad",     icon: "file-doc",  title: "Søknadsbrev mal",       pill: "Søknadsbrev",     meta: "DOCX · 4 MB · Last week" },
+  { id: "diploma",    icon: "grad-cap",  title: "Master Diploma",        pill: "Vitnemål",        meta: "PDF · 5 MB · 5 days ago" },
+  { id: "anbefaling", icon: "thumbs-up", title: "Anbefalingsbrev",       pill: "Anbefalingsbrev", meta: "DOC · 3.5 MB · Yesterday" },
+];
+const OA_PILLS = {
+  "CV":              { bg: "#cdf1ff", fg: "#0f6a8f" },
+  "Søknadsbrev":     { bg: "#fdedb0", fg: "#6b520a" },
+  "Vitnemål":        { bg: "#e4dcff", fg: "#4b3a8c" },
+  "Anbefalingsbrev": { bg: "#ffd9ec", fg: "#8c2b5e" },
+};
+// AI cover-letter drafts per tone × language (chip switches restream).
+const OA_LETTERS = {
+  "no-Formal":    "Jeg søker stillingen som UX-/UI-designer hos Mattilsynet. Med solid erfaring fra brukersentrert design, designsystemer og tverrfaglige produktteam ønsker jeg å bidra til brukervennlige tjenester for både innbyggere og virksomheter. Jeg motiveres av samfunnsoppdraget og av å bygge løsninger som skaper reell verdi.",
+  "no-Casual":    "Hei! Jeg heter Erik og vil gjerne jobbe som UX-/UI-designer hos dere. Jeg trives best når jeg får jobbe tett på brukerne, teste tidlig og ofte, og bygge design som faktisk funker i hverdagen. Mattilsynets samfunnsoppdrag treffer meg — dette vil jeg være med på!",
+  "no-Confident": "Som UX-/UI-designer med dokumenterte resultater fra designsystemer og selvstyrte produktteam er jeg trygg på at jeg vil løfte Mattilsynets digitale tjenester. Jeg kombinerer struktur med sterke mellommenneskelige ferdigheter — og leverer design som beviselig flytter målene.",
+  "en-Formal":    "I am applying for the position of UX/UI designer at Mattilsynet. With solid experience in user-centred design, design systems and cross-functional product teams, I want to contribute to user-friendly services for citizens and businesses alike. I am motivated by the public mission and by building solutions that create real value.",
+  "en-Casual":    "Hi! I'm Erik, and I'd love to join you as a UX/UI designer. I do my best work close to users — testing early and often, and shipping design that actually works in everyday life. Mattilsynet's mission really resonates with me, and I want in!",
+  "en-Confident": "As a UX/UI designer with proven results across design systems and autonomous product teams, I am confident I will raise the bar for Mattilsynet's digital services. I combine structure with strong interpersonal skills — and deliver design that measurably moves the goals.",
+};
+
+// Draft persistence — module scope so the sheet can be closed and
+// reopened with everything intact ("closing mid-flow saves a draft").
+let OA_DRAFT = null;
+
+// iOS toggle in the FINN tint — the Figma flow uses BLUE switches.
+function OASwitch({ on, onChange, disabled }) {
+  return (
+    <button role="switch" aria-checked={on} disabled={disabled}
+      onClick={() => { if (!disabled) { haptic("tap"); onChange?.(!on); } }}
+      style={{
+        width: 51, height: 31, borderRadius: 9999, border: 0, padding: 0,
+        flexShrink: 0, background: on ? "#0063fb" : "#e9e9eb",
+        position: "relative", cursor: disabled ? "default" : "pointer",
+        transition: "background 220ms var(--ease-out)",
+        opacity: disabled ? 0.6 : 1,
+      }}>
+      <div style={{
+        position: "absolute", top: 2, left: on ? 22 : 2,
+        width: 27, height: 27, borderRadius: 9999, background: "#fff",
+        boxShadow: "0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.1)",
+        transition: "left 240ms cubic-bezier(.2,1.05,.3,1.2)",
+      }} />
+    </button>
+  );
+}
+
+// Outline sparkle cluster — Lucide stand-in for the design's AI glyph.
+function OASparkles({ size = 28, color = "#1b1b1f" }) {
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <div style={{ position: "absolute", left: 0, bottom: 0 }}>
+        <Icon name="sparkle" size={Math.round(size * 0.72)} color={color} stroke={1.8} />
+      </div>
+      <div style={{ position: "absolute", right: 0, top: 0 }}>
+        <Icon name="sparkle" size={Math.round(size * 0.42)} color={color} stroke={1.8} />
+      </div>
+    </div>
+  );
+}
+
+function OAFooter({ children, homeArea }) {
+  return (
+    <div className="oa-footer" style={{ paddingBottom: `calc(24px + ${homeArea}px)` }}>
+      <div className="oa-footer-card">{children}</div>
+    </div>
+  );
+}
+
+// Prefilled text field with the design's AI-forslag restore row: when the
+// user edits away from the AI/profile value, the original stays one tap
+// away (Badge Positive + value + small secondary "Use this").
+function OAField({ label, optional, value, onChange, placeholder, type = "text", aiValue, landing, style }) {
+  const t = useT();
+  const edited = aiValue !== undefined && value !== aiValue;
+  return (
+    <div style={{ width: "100%", ...style }}>
+      <p className="oa-field-label">
+        {label}
+        {optional && <span className="opt">{t({ en: "Optional", no: "Valgfritt" })}</span>}
+      </p>
+      <input className={"oa-input" + (landing ? " oa-landing" : "")}
+        type={type} value={value} placeholder={placeholder}
+        onChange={(e) => onChange?.(e.target.value)} />
+      {edited && (
+        <div className="oa-restore">
+          <span className="oa-badge">{t({ en: "AI suggestion", no: "AI-forslag" })}</span>
+          <span className="oa-restore-val">{aiValue}</span>
+          <button className="oa-btn-small press"
+            onClick={() => { haptic("tap"); onChange?.(aiValue); }}>
+            {t({ en: "Use this", no: "Bruk denne" })}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OADocCard({ icon = "file-doc", title, pill, meta, selected, onClick, land }) {
+  const p = pill ? OA_PILLS[pill] : null;
+  return (
+    <button className={"oa-doc-card press" + (selected ? " selected" : "") + (land ? " oa-icon-land" : "")}
+      onClick={() => { if (onClick) { haptic("tap"); onClick(); } }}
+      style={{ cursor: onClick ? "pointer" : "default" }}>
+      <Icon name={icon} size={30} color="#1b1b1f" stroke={1.5} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p className="oa-doc-title">{title}</p>
+        <p className="oa-doc-meta">
+          {p && <span className="oa-doc-pill" style={{ background: p.bg, color: p.fg }}>{pill}</span>}
+          <span>{meta}</span>
+        </p>
+      </div>
+      <Icon name="dots" size={20} color="#5c5c66" stroke={2.6} />
+    </button>
+  );
+}
+
+function OAOptionRow({ icon, ai, title, sub, onClick, working }) {
+  return (
+    <button className="oa-opt-row press" onClick={() => { haptic("tap"); onClick?.(); }}>
+      <div style={{ width: 30, flexShrink: 0, display: "flex", justifyContent: "center" }}>
+        {working ? (
+          <span style={{
+            width: 18, height: 18, borderRadius: 9999, display: "inline-block",
+            border: "2px solid rgba(0,99,251,0.25)", borderTopColor: "#0063fb",
+            animation: "spin 1.2s linear infinite",
+          }} />
+        ) : ai ? <OASparkles size={26} /> : <Icon name={icon} size={24} color="#1b1b1f" stroke={1.7} />}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, font: "500 16px/1.3 var(--sys-text)", color: "#1b1b1f" }}>{title}</p>
+        <p style={{ margin: "2px 0 0", font: "400 12px/1.4 var(--sys-text)", color: "#5c5c66" }}>{sub}</p>
+      </div>
+      <Icon name="chevron-right" size={18} color="#0063fb" stroke={2.4} />
+    </button>
+  );
+}
+
+// Sub-page header (My Documents / Document Details / Cover Letter).
+function OAPageHeader({ title, onBack, trailing }) {
+  return (
+    <div style={{ padding: "16px 16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <button className="press" onClick={() => { haptic("tap"); onBack(); }} aria-label="Back"
+        style={{
+          width: 44, height: 44, borderRadius: 9999, background: "#f5f5f7",
+          border: 0, cursor: "pointer", flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.10)",
+        }}>
+        <Icon name="chevron-left" size={22} color="#1b1b1f" stroke={2.2} />
+      </button>
+      <p style={{ margin: 0, font: "600 20px/25px var(--sys-text)", letterSpacing: -0.45, color: "#000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</p>
+      {trailing || <div style={{ width: 44, height: 44, flexShrink: 0 }} />}
+    </div>
+  );
+}
+
+// "Application Sent!" illustration — redrawn from the Figma asset with its
+// brand-palette colors (Bluegray 200/400, Yellow 500, Green 500).
+function OASentIllustration({ width = 216 }) {
+  return (
+    <svg width={width} height={Math.round(width * 0.64)} viewBox="0 0 216 138" fill="none" aria-hidden="true">
+      <ellipse cx="108" cy="127" rx="80" ry="8" fill="#EFF1F5" />
+      <g transform="rotate(-7 108 78)">
+        <path d="M96 46v-8a9 9 0 0 1 9-9h8a9 9 0 0 1 9 9v8" stroke="#9BA8BA" strokeWidth="8" fill="none" strokeLinecap="round" />
+        <rect x="56" y="46" width="104" height="74" rx="11" fill="#E1E6EE" />
+        <path d="M56 57a11 11 0 0 1 11-11h82a11 11 0 0 1 11 11v20H56z" fill="#9BA8BA" />
+        <rect x="100" y="70" width="16" height="12" rx="3.5" fill="#8A97AB" />
+      </g>
+      <circle cx="141" cy="88" r="31" fill="#fff" />
+      <circle cx="141" cy="88" r="30" stroke="#EFF1F5" strokeWidth="2" />
+      <circle cx="141" cy="88" r="22" stroke="#EFF1F5" strokeWidth="2" fill="#fff" />
+      <path d="M128 88.5l9 10 18-22" stroke="#18C884" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M38 38l3.4 7.6 8.2 1.1-6 5.6 1.6 8.1-7.2-4.1-7.2 4.1 1.6-8.1-6-5.6 8.2-1.1z" fill="#EEB61B" />
+      <path d="M64 8l2.3 5.2 5.7.8-4.2 3.9 1.1 5.6-4.9-2.8-4.9 2.8 1.1-5.6-4.2-3.9 5.7-.8z" fill="#EEB61B" />
+      <path d="M166 20l2 4.5 5 .7-3.7 3.4 1 4.9-4.3-2.5-4.3 2.5 1-4.9-3.7-3.4 5-.7z" fill="#EEB61B" />
+    </svg>
+  );
+}
+
+// Job-match % counts up on mount — reinforces "we computed this for you".
+function OAMatchBanner() {
+  const t = useT();
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const start = performance.now(), dur = 900;
+    let raf;
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / dur);
+      setN(Math.round(OA_JOB.match * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div className="oa-match" role="status">
+      <p className="oa-match-title">{n}% {t({ en: "Job match", no: "jobbmatch" })}</p>
+      <p className="oa-match-sub">
+        {t({ en: "You're a great match for this position. Go for it!", no: "Du er en god match for stillingen. Søk i vei!" })}
+        {" "}
+        <span style={{ display: "block", marginTop: 2, color: "#3d8f70", fontSize: 12 }}>
+          {t({ en: "Based on your Job Profile and this ad", no: "Basert på Jobbprofilen din og annonsen" })}
+        </span>
+      </p>
+    </div>
+  );
+}
+
+// ── The wizard ──────────────────────────────────────────────
+
+function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity }) {
+  const t = useT();
+  const { statusBarH, homeArea } = useMetrics();
+  const backdropH = statusBarH + 16;
+  const draft = OA_DRAFT;
+
+  // ── Application data (one object so drafts are trivial) ──
+  const [app, setAppRaw] = useState(draft ? draft.app : {
+    fields: { first: "", last: "", email: "", area: "", phone: "", linkedin: "", message: "" },
+    includeLinkedin: true, includeMessage: true,
+    cv: null,               // { title, pill, meta, ai }
+    coverLetter: null,      // "ai" | "attached" | "written"
+    letterText: "",
+    additionalDoc: null,
+    a1: "", a2: "", a3: "", incl2: true, incl3: true,
+    privacyOk: false, correctOk: false,
+  });
+  const setApp = (patch) => setAppRaw(s => ({ ...s, ...patch }));
+  const setField = (k) => (v) => setAppRaw(s => ({ ...s, fields: { ...s.fields, [k]: v } }));
+
+  // step: 0 personal · 1 attachments · 2 questions · 3 review · 4 sent
+  const [step, setStep] = useState(draft ? draft.step : 0);
+  const [stepDir, setStepDir] = useState("push");
+  const [returnToReview, setReturnToReview] = useState(false);
+  const [exiting, setExiting] = useState(false);
+
+  // AI prefill (Step 1) — skipped entirely when resuming a draft.
+  const [prefill, setPrefill] = useState(draft ? "done" : "loading");
+  const [landed, setLanded] = useState(draft ? 7 : 0); // fields revealed so far
+  const prefTimers = useRef([]);
+  useEffect(() => {
+    if (draft) return;
+    const KEYS = ["first", "last", "email", "area", "phone", "linkedin"];
+    const VALS = OA_PROFILE;
+    KEYS.forEach((k, i) => {
+      prefTimers.current.push(setTimeout(() => {
+        haptic("tap");
+        setAppRaw(s => ({ ...s, fields: { ...s.fields, [k]: VALS[k] } }));
+        setLanded(n => n + 1);
+      }, 1400 + i * 380));
+    });
+    prefTimers.current.push(setTimeout(() => setPrefill("done"), 1400 + KEYS.length * 380 + 200));
+    return () => prefTimers.current.forEach(clearTimeout);
+  }, []);
+
+  // Sub-pages pushed over the current step (My Docs, Details, Letter, ATS).
+  const [stack, setStack] = useState([]);
+  const [leaving, setLeaving] = useState(null);
+  const popTimer = useRef(null);
+  const sendTimer = useRef(null);
+  const cvTimer = useRef(null);
+  useEffect(() => () => [popTimer.current, sendTimer.current, cvTimer.current].forEach(clearTimeout), []);
+  function oaBlur() {
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (_) {}
+  }
+  function push(id, params) {
+    haptic("tap"); oaBlur();
+    setStack(s => [...s, { id, params: params || {}, key: id + ":" + Date.now() }]);
+  }
+  function animateOut(top) {
+    setLeaving(top);
+    clearTimeout(popTimer.current);
+    popTimer.current = setTimeout(() => setLeaving(null), 340);
+  }
+  function pop() {
+    oaBlur();
+    setStack(s => { const top = s[s.length - 1]; if (top) animateOut(top); return s.slice(0, -1); });
+  }
+  function popAll() {
+    oaBlur();
+    setStack(s => { const top = s[s.length - 1]; if (top) animateOut(top); return []; });
+  }
+
+  // Step navigation with directional slide.
+  function goStep(n, dir) {
+    oaBlur();
+    setStepDir(dir || (n > step ? "push" : "pop"));
+    setStep(n);
+  }
+  function advance() { haptic("ok"); if (returnToReview) { setReturnToReview(false); goStep(3, "push"); } else goStep(step + 1, "push"); }
+  function editFromReview(n) { haptic("tap"); setReturnToReview(true); goStep(n, "pop"); }
+
+  // Close = save draft (toast on the job ad) — unless already sent.
+  function close() {
+    if (exiting) return;
+    haptic("tap");
+    setExiting(true);
+    const isDraft = step < 4;
+    if (isDraft) OA_DRAFT = { app, step: Math.min(step, 3) };
+    setTimeout(() => { (isDraft ? onDraftClose : onClose)?.(); }, 300);
+  }
+
+  // ── Derived status ──
+  const answered = (app.a1.trim() ? 1 : 0)
+    + (app.a2.trim() && app.incl2 ? 1 : 0)
+    + (app.a3.trim() && app.incl3 ? 1 : 0);
+  const questionsOk = !!app.a1.trim();
+  const cvOk = !!app.cv;
+  const rowsOk = cvOk && questionsOk;
+  const [sending, setSending] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
+  function trySend() {
+    if (sending) return;
+    if (!app.privacyOk || !app.correctOk) { haptic("err"); setShakeKey(k => k + 1); return; }
+    haptic("ok");
+    setSending(true);
+    sendTimer.current = setTimeout(() => {
+      setSending(false);
+      OA_DRAFT = null;
+      onSent?.();
+      setStepDir("push");
+      setStep(4);
+    }, 1600);
+  }
+
+  // "Create new from Job Profile" — AI beat, then the CV card lands.
+  const [cvWorking, setCvWorking] = useState(false);
+  function generateCv() {
+    if (cvWorking) return;
+    haptic("tap");
+    setCvWorking(true);
+    cvTimer.current = setTimeout(() => {
+      setCvWorking(false);
+      haptic("ok");
+      setApp({ cv: { title: "CV – " + OA_JOB.title + " (" + OA_JOB.company + ")", pill: "CV", icon: "user-card", ai: true,
+        meta: t({ en: "Created from your Job Profile · just now", no: "Laget fra Jobbprofilen din · nå nettopp" }) } });
+    }, 1600);
+  }
+
+  // ── Shared chrome ──
+  const sheetHeader = (
+    <>
+      <div style={{ padding: "16px 24px 0", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1, minWidth: 0, padding: "6px 0 14px" }}>
+            <CompanyLogo size={48} radius={8} initials={OA_JOB.initials} color={OA_JOB.brandColor} />
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, font: "500 16px/22px var(--sys-text)", color: "#1b1b1f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{OA_JOB.title}</p>
+              <p style={{ margin: 0, font: "400 13px/18px var(--sys-text)", color: "#5c5c66" }}>{OA_JOB.company}</p>
+            </div>
+          </div>
+          <button className="press" onClick={close} aria-label={t({ en: "Close", no: "Lukk" })}
+            style={{
+              width: 36, height: 36, borderRadius: 9999, background: "#f0f0f2", border: 0,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              marginTop: 6, flexShrink: 0,
+            }}>
+            <Icon name="x" size={18} color="#1b1b1f" stroke={2.2} />
+          </button>
+        </div>
+      </div>
+      <div style={{ borderTop: "0.5px solid #ededed", flexShrink: 0 }} />
+    </>
+  );
+
+  const stepHead = (title, idx) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, alignItems: "center" }}>
+      <h2 className="oa-step-title">{title}</h2>
+      <div className="oa-progress" role="progressbar" aria-valuemin={1} aria-valuemax={3} aria-valuenow={idx + 1}
+        aria-label={t({ en: `Step ${idx + 1} of 3`, no: `Steg ${idx + 1} av 3` })}>
+        {[0, 1, 2].map(i => <div key={i} className={"oa-progress-seg" + (i <= idx ? " fill" : "")} />)}
+      </div>
+    </div>
+  );
+
+  const infoToast = (
+    <div className="oa-toast" role="note">
+      {t({
+        en: "We use information from your Job profile to help you fill in the application. Review and change anything you want before you send.",
+        no: "Vi bruker informasjon fra Jobbprofilen din til å fylle ut søknaden. Se over og endre det du vil før du sender.",
+      })}
+    </div>
+  );
+
+  const ctaLabel = (fwd) => returnToReview
+    ? t({ en: "Save and return to Review", no: "Lagre og gå til oversikten" })
+    : fwd;
+
+  // "Include optional question" — belongs to the field ABOVE it: it only
+  // appears once that optional field has content, pre-checked, and
+  // controls whether the answer is included in the application.
+  const inclRow = (on, set, label) => (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
+      animation: "fadeup 300ms var(--ease-modal) both",
+    }}>
+      <p style={{ margin: 0, font: "300 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+        {label || t({ en: "Include optional question", no: "Ta med valgfritt spørsmål" })}
+      </p>
+      <OASwitch on={on} onChange={set} />
+    </div>
+  );
+
+  // ── Step 1 — Personal Details ──
+  const stepPersonal = (
+    <>
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "24px 24px 190px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+          {stepHead(t({ en: "Personal Details", no: "Personopplysninger" }), 0)}
+          {infoToast}
+          {prefill === "loading" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "-8px 0" }}>
+              <div className="oa-ai-working"><AILogo size={26} /></div>
+              <p style={{ margin: 0, font: "400 15px/1.4 var(--sys-text)", color: "#474750" }}>
+                {t({ en: "Building application from your profile..", no: "Bygger søknaden fra profilen din …" })}
+              </p>
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <OAField label={t({ en: "First name", no: "Fornavn" })} value={app.fields.first} onChange={setField("first")} aiValue={landed >= 1 ? OA_PROFILE.first : undefined} landing={landed === 1 && prefill === "loading"} />
+            <OAField label={t({ en: "Last name", no: "Etternavn" })} value={app.fields.last} onChange={setField("last")} aiValue={landed >= 2 ? OA_PROFILE.last : undefined} landing={landed === 2 && prefill === "loading"} />
+            <OAField label={t({ en: "Email", no: "E-post" })} type="email" value={app.fields.email} onChange={setField("email")} aiValue={landed >= 3 ? OA_PROFILE.email : undefined} landing={landed === 3 && prefill === "loading"} />
+            <div style={{ display: "flex", gap: 16, alignItems: "flex-end" }}>
+              <OAField label={t({ en: "Area Code", no: "Landskode" })} value={app.fields.area} onChange={setField("area")} placeholder="+" style={{ width: 88, flexShrink: 0 }} />
+              <OAField label={t({ en: "Phone", no: "Telefon" })} type="tel" value={app.fields.phone} onChange={setField("phone")} aiValue={landed >= 5 ? OA_PROFILE.phone : undefined} landing={landed === 5 && prefill === "loading"} style={{ flex: 1 }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <OAField label={t({ en: "Linkedin link", no: "LinkedIn-lenke" })} optional value={app.fields.linkedin} onChange={setField("linkedin")} landing={landed === 6 && prefill === "loading"} />
+              {app.fields.linkedin.trim() !== "" && inclRow(app.includeLinkedin, (v) => setApp({ includeLinkedin: v }))}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <p className="oa-field-label">
+                  {t({ en: "Message", no: "Melding" })}
+                  <span className="opt">{t({ en: "Optional", no: "Valgfritt" })}</span>
+                </p>
+                <textarea className="oa-textarea" value={app.fields.message}
+                  placeholder={t({ en: "Placeholder", no: "Skriv en melding" })}
+                  onChange={(e) => setField("message")(e.target.value)} />
+              </div>
+              {app.fields.message.trim() !== "" && inclRow(app.includeMessage, (v) => setApp({ includeMessage: v }))}
+            </div>
+          </div>
+          {/* The one deliberate exit to Direct Apply — quiet, one screen deep. */}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <button className="oa-link press" onClick={() => push("ats")}>
+              {t({ en: "Apply directly on the employer's site", no: "Søk direkte på arbeidsgiverens nettside" })}
+              <Icon name="external" size={16} color="#0063fb" stroke={2} />
+            </button>
+          </div>
+        </div>
+      </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" disabled={prefill === "loading"} onClick={advance}>
+          {ctaLabel(t({ en: "Go to Attachments", no: "Gå til vedlegg" }))}
+          {!returnToReview && <Icon name="arrow-right" size={18} color="#fff" stroke={2.2} />}
+        </button>
+      </OAFooter>
+    </>
+  );
+
+  // ── Step 2 — Attachments ──
+  const sectionGap = { display: "flex", flexDirection: "column", gap: 12 };
+  const stepAttachments = (
+    <>
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "24px 24px 190px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+          {stepHead(t({ en: "Attachments", no: "Vedlegg" }), 1)}
+          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+            <div style={sectionGap}>
+              <h2 className="oa-section-h">
+                CV
+                {!cvOk && <span className="req" key={"cvreq" + shakeKey}>{t({ en: "Required before sending", no: "Kreves før du sender" })}</span>}
+              </h2>
+              {app.cv && <OADocCard land icon={app.cv.icon || "user-card"} selected title={app.cv.title} pill={app.cv.pill} meta={app.cv.meta} />}
+              <div>
+                <OAOptionRow icon="file-doc"
+                  title={t({ en: "Attach document", no: "Legg ved dokument" })}
+                  sub={t({ en: "Upload new or add document", no: "Last opp nytt eller hent dokument" })}
+                  onClick={() => push("mydocs", { target: "cv" })} />
+                <OAOptionRow ai working={cvWorking}
+                  title={t({ en: "Create new from Job Profile", no: "Lag ny fra Jobbprofilen" })}
+                  sub={cvWorking
+                    ? t({ en: "Creating your CV…", no: "Lager CV-en din …" })
+                    : t({ en: "Based on your job profile and this ad", no: "Basert på jobbprofilen din og denne annonsen" })}
+                  onClick={generateCv} />
+              </div>
+            </div>
+
+            <div style={sectionGap}>
+              <h2 className="oa-section-h">
+                {t({ en: "Cover Letter", no: "Søknadsbrev" })}
+                <span className="opt">{t({ en: "Optional", no: "Valgfritt" })}</span>
+              </h2>
+              {app.coverLetter === "ai" && (
+                <OADocCard land icon="user-card" selected
+                  title={t({ en: "Automated Cover Letter", no: "Automatisk søknadsbrev" })}
+                  meta={t({ en: "See and edit cover letter", no: "Se og rediger søknadsbrevet" })}
+                  onClick={() => push("letter", { mode: "ai" })} />
+              )}
+              {app.coverLetter === "attached" && (
+                <OADocCard land icon="user-card" selected
+                  title={t({ en: "Attached Cover Letter", no: "Vedlagt søknadsbrev" })}
+                  meta={"PDF · 2 MB · " + t({ en: "Last week", no: "Forrige uke" })} />
+              )}
+              {app.coverLetter === "written" && (
+                <OADocCard land icon="edit" selected
+                  title={t({ en: "Your Cover Letter", no: "Ditt søknadsbrev" })}
+                  meta={t({ en: "Written by you · tap to edit", no: "Skrevet av deg · trykk for å redigere" })}
+                  onClick={() => push("letter", { mode: "write" })} />
+              )}
+              <div>
+                {app.coverLetter !== "ai" && (
+                  <OAOptionRow ai
+                    title={t({ en: "Let us create a draft for you", no: "La oss lage et utkast for deg" })}
+                    sub={t({ en: "Based on your job profile and this ad", no: "Basert på jobbprofilen din og denne annonsen" })}
+                    onClick={() => push("letter", { mode: "ai" })} />
+                )}
+                {app.coverLetter !== "written" && (
+                  <OAOptionRow icon="edit"
+                    title={t({ en: "Write yourself", no: "Skriv selv" })}
+                    sub={t({ en: "Start with a blank page", no: "Start med en blank side" })}
+                    onClick={() => push("letter", { mode: "write" })} />
+                )}
+                {app.coverLetter !== "attached" && (
+                  <OAOptionRow icon="file-doc"
+                    title={t({ en: "Attach document", no: "Legg ved dokument" })}
+                    sub={t({ en: "Upload new or add document", no: "Last opp nytt eller hent dokument" })}
+                    onClick={() => push("mydocs", { target: "cover" })} />
+                )}
+              </div>
+            </div>
+
+            <div style={sectionGap}>
+              <h2 className="oa-section-h">
+                {t({ en: "Additional", no: "Annet" })}
+                <span className="opt">{t({ en: "Optional", no: "Valgfritt" })}</span>
+              </h2>
+              {app.additionalDoc && (
+                <OADocCard land icon={app.additionalDoc.icon} selected
+                  title={app.additionalDoc.title} pill={app.additionalDoc.pill} meta={app.additionalDoc.meta} />
+              )}
+              <div>
+                <OAOptionRow icon="file-doc"
+                  title={t({ en: "Attach document", no: "Legg ved dokument" })}
+                  sub={t({ en: "Upload new or add document", no: "Last opp nytt eller hent dokument" })}
+                  onClick={() => push("mydocs", { target: "additional" })} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" onClick={advance}>
+          {ctaLabel(t({ en: "Go to Additional Questions", no: "Gå til tilleggsspørsmål" }))}
+          {!returnToReview && <Icon name="arrow-right" size={18} color="#fff" stroke={2.2} />}
+        </button>
+      </OAFooter>
+    </>
+  );
+
+  // ── Step 3 — Additional Questions (never AI-filled) ──
+  const stepQuestions = (
+    <>
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "24px 24px 190px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+          {stepHead(t({ en: "Additional Questions", no: "Tilleggsspørsmål" }), 2)}
+          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+            <OAField label={t({ en: "Example Question", no: "Eksempelspørsmål" })}
+              value={app.a1} onChange={(v) => setApp({ a1: v })}
+              placeholder={t({ en: "Answer", no: "Svar" })} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <OAField label={t({ en: "Optional question", no: "Valgfritt spørsmål" })} optional
+                value={app.a2} onChange={(v) => setApp({ a2: v })}
+                placeholder={t({ en: "Answer", no: "Svar" })} />
+              {app.a2.trim() !== "" && inclRow(app.incl2, (v) => setApp({ incl2: v }),
+                t({ en: "Add optional answer", no: "Legg til valgfritt svar" }))}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <p className="oa-field-label">
+                  {t({ en: "Optional question", no: "Valgfritt spørsmål" })}
+                  <span className="opt">{t({ en: "Optional", no: "Valgfritt" })}</span>
+                </p>
+                <textarea className="oa-textarea" value={app.a3}
+                  placeholder={t({ en: "Placeholder", no: "Skriv svaret ditt" })}
+                  onChange={(e) => setApp({ a3: e.target.value })} />
+              </div>
+              {app.a3.trim() !== "" && inclRow(app.incl3, (v) => setApp({ incl3: v }),
+                t({ en: "Add optional answer", no: "Legg til valgfritt svar" }))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" onClick={advance}>
+          {ctaLabel(t({ en: "Review Application", no: "Se over søknaden" }))}
+          {!returnToReview && <Icon name="arrow-right" size={18} color="#fff" stroke={2.2} />}
+        </button>
+      </OAFooter>
+    </>
+  );
+
+  // ── Review ──
+  const reviewRows = [
+    { id: 0, icon: "user", title: t({ en: "Personal Details", no: "Personopplysninger" }),
+      sub: (app.fields.first + " " + app.fields.last).trim() + " · 76 54 43 21 · +1 til", neg: false },
+    { id: 1, icon: "file-doc", title: t({ en: "Attachments", no: "Vedlegg" }),
+      sub: cvOk ? app.cv.title + ".pdf" : t({ en: "Required before sending", no: "Kreves før du sender" }), neg: !cvOk },
+    { id: 2, icon: "checklist", title: t({ en: "Additional Questions", no: "Tilleggsspørsmål" }),
+      sub: questionsOk
+        ? answered + " " + t({ en: answered === 1 ? "question answered" : "questions answered", no: answered === 1 ? "spørsmål besvart" : "spørsmål besvart" })
+        : t({ en: "Required before sending", no: "Kreves før du sender" }), neg: !questionsOk },
+  ];
+  const legalRow = (labelNode, on, key, setOn) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+        <p style={{ margin: 0, font: "300 14px/18px var(--sys-text)", color: "#1b1b1f" }}>{labelNode}</p>
+        <p key={key + shakeKey} className={"oa-req" + (on ? " hidden-req" : "") + (shakeKey && !on ? " oa-shake" : "")}>
+          {t({ en: "Required before sending", no: "Må bekreftes før du sender" })}
+        </p>
+      </div>
+      <OASwitch on={on} onChange={setOn} disabled={sending} />
+    </div>
+  );
+  const stepReview = (
+    <div style={{ display: "flex", flexDirection: "column", position: "absolute", inset: 0, pointerEvents: sending ? "none" : "auto" }}>
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", paddingBottom: 170 }}>
+        <div style={{ padding: "24px 24px 0", display: "flex", flexDirection: "column", gap: 24 }}>
+          <OAMatchBanner />
+          <div>
+            {reviewRows.map((r) => (
+              <div className="oa-row" key={r.id}>
+                <div style={{ width: 32, height: 32, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name={r.icon} size={28} color="#1b1b1f" stroke={1.5} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span className="oa-row-title">{r.title}</span>
+                  <span key={r.sub + (r.neg ? shakeKey : "")}
+                    className={"oa-row-sub oa-sub-in" + (r.neg ? " neg" : "") + (r.neg && shakeKey ? " oa-shake" : "")}>
+                    {r.sub}
+                  </span>
+                </div>
+                <button className="oa-edit press" onClick={() => editFromReview(r.id)}>
+                  {t({ en: "Edit", no: "Endre" })}
+                  <Icon name="chevron-right" size={18} color="#0063fb" stroke={2.4} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: "24px 16px 0", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="oa-legals">
+            {legalRow(
+              <>
+                {t({ en: "I confirm that I have read the Privacy Policy ", no: "Jeg bekrefter at jeg har lest personvernerklæringen " })}
+                <span role="link" tabIndex={0} onClick={(e) => e.stopPropagation()}
+                  style={{ color: "#0063fb", cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {t({ en: "(Read more)", no: "(Les mer)" })}
+                </span>
+              </>,
+              app.privacyOk, "pv", (v) => setApp({ privacyOk: v })
+            )}
+            {legalRow(
+              t({ en: "I confirm all the information above is correct", no: "Jeg bekrefter at all informasjonen ovenfor er korrekt" }),
+              app.correctOk, "cr", (v) => setApp({ correctOk: v })
+            )}
+          </div>
+          <p className="oa-gdpr">
+            {t({
+              en: <>When you send the application, the employer becomes responsible for further processing. Read more about how FINN stores your CV and application <span className="lnk" role="link" tabIndex={0}>here</span>.</>,
+              no: <>Når du sender søknaden, blir arbeidsgiveren ansvarlig for videre behandling. Les mer om hvordan FINN lagrer din CV og søknad <span className="lnk" role="link" tabIndex={0}>her</span>.</>,
+            })}
+          </p>
+        </div>
+      </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" disabled={!rowsOk || sending} onClick={trySend}>
+          {sending ? (
+            <>
+              <span style={{
+                width: 16, height: 16, borderRadius: 9999, display: "inline-block",
+                border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff",
+                animation: "spin 1.2s linear infinite",
+              }} />
+              {t({ en: "Sending…", no: "Sender …" })}
+            </>
+          ) : t({ en: "Send application", no: "Send søknad" })}
+        </button>
+      </OAFooter>
+    </div>
+  );
+
+  // ── Confirmation ──
+  const confirmation = (
+    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", background: "#fff", animation: "fadein 380ms var(--ease-modal)" }}>
+      <div className="scroll-area" style={{
+        flex: 1, overflowY: "auto", padding: "84px 24px 230px",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 32, textAlign: "center",
+      }}>
+        <div style={{ animation: "popin 620ms var(--ease-spring)" }}><OASentIllustration /></div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 24, animation: "fadeup 460ms var(--ease-modal) 160ms both" }}>
+          <h1 style={{ margin: 0, font: "500 34px/41px var(--sys-text)", letterSpacing: -0.4, color: "#1b1b1f" }}>
+            {t({ en: "Application Sent!", no: "Søknaden er sendt!" })}
+          </h1>
+          <p style={{ margin: 0, font: "400 16px/21px var(--sys-text)", letterSpacing: -0.31, color: "#5c5c66" }}>
+            {t({
+              en: <>Your application for <strong style={{ color: "#1b1b1f", fontWeight: 600 }}>{OA_JOB.title}</strong> at <strong style={{ color: "#1b1b1f", fontWeight: 600 }}>{OA_JOB.company}</strong> has been submitted.</>,
+              no: <>Søknaden din på <strong style={{ color: "#1b1b1f", fontWeight: 600 }}>{OA_JOB.title}</strong> hos <strong style={{ color: "#1b1b1f", fontWeight: 600 }}>{OA_JOB.company}</strong> er sendt inn.</>,
+            })}
+          </p>
+          <div style={{ font: "300 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+            <p style={{ margin: 0 }}>
+              {t({
+                en: "If you need to make changes or have questions regarding your application, please contact the employer directly:",
+                no: "Hvis du trenger å gjøre endringer eller har spørsmål om søknaden din, kan du kontakte arbeidsgiver direkte:",
+              })}
+            </p>
+            <p style={{ margin: "22px 0 0", fontWeight: 500 }}>
+              Maria Tengs<br />maria.tengs@mattilsynet.no<br />22 40 00 00
+            </p>
+          </div>
+        </div>
+      </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" onClick={() => { haptic("tap"); setExiting(true); setTimeout(() => onClose?.(), 300); }}>
+          {t({ en: "Browse More Jobs", no: "Se flere stillinger" })}
+        </button>
+        <button className="oa-btn secondary press" onClick={() => { haptic("tap"); onOpenActivity ? onOpenActivity() : onClose?.(); }}>
+          {t({ en: "View My Applications", no: "Se søknadene mine" })}
+        </button>
+      </OAFooter>
+    </div>
+  );
+
+  // ── Sub-pages ──
+  function renderPage(p) {
+    switch (p.id) {
+      case "mydocs":
+        return <OAMyDocsPage onBack={pop}
+          onPick={(doc) => push("docdetails", { doc, target: p.params.target })}
+          onUpload={() => push("docdetails", {
+            doc: { id: "upload", icon: "file-doc", title: "CV.txt", pill: "Søknadsbrev", meta: "DOCX · 4 MB · " + t({ en: "Last week", no: "Forrige uke" }) },
+            target: p.params.target,
+          })} />;
+      case "docdetails":
+        return <OADocDetailsPage onBack={pop} doc={p.params.doc} homeArea={homeArea}
+          onSave={(doc) => {
+            haptic("ok");
+            if (p.params.target === "cv") setApp({ cv: { ...doc, pill: "CV" } });
+            else if (p.params.target === "cover") setApp({ coverLetter: "attached" });
+            else setApp({ additionalDoc: doc });
+            popAll();
+          }} />;
+      case "letter":
+        return <OALetterPage onBack={pop} mode={p.params.mode} homeArea={homeArea}
+          initialText={app.letterText}
+          onSave={(kind, text) => { haptic("ok"); setApp({ coverLetter: kind, letterText: text }); popAll(); }} />;
+      case "ats":
+        return <OAATSPage onBack={pop} />;
+      default:
+        return null;
+    }
+  }
+  const pageShell = (p, cls, z) => (
+    <div key={p.key + cls} className={cls}
+      style={{ position: "absolute", inset: 0, background: "#fff", zIndex: z, display: "flex", flexDirection: "column" }}>
+      {renderPage(p)}
+    </div>
+  );
+
+  const stepBody = step === 0 ? stepPersonal : step === 1 ? stepAttachments : step === 2 ? stepQuestions : null;
+
+  return (
+    <div className={exiting ? "backdrop-exit" : ""}
+      style={{
+        position: "absolute", inset: 0, zIndex: 60,
+        display: "flex", flexDirection: "column",
+        background: "rgba(0,0,0,0.15)",
+        animation: "fadein 300ms var(--ease-modal)",
+      }}>
+      <div onClick={sending ? undefined : close} style={{ flex: `0 0 ${backdropH}px`, cursor: sending ? "default" : "pointer" }} />
+      <div className={exiting ? "sheet-exit" : ""}
+        style={{
+          flex: 1, background: "#fff",
+          borderTopLeftRadius: 38, borderTopRightRadius: 38,
+          boxShadow: "0 -15px 75px rgba(0,0,0,0.18)",
+          position: "relative", overflow: "hidden",
+          animation: "slideup 440ms var(--ease-modal)",
+        }}>
+        <div aria-hidden="true" style={{
+          position: "absolute", top: 5, left: "50%", transform: "translateX(-50%)",
+          width: 36, height: 5, borderRadius: 2.5, background: "rgba(60,60,67,0.3)", zIndex: 70,
+        }} />
+        {step === 4 ? confirmation : (
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
+            {sheetHeader}
+            <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+              {step === 3 ? (
+                <div key="review" className={stepDir === "pop" ? "page-pop-in" : "page-push-in"}
+                  style={{ position: "absolute", inset: 0, background: "#fff" }}>
+                  {stepReview}
+                </div>
+              ) : (
+                <div key={"step" + step} className={stepDir === "pop" ? "page-pop-in" : "page-push-in"}
+                  style={{ position: "absolute", inset: 0, background: "#fff", display: "flex", flexDirection: "column" }}>
+                  {stepBody}
+                </div>
+              )}
+              {stack.map((p, i) => pageShell(p, "page-push-in", 10 + i))}
+              {leaving && pageShell(leaving, "page-pop-out", 50)}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Wizard sub-pages (module scope so state survives parent renders) ──
+
+function OAMyDocsPage({ onBack, onPick, onUpload }) {
+  const t = useT();
+  return (
+    <>
+      <OAPageHeader title={t({ en: "My Documents", no: "Mine dokumenter" })} onBack={onBack} />
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 60px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <h2 className="oa-section-h" style={{ fontSize: 16 }}>{t({ en: "Add new file", no: "Legg til ny fil" })}</h2>
+          <button className="press" onClick={() => { haptic("tap"); onUpload(); }}
+            style={{
+              width: "100%", padding: "14px 16px", borderRadius: 8,
+              background: "#fff", border: "1px solid #c3c3c6", cursor: "pointer",
+              display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+              font: "500 16px/22px var(--sys-text)", fontFamily: "inherit", color: "#0063fb",
+              transition: "background 140ms var(--ease-out), border-color 140ms var(--ease-out)",
+            }}>
+            <Icon name="upload" size={18} color="#0063fb" stroke={2.2} />
+            {t({ en: "Upload New File", no: "Last opp ny fil" })}
+          </button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 28 }}>
+          <h2 className="oa-section-h" style={{ fontSize: 16 }}>{t({ en: "My Documents", no: "Mine dokumenter" })}</h2>
+          {OA_DOCS.map((d, i) => (
+            <div key={d.id} style={{ animation: `fadeup 360ms var(--ease-modal) ${i * 60}ms both` }}>
+              <OADocCard icon={d.icon} title={d.title} pill={d.pill} meta={d.meta} onClick={() => onPick(d)} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function OADocDetailsPage({ onBack, onSave, doc, homeArea }) {
+  const t = useT();
+  const CATEGORIES = [
+    { en: "CV", no: "CV" }, { en: "Cover letter", no: "Søknadsbrev" },
+    { en: "Diploma", no: "Vitnemål" }, { en: "Letter of recommendation", no: "Anbefalingsbrev" },
+    { en: "Certificate", no: "Kursbevis" }, { en: "Portfolio", no: "Portefølje" },
+    { en: "Other", no: "Annet" },
+  ];
+  const [name, setName] = useState(doc.title);
+  const [cat, setCat] = useState(null);
+  return (
+    <>
+      <OAPageHeader title={t({ en: "Document Details", no: "Dokumentdetaljer" })} onBack={onBack} />
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 190px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <h2 className="oa-section-h" style={{ fontSize: 16 }}>
+            {t({ en: "Name and categorize your document", no: "Gi dokumentet navn og kategori" })}
+          </h2>
+          <OADocCard icon={doc.icon} title={doc.title} pill={doc.pill} meta={doc.meta} />
+          <OAField label={t({ en: "Document name", no: "Dokumentnavn" })} value={name} onChange={setName} />
+          <div>
+            <p className="oa-field-label">{t({ en: "Choose a category", no: "Velg en kategori" })}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {CATEGORIES.map((c) => (
+                <button key={c.en} className={"oa-chip outline press" + (cat === c.en ? " on" : "")}
+                  onClick={() => { haptic("tap"); setCat(c.en); }}>
+                  {t(c)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" onClick={() => onSave({ ...doc, title: name })}>
+          {t({ en: "Save and continue", no: "Lagre og fortsett" })}
+        </button>
+      </OAFooter>
+    </>
+  );
+}
+
+// Cover-letter editor — one component, two modes ("ai" | "write"), per the
+// Figma AI Assist / Writing own screens: helper toast until the first chip
+// tap, tone + language chips restream the draft, hand-written text is
+// stashed behind a restore chip when AI overwrites it, "Ferdig" appears in
+// the header while the keyboard is up, and one full-width "Use this Letter".
+function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea }) {
+  const t = useT();
+  const [aiMode, setAiMode] = useState(mode === "ai");
+  const [tone, setTone] = useState("Formal");
+  const [letterLang, setLetterLang] = useState(t({ en: "English", no: "Norsk" }));
+  const [generating, setGenerating] = useState(mode === "ai" && !initialText);
+  const [text, setText] = useState(initialText);
+  const [stash, setStash] = useState(null);
+  const [chipUsed, setChipUsed] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const genTimer = useRef(null);
+  useEffect(() => () => clearTimeout(genTimer.current), []);
+  function regen(nextTone, nextLang) {
+    setGenerating(true);
+    clearTimeout(genTimer.current);
+    genTimer.current = setTimeout(() => {
+      const key = (nextLang === "Norsk" ? "no" : "en") + "-" + nextTone;
+      setText(OA_LETTERS[key] || OA_LETTERS["no-Formal"]);
+      setGenerating(false);
+    }, 700);
+  }
+  useEffect(() => { if (mode === "ai" && !initialText) regen(tone, letterLang); }, []);
+  function pick(setter) {
+    return (l) => {
+      haptic("tap"); setChipUsed(true);
+      if (!generating && text.trim() && stash === null && text !== (OA_LETTERS[(letterLang === "Norsk" ? "no" : "en") + "-" + tone] || "")) setStash(text);
+      setter(l);
+    };
+  }
+  function pickTone(l) { pick(setTone)(l); regen(l, letterLang); }
+  function pickLang(l) { pick(setLetterLang)(l); regen(tone, l); }
+  function makeDraft() {
+    haptic("ok");
+    if (text.trim()) setStash(text);
+    setAiMode(true);
+    regen(tone, letterLang);
+  }
+  const chip = (label, on, fn) => (
+    <button key={label} className={"oa-chip press" + (on ? " on" : "")} onClick={() => fn(label)}>{label}</button>
+  );
+  return (
+    <>
+      <OAPageHeader title={t({ en: "Cover Letter", no: "Søknadsbrev" })} onBack={onBack}
+        trailing={focused ? (
+          <button className="press"
+            onPointerDown={(e) => {
+              e.preventDefault(); haptic("tap");
+              try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (_) {}
+            }}
+            style={{
+              minWidth: 44, height: 44, flexShrink: 0,
+              background: "transparent", border: 0, cursor: "pointer",
+              color: "#0063fb", fontFamily: "inherit",
+              font: "600 15px/1 var(--sys-text)", letterSpacing: -0.1,
+              animation: "fadein 160ms var(--ease-out)",
+            }}>
+            {t({ en: "Done", no: "Ferdig" })}
+          </button>
+        ) : null} />
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 190px", display: "flex", flexDirection: "column", gap: 20 }}>
+        {aiMode ? (
+          <>
+            <div style={{
+              overflow: "hidden",
+              maxHeight: chipUsed ? 0 : 80, opacity: chipUsed ? 0 : 1,
+              transition: "max-height 320ms var(--ease-modal), opacity 220ms var(--ease-out)",
+            }}>
+              <div className="oa-toast" style={{ textAlign: "center", padding: 12 }}>
+                {t({ en: "Pick a style to adjust the text. Edit it however you like.", no: "Velg en stil for å justere teksten. Rediger som du vil." })}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                {["Formal", "Casual", "Confident"].map(l => chip(l, tone === l, pickTone))}
+              </div>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                {["Norsk", "English"].map(l => chip(l, letterLang === l, pickLang))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <button className="oa-chip press" onClick={makeDraft} style={{ gap: 8 }}>
+              <OASparkles size={18} />
+              {t({ en: "Let us create a draft for you", no: "La oss lage et utkast for deg" })}
+            </button>
+          </div>
+        )}
+        {generating ? (
+          <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 6 }}>
+            {[100, 96, 98, 88, 94, 60].map((w, i) => (
+              <div key={i} style={{
+                height: 14, width: w + "%", borderRadius: 7,
+                background: "linear-gradient(90deg, #f0f0f2 25%, #e4e4e8 50%, #f0f0f2 75%)",
+                backgroundSize: "200% 100%",
+                animation: "shimmer 1.1s linear infinite",
+              }} />
+            ))}
+          </div>
+        ) : (
+          <>
+            <textarea className="oa-textarea" value={text}
+              placeholder={t({ en: "Write your cover letter…", no: "Skriv søknadsbrevet ditt …" })}
+              onChange={(e) => setText(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              style={{
+                border: 0, boxShadow: "none", padding: "6px 0", minHeight: 240,
+                font: "300 16px/24px var(--sys-text)", color: "#1b1b1f",
+                animation: "fadein 300ms var(--ease-modal)",
+              }} />
+            {stash && (
+              <div style={{ display: "inline-flex", alignSelf: "center", alignItems: "center", gap: 8, animation: "fadein 200ms" }}>
+                <span style={{ padding: "7px 12px", borderRadius: 9999, background: "#f0f0f3", color: "#474750", fontSize: 12, fontWeight: 500 }}>
+                  {t({ en: "Your own text is saved", no: "Din egen tekst er tatt vare på" })}
+                </span>
+                <button className="oa-btn-small press"
+                  onClick={() => { haptic("tap"); setText(stash); setStash(null); setAiMode(false); }}
+                  style={{ borderRadius: 9999, fontSize: 12, padding: "7px 14px" }}>
+                  {t({ en: "Use my version", no: "Bruk min versjon" })}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" disabled={generating || !text.trim()}
+          onClick={() => onSave(aiMode ? "ai" : "written", text)}>
+          {t({ en: "Use this Letter", no: "Bruk dette brevet" })}
+        </button>
+      </OAFooter>
+    </>
+  );
+}
+
+function OAATSPage({ onBack }) {
+  const t = useT();
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    const tm = setTimeout(() => setLoaded(true), 1100);
+    return () => clearTimeout(tm);
+  }, []);
+  return (
+    <>
+      <div style={{ padding: "16px 16px 12px", display: "flex", alignItems: "center", gap: 12, borderBottom: "0.5px solid #ededed", flexShrink: 0 }}>
+        <div style={{
+          flex: 1, display: "flex", alignItems: "center", gap: 8,
+          background: "#f0f0f2", borderRadius: 10, padding: "10px 14px",
+          font: "400 14px/1 var(--sys-text)", color: "#5c5c66",
+        }}>
+          <Icon name="lock" size={14} color="#5c5c66" stroke={2} />
+          mattilsynet.easycruit.com
+        </div>
+        <button className="press" onClick={() => { haptic("tap"); onBack(); }} aria-label="Close"
+          style={{
+            width: 40, height: 40, borderRadius: 9999, background: "#f0f0f2", border: 0,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+          <Icon name="x" size={18} color="#1b1b1f" stroke={2.2} />
+        </button>
+      </div>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 32, textAlign: "center" }}>
+        {!loaded ? (
+          <span style={{
+            width: 26, height: 26, borderRadius: 9999, display: "inline-block",
+            border: "2.5px solid rgba(0,0,0,0.12)", borderTopColor: "#5c5c66",
+            animation: "spin 1s linear infinite",
+          }} />
+        ) : (
+          <>
+            <Icon name="external" size={30} color="#c3c3c6" stroke={1.6} />
+            <p style={{ margin: 0, font: "400 14px/1.5 var(--sys-text)", color: "#5c5c66", maxWidth: 260 }}>
+              {t({
+                en: "The employer's application form opens here, in an in-app browser (external ATS).",
+                no: "Arbeidsgiverens søknadsskjema åpnes her, i en nettleser i appen (eksternt ATS).",
+              })}
+            </p>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+// Draft-saved toast on the job ad (Figma "Draft Toast" frame): green,
+// check icon, dismissible, auto-dismisses after 4s. Sits above the
+// bottom action bar so it never covers the primary CTA.
+function OADraftToast({ onDone }) {
+  const t = useT();
+  const { homeArea } = useMetrics();
+  const [leaving, setLeaving] = useState(false);
+  const timers = useRef([]);
+  useEffect(() => {
+    timers.current.push(setTimeout(() => setLeaving(true), 4000));
+    timers.current.push(setTimeout(() => onDone?.(), 4300));
+    return () => timers.current.forEach(clearTimeout);
+  }, []);
+  function dismiss() {
+    haptic("tap");
+    setLeaving(true);
+    timers.current.push(setTimeout(() => onDone?.(), 280));
+  }
+  return (
+    <div className={"oa-draft-toast" + (leaving ? " leaving" : "")}
+      role="status" aria-live="polite"
+      style={{ bottom: `calc(104px + ${homeArea}px)` }}>
+      <span style={{
+        width: 22, height: 22, borderRadius: 9999, flexShrink: 0,
+        background: "#059e6f", display: "inline-flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <Icon name="check" size={13} color="#fff" stroke={3} />
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        {t({ en: "Application draft saved in Job Profile", no: "Utkastet er lagret i Jobbprofilen din" })}
+      </span>
+      <button className="press" onClick={dismiss} aria-label={t({ en: "Dismiss", no: "Lukk" })}
+        style={{ background: "transparent", border: 0, cursor: "pointer", padding: 6, flexShrink: 0, display: "flex" }}>
+        <Icon name="x" size={16} color="#1b1b1f" stroke={2.2} />
+      </button>
+    </div>
+  );
+}
+
+// FINN action bar (Forside · Varslinger · Ny annonse · Meldinger · Min FINN)
+// — floating pill per the Figma job ad. Chrome-only in the prototype.
+function OATabBar({ homeArea }) {
+  const item = (content, label, active) => (
+    <button key={label} className="press"
+      onClick={() => haptic("tap")}
+      style={{
+        flex: 1, background: "transparent", border: 0, cursor: "pointer",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+        padding: "8px 0 6px", fontFamily: "inherit",
+      }}>
+      <span style={{
+        position: "relative", width: 40, height: 28, borderRadius: 10,
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        background: active ? "#fff" : "transparent",
+        boxShadow: active ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+      }}>{content}</span>
+      <span style={{ font: `${active ? 600 : 400} 10px/1 var(--sys-text)`, color: active ? "#0063fb" : "#474750" }}>{label}</span>
+    </button>
+  );
+  return (
+    <div style={{
+      position: "absolute", left: 12, right: 12,
+      bottom: `calc(8px + ${homeArea}px)`, zIndex: 5,
+      display: "flex", alignItems: "stretch",
+      background: "rgba(243,243,245,0.94)",
+      WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
+      borderRadius: 26, boxShadow: "0 4px 18px rgba(0,0,0,0.10), 0 0 0 0.5px rgba(0,0,0,0.04)",
+    }}>
+      {item(
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+          <rect x="1" y="1" width="12" height="18" rx="3" fill="#0063fb" />
+          <rect x="10" y="4" width="9" height="9" rx="2.5" fill="#62e3ff" />
+        </svg>, "Forside", true)}
+      {item(
+        <span style={{ position: "relative", display: "inline-flex" }}>
+          <Icon name="bell" size={21} color="#474750" stroke={1.8} />
+          <span style={{ position: "absolute", top: -1, right: -2, width: 7, height: 7, borderRadius: 9999, background: "#d91f0a", border: "1.5px solid #f3f3f5" }} />
+        </span>, "Varslinger", false)}
+      {item(<Icon name="plus-circle" size={21} color="#474750" stroke={1.8} />, "Ny annonse", false)}
+      {item(
+        <span style={{ position: "relative", display: "inline-flex" }}>
+          <Icon name="message-square" size={21} color="#474750" stroke={1.8} />
+          <span style={{
+            position: "absolute", top: -5, right: -8, minWidth: 15, height: 15,
+            borderRadius: 9999, background: "#d91f0a", color: "#fff",
+            font: "600 9px/15px var(--sys-text)", textAlign: "center", padding: "0 3px",
+            border: "1.5px solid #f3f3f5", boxSizing: "border-box",
+          }}>2</span>
+        </span>, "Meldinger", false)}
+      {item(<Icon name="user-circle" size={21} color="#474750" stroke={1.8} />, "Min FINN", false)}
     </div>
   );
 }
@@ -17570,6 +19156,8 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   const [magicMode, setMagicMode] = useState(false);
   const [magicStep, setMagicStep] = useState(0);
   const [magicSent, setMagicSent] = useState(false); // confirms a magic send for the confirmation copy
+  // 2.0 One Apply — draft-saved toast on the job ad after closing mid-flow.
+  const [oaDraftToast, setOaDraftToast] = useState(0);
   const magicTimersRef = useRef([]);
   function cancelMagic() {
     magicTimersRef.current.forEach(clearTimeout);
@@ -17655,6 +19243,9 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
     if (userState === "not-logged-in") { setOverlay("login"); return; }
     if (userState === "already-applied") return; // shouldn't be tappable
     if (version === "agentic") { setScreen("agentic-review"); return; }
+    // 2.0 (One Apply) — the stepped wizard built from the Figma "Booking
+    // flow" frame. Self-contained; other versions untouched.
+    if (version === "v2") { setOaDraftToast(0); setScreen("one-apply"); return; }
     if (enableMagicApply) { startMagicApply(); return; }
     setScreen("preview");
     startProgressiveLoad();
@@ -17692,8 +19283,12 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
         onApply={goApply}
         onBack={() => {}}
         userState={userState}
+        oneApply={version === "v2"}
       />
     );
+  } else if (screen === "one-apply") {
+    // 2.0 One Apply — the wizard sheet overlays the job ad.
+    bodyScreen = <JobDetailScreen job={JOB} onApply={() => {}} onBack={() => {}} userState={userState} oneApply />;
   } else if (screen === "preparing") {
     bodyScreen = <PreparingScreen job={JOB} onReady={() => setScreen("preview")} />;
   } else if (screen === "preview") {
@@ -17883,6 +19478,17 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
                 setOverlay("edit:" + rowId);
               }}
             />
+          )}
+          {screen === "one-apply" && (
+            <OneApplyFlow
+              onClose={() => setScreen("jobad")}
+              onDraftClose={() => { setScreen("jobad"); setOaDraftToast(Date.now()); }}
+              onSent={() => setApplicationStatus("sent")}
+              onOpenActivity={() => openActivity("sent")}
+            />
+          )}
+          {oaDraftToast > 0 && screen === "jobad" && (
+            <OADraftToast key={oaDraftToast} onDone={() => setOaDraftToast(0)} />
           )}
           {screen === "agentic-review" && (
             <AgenticReviewScreen
@@ -18085,7 +19691,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
               { id: "agentic", label: "MVP (Agentic)" },
               { id: "mvp",     label: "1.0 (Easy Apply)" },
               { id: "v1",      label: "1.2 (Easy Apply)" },
-              { id: "v2",      label: "2.0 (YOLO mode)" },
+              { id: "v2",      label: "2.0 (One Apply Button)" },
             ]}
           />
           <Dropdown
