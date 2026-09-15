@@ -12462,32 +12462,74 @@ function OASentIllustration({ width = 216 }) {
   );
 }
 
-// Job-match % counts up on mount — reinforces "we computed this for you".
+// Job-match banner — the three tier cards straight from the Figma
+// (updated copy: honest attribution, action that actually helps).
+// The % counts up on mount; tapping the card cycles tiers so all three
+// states are demoable without touching the dev panel.
+const OA_MATCH_TIERS = [
+  { pct: 87, tone: "good",
+    en: "You're a great match for this position!",
+    no: "Du er en god match for denne stillingen!" },
+  { pct: 62, tone: "warn",
+    en: "You match a lot of what this employer is looking for. A tailored CV or a good cover letter can help you stand out.",
+    no: "Du matcher mye av det arbeidsgiveren ser etter. En tilpasset CV eller et godt søknadsbrev kan hjelpe deg å skille deg ut." },
+  { pct: 27, tone: "warn",
+    en: "Your profile doesn't match much of what this employer is asking for. You can still apply or find positions that fit you better.",
+    no: "Profilen din matcher lite av det arbeidsgiveren ser etter. Du kan fortsatt søke eller finne stillinger som passer deg bedre." },
+];
+
+function OAGauge({ size = 26, color = "#1b1b1f" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke={color} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"
+      style={{ flexShrink: 0, display: "block" }}>
+      <path d="M7.5 19.5a9 9 0 1 1 9 0" />
+      <path d="M11 13l7.5-7.5" />
+      <circle cx="10.4" cy="13.6" r="1.1" fill={color} stroke="none" />
+    </svg>
+  );
+}
+
 function OAMatchBanner() {
   const t = useT();
+  const [tier, setTier] = useState(0);
+  const T = OA_MATCH_TIERS[tier];
+  const good = T.tone === "good";
   const [n, setN] = useState(0);
   useEffect(() => {
-    const start = performance.now(), dur = 900;
+    const start = performance.now(), dur = 800, from = n, to = T.pct;
     let raf;
     const tick = (now) => {
       const p = Math.min(1, (now - start) / dur);
-      setN(Math.round(OA_JOB.match * (1 - Math.pow(1 - p, 3))));
+      setN(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))));
       if (p < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [tier]);
   return (
-    <div className="oa-match" role="status">
-      <p className="oa-match-title">{n}% {t({ en: "Job match", no: "jobbmatch" })}</p>
-      <p className="oa-match-sub">
-        {t({ en: "You're a great match for this position. Go for it!", no: "Du er en god match for stillingen. Søk i vei!" })}
-        {" "}
-        <span style={{ display: "block", marginTop: 2, color: "#3d8f70", fontSize: 12 }}>
-          {t({ en: "Based on your Job Profile and this ad", no: "Basert på Jobbprofilen din og annonsen" })}
+    <button className="press" role="status"
+      onClick={() => { haptic("tap"); setTier((tier + 1) % OA_MATCH_TIERS.length); }}
+      title="Demo: tap to cycle match tiers"
+      style={{
+        width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+        display: "flex", gap: 12, alignItems: good ? "center" : "flex-start",
+        padding: "14px 16px", borderRadius: 10,
+        border: `1px solid ${good ? "rgba(5,158,111,0.5)" : "#f2c445"}`,
+        background: good ? "#e9f8f1" : "#fdf6e0",
+        transition: "background 300ms var(--ease-out), border-color 300ms var(--ease-out)",
+        animation: "fadeup 420ms var(--ease-modal) both",
+      }}>
+      <OAGauge color={good ? "#059e6f" : "#1b1b1f"} />
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", font: "600 16px/22px var(--sys-text)", color: good ? "#059e6f" : "#1b1b1f" }}>
+          {n}% {t({ en: "Job match", no: "jobbmatch" })}
         </span>
-      </p>
-    </div>
+        <span key={tier} style={{ display: "block", margin: "2px 0 0", font: "400 13px/1.45 var(--sys-text)", color: "#474750", animation: "fadein 260ms var(--ease-out)" }}>
+          {t({ en: T.en, no: T.no })}
+        </span>
+      </span>
+    </button>
   );
 }
 
@@ -18631,7 +18673,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   // on a "scan to test on phone" experience.
   const [view, setView] = useState(fullscreen ? "prototype" : "prototype");
   const [storyVersion, setStoryVersion] = useState("all"); // all | mvp | v1 | v2
-  const [version, setVersion] = useState("agentic"); // dev panel toggle: agentic | mvp | v1 | v2 — MVP (Agentic) is the default demo
+  const [version, setVersion] = useState("v2"); // dev panel toggle: agentic | mvp | v1 | v2 — 2.0 (One Apply Button) is the default demo
   const [platform, setPlatform] = useState("ios"); // ios | android | web (toggle UI hidden for now)
   // Web sub-view: only relevant when platform === "web". "mobile" keeps the
   // phone-width responsive layout (FINN.no on a small viewport); "desktop"
