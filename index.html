@@ -1597,6 +1597,9 @@
     padding-left: 24px; padding-right: 24px;
     align-self: flex-start;
   }
+  /* With the drawer's static footer bar (no floating card), the step
+     scroll areas no longer need the 190px clearance under the content. */
+  .dt-drawer .scroll-area { padding-bottom: 32px !important; }
   /* ─── Coming Soon card (non-iOS platforms + Future version) ─── */
   .coming-soon {
     display: flex; flex-direction: column; align-items: center;
@@ -12869,6 +12872,23 @@ function OASparkles({ size = 28, color = "#1b1b1f" }) {
 }
 
 function OAFooter({ children, homeArea }) {
+  // Desktop drawer (Lee, Sept 29): no sticky glass card floating over the
+  // content — a plain white footer bar with a hairline, sitting in the
+  // drawer's layout flow under the scroll area. Phones keep the sticky
+  // card, which is the native sheet pattern there.
+  const inPanel = React.useContext(FlowPanelCtx);
+  if (inPanel) {
+    return (
+      <div style={{
+        flexShrink: 0, background: "#fff",
+        borderTop: "1px solid #eef0f2",
+        padding: "16px 24px 24px",
+        display: "flex", flexDirection: "column", gap: 12,
+      }}>
+        {children}
+      </div>
+    );
+  }
   return (
     <div className="oa-footer" style={{ paddingBottom: `calc(24px + ${homeArea}px)` }}>
       <div className="oa-footer-card">{children}</div>
@@ -12911,13 +12931,50 @@ function OAField({ label, optional, value, onChange, placeholder, type = "text",
   );
 }
 
-function OADocCard({ icon = "file-doc", ai, title, pill, meta, selected, onClick, land }) {
+function OADocCard({ icon = "file-doc", ai, title, pill, meta, selected, onClick, land, check, radio }) {
   const p = pill ? OA_PILLS[pill] : null;
   return (
-    <button className={"oa-doc-card press" + (selected ? " selected" : "") + (land ? " oa-icon-land" : "")}
+    <button className={"oa-doc-card press" + (selected || check ? " selected" : "") + (land ? " oa-icon-land" : "")}
       onClick={() => { if (onClick) { haptic("tap"); onClick(); } }}
+      role={check !== undefined ? (radio ? "radio" : "checkbox") : undefined}
+      aria-checked={check !== undefined ? check : undefined}
       style={{ cursor: onClick ? "pointer" : "default" }}>
-      {ai ? <OASparkles size={28} /> : <Icon name={icon} size={30} color="#1b1b1f" stroke={1.5} />}
+      {check !== undefined ? (
+        radio ? (
+          /* Single-select variant (Figma 1592:29617): WARP radio — one
+             mutually exclusive pick (CV, cover letter). */
+          <span aria-hidden="true" style={{
+            width: 20, height: 20, borderRadius: 9999, flexShrink: 0, boxSizing: "border-box",
+            background: "#fff",
+            border: check ? "2px solid #0063fb" : "2px solid #aeaeb6",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            transition: "border-color 140ms var(--ease-out)",
+          }}>
+            <span style={{
+              width: 10, height: 10, borderRadius: 9999,
+              background: "#0063fb",
+              transform: check ? "scale(1)" : "scale(0)",
+              transition: "transform 160ms var(--ease-out)",
+            }} />
+          </span>
+        ) : (
+          /* Multi-select variant (Figma 2009:15153): WARP checkbox —
+             several documents can be attached (Additional). */
+          <span aria-hidden="true" style={{
+            width: 20, height: 20, borderRadius: 5, flexShrink: 0, boxSizing: "border-box",
+            background: check ? "#0063fb" : "#fff",
+            border: check ? "2px solid #0063fb" : "2px solid #aeaeb6",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            transition: "background 140ms var(--ease-out), border-color 140ms var(--ease-out)",
+          }}>
+            {check && (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M2.2 6.4 L4.8 9 L9.8 3.4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </span>
+        )
+      ) : ai ? <OASparkles size={28} /> : <Icon name={icon} size={30} color="#1b1b1f" stroke={1.5} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p className="oa-doc-title">{title}</p>
         <p className="oa-doc-meta">
@@ -13110,7 +13167,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
     cv: null,               // { title, pill, meta, ai }
     coverLetter: null,      // "ai" | "attached" | "written"
     letterText: "",
-    additionalDoc: null,
+    additionalDocs: [],
     a1: "", a2: "", a3: "", incl2: true, incl3: true,
     privacyOk: false, correctOk: false,
   });
@@ -13497,9 +13554,13 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
                 {t({ en: "Additional", no: "Annet" })}
                 <span className="opt">{t({ en: "Optional", no: "Valgfritt" })}</span>
               </h2>
-              {app.additionalDoc && (
-                <OADocCard land icon={app.additionalDoc.icon} selected
-                  title={app.additionalDoc.title} pill={app.additionalDoc.pill} meta={app.additionalDoc.meta} />
+              {app.additionalDocs.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {app.additionalDocs.map((d) => (
+                    <OADocCard key={d.id} land icon={d.icon} selected
+                      title={d.title} pill={d.pill} meta={d.meta} />
+                  ))}
+                </div>
               )}
               <div>
                 <OAOptionRow icon="file-doc"
@@ -13733,15 +13794,24 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
     haptic("ok");
     if (target === "cv") setApp({ cv: { ...doc, pill: "CV" } });
     else if (target === "cover") setApp({ coverLetter: "attached" });
-    else setApp({ additionalDoc: doc });
+    else if (Array.isArray(doc)) setApp({ additionalDocs: doc }); // multi-select picker: the selection IS the list
+    else setApp({ additionalDocs: [...app.additionalDocs.filter((x) => x.id !== doc.id), doc] }); // newly uploaded file appends
     popAll();
   }
   function renderPage(p) {
     switch (p.id) {
       case "mydocs":
-        // Picking an EXISTING document from the library attaches it
-        // directly — Document Details is only for newly uploaded files.
-        return <OAMyDocsPage onBack={pop}
+        // Additional documents (Figma 2009:15153): checkbox multi-select
+        // with an "Attach Document" footer. CV / cover letter keep the
+        // single tap-to-pick behaviour.
+        if (p.params.target === "additional") {
+          return <OAMyDocsPage multi homeArea={homeArea} onBack={pop}
+            initialSelected={app.additionalDocs}
+            onAttach={(docs) => attachDoc(docs, "additional")}
+            onUpload={() => push("upload", { target: p.params.target })} />;
+        }
+        return <OAMyDocsPage onBack={pop} homeArea={homeArea}
+          initialSelected={p.params.target === "cv" && app.cv && app.cv.id ? [app.cv] : []}
           onPick={(doc) => attachDoc(doc, p.params.target)}
           onUpload={() => push("upload", { target: p.params.target })} />;
       case "upload":
@@ -13998,12 +14068,23 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
 
 // ── Wizard sub-pages (module scope so state survives parent renders) ──
 
-function OAMyDocsPage({ onBack, onPick, onUpload }) {
+// Selection-first picker (Figma 2009:15153 pattern for BOTH modes,
+// Lee Sept 29): tick a document, then confirm with "Attach Document" —
+// nothing attaches on tap alone. multi (additional documents) allows
+// several ticks; single (CV / cover letter) behaves like a radio: a new
+// tick replaces the old one, so only one file can ever be selected.
+function OAMyDocsPage({ onBack, onPick, onUpload, multi = false, initialSelected = [], onAttach, homeArea }) {
   const t = useT();
+  const [sel, setSel] = useState(() => new Set(initialSelected.map((d) => d.id)));
+  const toggle = (d) => setSel((prev) => {
+    const n = new Set(multi ? prev : []); // single mode: selection replaces
+    if (prev.has(d.id)) n.delete(d.id); else n.add(d.id);
+    return n;
+  });
   return (
     <>
       <OAPageHeader title={t({ en: "My Documents", no: "Mine dokumenter" })} onBack={onBack} />
-      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 60px" }}>
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 190px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {/* Figma: the upload button sits directly under the nav — no
               "Add new file" heading above it. */}
@@ -14023,11 +14104,22 @@ function OAMyDocsPage({ onBack, onPick, onUpload }) {
           <h2 className="oa-section-h" style={{ fontSize: 16 }}>{t({ en: "My Documents", no: "Mine dokumenter" })}</h2>
           {OA_DOCS.map((d, i) => (
             <div key={d.id} style={{ animation: `fadeup 360ms var(--ease-modal) ${i * 60}ms both` }}>
-              <OADocCard icon={d.icon} title={d.title} pill={d.pill} meta={d.meta} onClick={() => onPick(d)} />
+              <OADocCard check={sel.has(d.id)} radio={!multi} title={d.title} pill={d.pill} meta={d.meta} onClick={() => toggle(d)} />
             </div>
           ))}
         </div>
       </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" disabled={sel.size === 0}
+          onClick={() => {
+            haptic("ok");
+            const docs = OA_DOCS.filter((d) => sel.has(d.id));
+            if (multi) onAttach?.(docs);
+            else onPick?.(docs[0]);
+          }}>
+          {t({ en: "Attach Document", no: "Legg ved dokument" })}
+        </button>
+      </OAFooter>
     </>
   );
 }
