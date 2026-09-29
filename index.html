@@ -1583,6 +1583,15 @@
     overflow: hidden;
     animation: dtDrawerIn 320ms var(--ease-modal);
   }
+  /* Desktop patterns per the Figma Side Draw: buttons are WARP Medium —
+     they hug their label (min 216px) and sit left-aligned instead of
+     stretching full width like the phone sheet. Scoped to the desktop
+     scene so every phone platform keeps its full-width CTAs. */
+  .dt-window .oa-btn {
+    width: fit-content; min-width: 216px; max-width: 100%;
+    padding-left: 24px; padding-right: 24px;
+    align-self: flex-start;
+  }
   /* ─── Coming Soon card (non-iOS platforms + Future version) ─── */
   .coming-soon {
     display: flex; flex-direction: column; align-items: center;
@@ -14837,6 +14846,9 @@ function DTFastApplyScene({ onRestart, flags }) {
               animation: "fadein 240ms var(--ease-modal)",
             }}>
               <div className="dt-drawer">
+                {/* Figma px-48: the flow keeps its 24px gutters, this
+                    inset supplies the other 24 on each side. */}
+                <div style={{ position: "absolute", top: 0, bottom: 0, left: 24, right: 24 }}>
                 <PlatformCtx.Provider value="web">
                   <FlowPanelCtx.Provider value={true}>
                     <MetricsOverrideCtx.Provider value={DT_FLOW_METRICS}>
@@ -14854,6 +14866,7 @@ function DTFastApplyScene({ onRestart, flags }) {
                     </MetricsOverrideCtx.Provider>
                   </FlowPanelCtx.Provider>
                 </PlatformCtx.Provider>
+                </div>
               </div>
             </div>
           )}
