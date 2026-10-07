@@ -1458,7 +1458,7 @@
      border #84848f, Send søknad 48px r8 700 16. */
   .dt-window {
     background: #fff; border-radius: 12px; overflow: hidden;
-    display: flex; flex-direction: column;
+    display: flex; flex-direction: column; position: relative;
     box-shadow: 0 40px 90px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.35);
   }
   .dt-chrome {
@@ -3823,6 +3823,12 @@
     transition: transform 420ms cubic-bezier(0.2, 0, 0, 1);
   }
   .oa-progress-seg.fill::after { transform: scaleX(1); }
+  /* Chunked Attachments (Figma 2124:15678): the middle segment fills in
+     thirds as CV → Cover Letter → Additional pass; the unfilled remainder
+     of the active segment is selected-active #c2dafe, one notch darker
+     than the future segments' #e1edfe. */
+  .oa-progress-seg.part { background: #c2dafe; }
+  .oa-progress-seg.part::after { transform: scaleX(var(--segfill, 0.33)); }
   .oa-step-title {
     margin: 0; text-align: center;
     font: 600 20px/25px var(--sys-text); letter-spacing: -0.45px; color: #000;
@@ -3914,6 +3920,22 @@
   @media (hover: hover) {
     .oa-ai-help:not(:disabled):hover { background: #f7faff; border-color: #b9d1fb; }
   }
+  /* Updated per Figma 1656:34085 / 1593:32546: the assist button under the
+     Message field is now a full-width WARP Secondary Medium button — same
+     recipe as "Upload New File" (1px #c3c3c6, radius 8, 14×16 padding,
+     500 16/22 link blue, centred) — instead of the small pill. */
+  .oa-ai-help.oa-ai-full {
+    align-self: stretch; width: 100%;
+    justify-content: center;
+    border: 1px solid #c3c3c6;
+    padding: 14px 16px;
+    font: 500 16px/22px var(--sys-text); font-family: inherit;
+  }
+  /* Desktop drawer keeps the hug-label Medium-button pattern. */
+  .dt-window .oa-ai-help.oa-ai-full {
+    width: fit-content; min-width: 216px; max-width: 100%;
+    align-self: flex-start;
+  }
   .oa-restore-val {
     flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     font: 300 14px/18px var(--sys-text); color: #1b1b1f;
@@ -3971,7 +3993,9 @@
     font: 700 22px/1.2 var(--sys-text); color: #1b1b1f; margin: 0;
     display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
   }
-  .oa-section-h .opt { font: 300 14px/1.3 var(--sys-text); color: #5c5c66; font-weight: 300; }
+  /* Same size as the "Required before sending" note (.req, 12px) so the
+     two section annotations read as one system (Lee, Sept 30). */
+  .oa-section-h .opt { font: 300 12px/1.3 var(--sys-text); color: #5c5c66; font-weight: 300; }
   .oa-section-h .req {
     font: 400 12px/1.3 var(--sys-text); color: #d91f0a;
     animation: fadein 300ms var(--ease-out);
@@ -3990,6 +4014,14 @@
     transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
   }
   .oa-doc-card.selected { border-color: #0063fb; box-shadow: 0 0 0 0.5px #0063fb; }
+  /* Attached-state card on the step pages (Figma 2124:15690 DocumentCell):
+     2px border/primary-subtle #9ac1fe, radius 16, shadow-s — softer than
+     the hard blue used for in-picker selection. */
+  .oa-doc-card.oa-icon-land.selected,
+  .oa-doc-card.oa-icon-land.selected:hover {
+    border: 2px solid #9ac1fe; border-radius: 16px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.16), 0 1px 6px rgba(0,0,0,0.12);
+  }
   .oa-doc-title { font: 500 16px/1.3 var(--sys-text); color: #1b1b1f; margin: 0; }
   .oa-doc-meta  { font: 400 12px/1.4 var(--sys-text); color: #5c5c66; margin: 2px 0 0; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
   .oa-doc-pill  { display: inline-flex; font: 500 11px/1 var(--sys-text); padding: 3px 6px; border-radius: 4px; }
@@ -5412,25 +5444,25 @@ window.FIGMA_SNAPSHOT_HIRES_DATA = "data:image/webp;base64,UklGRjr1AwBXRUJQVlA4I
      (new tracking)" -> UNIQUES(clicks)/UNIQUES(views) overall.
    Targets and the ATS/Easy Apply baselines are fixed MVP constants. */
 window.VEND_METRICS = {
-  asOf: "2026-09-30",
-  range: "Aug 31 \u2013 Sep 30, 2026 (last 30 days)",
+  asOf: "2026-10-07",
+  range: "Sep 7 \u2013 Oct 7, 2026 (last 30 days)",
   amplitudeUrl: "https://app.eu.amplitude.com/analytics/vend/dashboard/e-x62e6gmr",
   funnel: [
-    { id: "view",    label: "View agentic ad", count: 45215, target: null },
-    { id: "load",    label: "Form loading",    count:  5568, target: null },
-    { id: "review",  label: "Form review",     count:  3730, target: null },
-    { id: "confirm", label: "Confirmation",    count:  1878, target: null },
+    { id: "view",    label: "View agentic ad", count: 45282, target: null },
+    { id: "load",    label: "Form loading",    count:  5772, target: null },
+    { id: "review",  label: "Form review",     count:  3937, target: null },
+    { id: "confirm", label: "Confirmation",    count:  1984, target: null },
   ],
   steps: [
-    { label: "View \u2192 Form load",          current: 0.123, target: 0.18, note: "Includes the apply click \u2014 CTR since launch is 18.0% (18,183 of 100,917 views)" },
-    { label: "Form load \u2192 Review",        current: 0.670, target: 0.80, note: "Where the agent pre-fills and the seeker reviews" },
-    { label: "Review \u2192 Confirmation",     current: 0.503, target: 0.70, note: "Biggest leverage \u2014 Send button friction" },
-    { label: "View \u2192 Confirmation (E2E)", current: 0.042, target: 0.10, note: "Doubling end-to-end is the MVP outcome metric" },
+    { label: "View \u2192 Form load",          current: 0.127, target: 0.18, note: "Includes the apply click \u2014 CTR since launch is 18.9% (20,122 of 106,694 views)" },
+    { label: "Form load \u2192 Review",        current: 0.682, target: 0.80, note: "Where the agent pre-fills and the seeker reviews" },
+    { label: "Review \u2192 Confirmation",     current: 0.504, target: 0.70, note: "Biggest leverage \u2014 Send button friction" },
+    { label: "View \u2192 Confirmation (E2E)", current: 0.044, target: 0.10, note: "Doubling end-to-end is the MVP outcome metric" },
   ],
   ctr: [
     { label: "ATS ads (external)", value: 0.090, tone: "neutral" },
     { label: "Easy Apply (current)", value: 0.103, tone: "neutral" },
-    { label: "Agentic apply (since launch)", value: 0.180, tone: "good" },
+    { label: "Agentic apply (since launch)", value: 0.189, tone: "good" },
     { label: "Agentic apply (MVP target)", value: 0.180, tone: "target" },
   ],
 };
@@ -12982,7 +13014,9 @@ function OADocCard({ icon = "file-doc", ai, title, pill, meta, selected, onClick
           <span>{meta}</span>
         </p>
       </div>
-      <Icon name="dots" size={20} color="#5c5c66" stroke={2.6} />
+      {/* Figma update (2013:15548 DocumentCell): attached files carry a
+          preview (EyeOn) icon on the trailing edge instead of the ⋯ menu. */}
+      <Icon name="eye" size={24} color="#5c5c66" stroke={1.7} />
     </button>
   );
 }
@@ -13138,7 +13172,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
   const t = useT();
   // Feature flags from the toolbox — defaults keep everything on when
   // the sheet is mounted without them.
-  const F = { wizard: true, jobMatch: true, aiWriting: true, oneClick: true, onePage: false, ...(flags || {}) };
+  const F = { wizard: true, jobMatch: true, aiWriting: true, oneClick: true, onePage: false, chunked: false, ...(flags || {}) };
   const { statusBarH, homeArea } = useMetrics();
   const platform = usePlatform();
   const inPanel = React.useContext(FlowPanelCtx);
@@ -13157,6 +13191,14 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
   // application on one scrolling page — fields prefilled from the Job
   // Profile like review-first, no wizard, no sheet chrome.
   const onePage = !!F.onePage;
+  // Chunked Attachments (Direction A, "Chunked Attachments" flag): the
+  // Attachments step subdivides into CV → Cover Letter → Additional,
+  // one decision per view, inside the same sheet. The CV arrives
+  // pre-attached from the Job Profile (confirm, not choose — the
+  // Glassdoor pattern), and the middle progress segment fills in thirds.
+  const chunked = !!F.chunked && !reviewFirst && !onePage;
+  const [subStep, setSubStep] = useState(0);
+  const [subDir, setSubDir] = useState("push");
 
   // ── Application data (one object so drafts are trivial) ──
   const [app, setAppRaw] = useState(draft ? draft.app : {
@@ -13164,7 +13206,11 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
       ? { first: OA_PROFILE.first, last: OA_PROFILE.last, email: OA_PROFILE.email, area: OA_PROFILE.area, phone: OA_PROFILE.phone, linkedin: "", message: "" }
       : { first: "", last: "", email: "", area: "", phone: "", linkedin: "", message: "" },
     includeLinkedin: true, includeMessage: true,
-    cv: null,               // { title, pill, meta, ai }
+    // Chunked flow: the agent pre-attaches the Job Profile CV so the CV
+    // sub-step is a confirmation, not a menu.
+    cv: F.chunked && !reviewFirst && !onePage
+      ? { icon: OA_DOCS[0].icon, title: OA_DOCS[0].title, meta: OA_DOCS[0].meta }
+      : null,               // { title, pill, meta, ai }
     coverLetter: null,      // "ai" | "attached" | "written"
     letterText: "",
     additionalDocs: [],
@@ -13235,6 +13281,8 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
   function goStep(n, dir) {
     oaBlur();
     setStepDir(dir || (n > step ? "push" : "pop"));
+    // Entering Attachments always lands on its first sub-step (CV).
+    if (n === 1) { setSubStep(0); setSubDir("push"); }
     setStep(n);
   }
   function advance() { haptic("ok"); if (returnToReview) { setReturnToReview(false); goStep(3, "push"); } else goStep(step + 1, "push"); }
@@ -13359,12 +13407,21 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
           <button key={i} type="button" role="tab" aria-selected={i === stepIdx}
             aria-label={t(STEP_TITLES[i])} className="oa-seg-btn"
             onClick={() => {
-              if (i === stepIdx || step > 2) return;
+              if (step > 2) return;
+              // Chunked: tapping the Attachments segment while deeper in
+              // its sub-steps goes back one sub-step.
+              if (i === stepIdx) {
+                if (chunked && step === 1 && subStep > 0) subBack();
+                return;
+              }
               haptic("tap");
               oaBlur();
               goStep(i, i > step ? "push" : "pop");
             }}>
-            <span className={"oa-progress-seg" + (i <= stepIdx ? " fill" : "")} />
+            <span
+              className={"oa-progress-seg"
+                + (chunked && step === 1 && i === 1 ? " part" : i <= stepIdx ? " fill" : "")}
+              style={chunked && step === 1 && i === 1 ? { "--segfill": String((subStep + 1) / 3) } : undefined} />
           </button>
         ))}
       </div>
@@ -13440,7 +13497,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
                   field, present in loading, loaded and edited states.
                   Behind the "AI message writing assistant" flag. */}
               {F.aiWriting && (
-              <button className="oa-ai-help press" onClick={helpWriteMessage} disabled={msgWorking}>
+              <button className="oa-ai-help oa-ai-full press" onClick={helpWriteMessage} disabled={msgWorking}>
                 <OASparkles size={16} color="#0063fb" />
                 {msgWorking
                   ? t({ en: "Writing a suggestion …", no: "Skriver et forslag …" })
@@ -13579,6 +13636,138 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
         </button>
       </OAFooter>
     </>
+  );
+
+  // ── Step 2 (chunked variant) — CV → Cover Letter → Additional ──
+  // Direction A from the Mobbin benchmark: one decision per view inside
+  // the same sheet. CV is a confirm (pre-attached default), Cover Letter
+  // is one question with an explicit skip, Additional is skip-by-default.
+  const subAdvance = () => {
+    haptic("ok"); oaBlur();
+    if (returnToReview) { setReturnToReview(false); goStep(3, "push"); return; }
+    if (subStep < 2) { setSubDir("push"); setSubStep(subStep + 1); }
+    else { goStep(2, "push"); }
+  };
+  const subBack = () => { haptic("tap"); oaBlur(); setSubDir("pop"); setSubStep(s => Math.max(0, s - 1)); };
+  const chunkCv = (
+    <div style={sectionGap}>
+      <h2 className="oa-section-h">
+        {cvOk ? t({ en: "Your CV is attached", no: "CV-en din er lagt ved" }) : "CV"}
+        {!cvOk && <span className="req" key={"cvreq" + shakeKey}>{t({ en: "Required before sending", no: "Kreves før du sender" })}</span>}
+      </h2>
+      {app.cv && <OADocCard land icon={app.cv.icon || "user-card"} ai={app.cv.ai} selected title={app.cv.title} meta={app.cv.meta} />}
+      {/* Figma 2124:15656: both alternatives sit under the attached card
+          as option rows — "Use a different CV" and the AI regenerate. */}
+      <div>
+        <OAOptionRow icon="file-doc"
+          title={cvOk
+            ? t({ en: "Use a different CV", no: "Bruk en annen CV" })
+            : t({ en: "Attach document", no: "Legg ved dokument" })}
+          sub={t({ en: "Upload new or add document", no: "Last opp nytt eller hent dokument" })}
+          onClick={() => push("mydocs", { target: "cv" })} />
+        <OAOptionRow ai working={cvWorking}
+          title={t({ en: "Create new from Job Profile", no: "Lag ny fra Jobbprofilen" })}
+          sub={cvWorking
+            ? t({ en: "Creating your CV…", no: "Lager CV-en din …" })
+            : t({ en: "Based on your job profile and this ad", no: "Basert på jobbprofilen din og denne annonsen" })}
+          onClick={generateCv} />
+      </div>
+    </div>
+  );
+  const chunkCover = (
+    <div style={sectionGap}>
+      <h2 className="oa-section-h">
+        {t({ en: "Add a Cover Letter", no: "Legg til søknadsbrev" })}
+        <span className="opt">{t({ en: "Optional", no: "Valgfritt" })}</span>
+      </h2>
+      {app.coverLetter === "ai" && (
+        <OADocCard land ai selected
+          title={t({ en: "Automated Cover Letter", no: "Automatisk søknadsbrev" })}
+          meta={t({ en: "See and edit cover letter", no: "Se og rediger søknadsbrevet" })}
+          onClick={() => push("letter", { mode: "ai" })} />
+      )}
+      {app.coverLetter === "attached" && (
+        <OADocCard land icon="user-card" selected
+          title={t({ en: "Attached Cover Letter", no: "Vedlagt søknadsbrev" })}
+          meta={"PDF · 2 MB · " + t({ en: "Last week", no: "Forrige uke" })} />
+      )}
+      {app.coverLetter === "written" && (
+        <OADocCard land icon="edit" selected
+          title={t({ en: "Your Cover Letter", no: "Ditt søknadsbrev" })}
+          meta={t({ en: "Written by you · tap to edit", no: "Skrevet av deg · trykk for å redigere" })}
+          onClick={() => push("letter", { mode: "write" })} />
+      )}
+      {app.coverLetter ? (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
+          <button className="oa-link press" onClick={() => { haptic("tap"); setApp({ coverLetter: null, letterText: "" }); }}>
+            {t({ en: "Remove cover letter", no: "Fjern søknadsbrevet" })}
+          </button>
+        </div>
+      ) : (
+        <div>
+          {F.aiWriting && (
+            <OAOptionRow ai
+              title={t({ en: "Let us create a draft for you", no: "La oss lage et utkast for deg" })}
+              sub={t({ en: "Based on your job profile and this ad", no: "Basert på jobbprofilen din og denne annonsen" })}
+              onClick={() => push("letter", { mode: "ai" })} />
+          )}
+          <OAOptionRow icon="edit"
+            title={t({ en: "Write yourself", no: "Skriv selv" })}
+            sub={t({ en: "Start with a blank page", no: "Start med en blank side" })}
+            onClick={() => push("letter", { mode: "write" })} />
+          <OAOptionRow icon="file-doc"
+            title={t({ en: "Attach document", no: "Legg ved dokument" })}
+            sub={t({ en: "Upload new or add document", no: "Last opp nytt eller hent dokument" })}
+            onClick={() => push("mydocs", { target: "cover" })} />
+        </div>
+      )}
+    </div>
+  );
+  const chunkAdditional = (
+    <div style={sectionGap}>
+      <h2 className="oa-section-h">
+        {t({ en: "Additional Attachments", no: "Flere vedlegg" })}
+        <span className="opt">{t({ en: "Optional", no: "Valgfritt" })}</span>
+      </h2>
+      {app.additionalDocs.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {app.additionalDocs.map((d) => (
+            <OADocCard key={d.id} land icon={d.icon} selected
+              title={d.title} pill={d.pill} meta={d.meta} />
+          ))}
+        </div>
+      )}
+      <div>
+        <OAOptionRow icon="file-doc"
+          title={t({ en: "Attach document", no: "Legg ved dokument" })}
+          sub={t({ en: "Upload new or add document", no: "Last opp nytt eller hent dokument" })}
+          onClick={() => push("mydocs", { target: "additional" })} />
+      </div>
+    </div>
+  );
+  // CTA copy per Figma 2124: "Next: Cover Letter" → "Next: Skip for now"
+  // (flips to "Next: Additional" once a letter is attached) → "Go to
+  // Additional Questions" (the frame says "Goto" — assumed typo).
+  const chunkCta = subStep === 0
+    ? t({ en: "Next: Cover Letter", no: "Neste: Søknadsbrev" })
+    : subStep === 1
+      ? (app.coverLetter
+          ? t({ en: "Next: Additional", no: "Neste: Flere vedlegg" })
+          : t({ en: "Next: Skip for now", no: "Neste: Hopp over" }))
+      : t({ en: "Go to Additional Questions", no: "Gå til tilleggsspørsmål" });
+  const stepAttachmentsChunked = (
+    <div key={"sub" + subStep} className={subDir === "pop" ? "page-pop-in" : "page-push-in"}
+      style={{ position: "absolute", inset: 0, background: "#fff", display: "flex", flexDirection: "column" }}>
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "24px 24px 190px" }}>
+        {subStep === 0 ? chunkCv : subStep === 1 ? chunkCover : chunkAdditional}
+      </div>
+      <OAFooter homeArea={homeArea}>
+        <button className="oa-btn primary press" disabled={subStep === 0 && !cvOk} onClick={subAdvance}>
+          {ctaLabel(chunkCta)}
+          {!returnToReview && <Icon name="arrow-right" size={16} color="#fff" stroke={2} />}
+        </button>
+      </OAFooter>
+    </div>
   );
 
   // ── Step 3 — Additional Questions (never AI-filled) ──
@@ -13839,7 +14028,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
     </div>
   );
 
-  const stepBody = step === 0 ? stepPersonal : step === 1 ? stepAttachments : step === 2 ? stepQuestions : null;
+  const stepBody = step === 0 ? stepPersonal : step === 1 ? (chunked ? stepAttachmentsChunked : stepAttachments) : step === 2 ? stepQuestions : null;
 
   // ── One Page Flow (Figma 1943:13817) — the whole application on one
   //    scrolling PAGE: top nav with back/share/save, header texts, three
@@ -14175,10 +14364,12 @@ function OADocDetailsPage({ onBack, onSave, doc, homeArea }) {
 function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea, aiEnabled = true }) {
   const t = useT();
   const [aiMode, setAiMode] = useState(mode === "ai");
-  // Per the Figma flow: arriving on the AI draft shows the "Let us
-  // create a draft for you" pill over the generated text ("entry");
-  // tapping it reveals the style chips with the helper toast ("chips").
-  const [aiPhase, setAiPhase] = useState("entry");
+  // Per the Figma flow: "Let us create a draft for you" lands straight
+  // on the style-chips page (1592:30508) — helper panel, chips and the
+  // generated draft. "Write yourself" lands on 1592:30483: the blank
+  // page with the "Let us help you create a draft" pill, which brings
+  // you to the chips page ("chips") when tapped.
+  const [aiPhase, setAiPhase] = useState("chips");
   const [tone, setTone] = useState("Formal");
   const [letterLang, setLetterLang] = useState(t({ en: "English", no: "Norsk" }));
   const [generating, setGenerating] = useState(mode === "ai" && !initialText);
@@ -14243,24 +14434,21 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
         ) : null} />
       <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 190px", display: "flex", flexDirection: "column", gap: 20 }}>
         {aiMode ? (
-          aiPhase === "entry" ? (
-            /* Figma AI-draft entry state: just the sparkle pill over the
-               generated text; tapping it opens the style chips. */
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <button className="oa-chip press" onClick={() => { haptic("tap"); setAiPhase("chips"); }}>
-                <OASparkles size={16} color="#1b1b1f" />
-                {t({ en: "Let us create a draft for you", no: "La oss lage et utkast for deg" })}
-              </button>
-            </div>
-          ) : (
+          /* AI path lands straight on the chips page (1592:30508). */
           <>
             <div style={{
               overflow: "hidden",
-              maxHeight: chipUsed ? 0 : 80, opacity: chipUsed ? 0 : 1,
+              maxHeight: chipUsed ? 0 : 120, opacity: chipUsed ? 0 : 1,
               transition: "max-height 320ms var(--ease-modal), opacity 220ms var(--ease-out)",
             }}>
-              <div className="oa-toast" style={{ textAlign: "center", padding: 12 }}>
-                {t({ en: "Pick a style to adjust the text. Edit it however you like.", no: "Velg en stil for å justere teksten. Rediger som du vil." })}
+              {/* Helper copy per Figma 1662:35894: left-aligned info
+                  panel, Caption 300 14/18 — one flowing paragraph, no
+                  hard break (the Figma text node has no line break). */}
+              <div className="oa-toast" role="note">
+                {t({
+                  en: "Pick a style to adjust the text. Edit it however you like. You can review and edit the draft to make it sound more like you.",
+                  no: "Velg en stil for å justere teksten. Rediger som du vil. Du kan se over og redigere utkastet slik at det høres mer ut som deg.",
+                })}
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
@@ -14272,12 +14460,11 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
               </div>
             </div>
           </>
-          )
         ) : aiEnabled ? (
           <div style={{ display: "flex", justifyContent: "center" }}>
             <button className="oa-chip press" onClick={makeDraft} style={{ gap: 8 }}>
               <OASparkles size={18} />
-              {t({ en: "Let us create a draft for you", no: "La oss lage et utkast for deg" })}
+              {t({ en: "Let us help you create a draft", no: "La oss hjelpe deg å lage et utkast" })}
             </button>
           </div>
         ) : null}
@@ -14638,7 +14825,7 @@ function WebApplyForm({ wide, flags, onBack, onSent }) {
         <div style={{ width: "100%" }}>
           {field(t({ en: "Message", no: "Melding" }), "message", { optional: true, textarea: true, placeholder: t({ en: "Placeholder", no: "Skriv en melding" }) })}
           {F.aiWriting && (
-            <button type="button" className={"oa-ai-help" + (msgWorking ? " oa-ai-working" : "")}
+            <button type="button" className={"oa-ai-help oa-ai-full" + (msgWorking ? " oa-ai-working" : "")}
               style={{ marginTop: 16 }} disabled={msgWorking} onClick={draftMessage}>
               <OASparkles size={16} color="#0063fb" />
               {msgWorking
@@ -14982,15 +15169,19 @@ function DTFastApplyScene({ onRestart, flags }) {
         <div className="dt-page" style={{ position: "relative" }}>
           <WebSiteHeader desktop />
           {landing}
+        </div>
 
           {/* The apply flow — the real mobile component in a full-height
               right drawer (the mobile sheet idiom rotated to desktop; same
               pattern as the v1 desktop concept). FlowPanelCtx makes the
               flow shed its bottom-sheet chrome; PlatformCtx "web" gives it
-              web radii/switches; the metrics override shims spacing. */}
+              web radii/switches; the metrics override shims spacing.
+              Anchored below the 40px browser chrome bar (Lee, Sept 30):
+              the scrim and drawer live in the PAGE, never over the
+              browser's own UI. */}
           {(screen === "flow" || screen === "direct") && (
             <div style={{
-              position: "fixed", inset: 0, zIndex: 80,
+              position: "absolute", top: 41, left: 0, right: 0, bottom: 0, zIndex: 80,
               background: "rgba(27,27,31,0.4)",
               animation: "fadein 240ms var(--ease-modal)",
             }}>
@@ -15024,7 +15215,7 @@ function DTFastApplyScene({ onRestart, flags }) {
           {draftToast > 0 && screen === "ad" && (
             <PlatformCtx.Provider value="web">
               <MetricsOverrideCtx.Provider value={DT_FLOW_METRICS}>
-                <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 70, pointerEvents: "none" }}>
+                <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 70, pointerEvents: "none" }}>
                   <div style={{ position: "relative", maxWidth: 560, margin: "0 auto", height: 160, pointerEvents: "auto" }}>
                     <OADraftToast key={draftToast} onDone={() => setDraftToast(0)} />
                   </div>
@@ -15032,7 +15223,6 @@ function DTFastApplyScene({ onRestart, flags }) {
               </MetricsOverrideCtx.Provider>
             </PlatformCtx.Provider>
           )}
-        </div>
       </div>
     </div>
   );
@@ -15048,141 +15238,164 @@ const OA_AVATAR = "data:image/webp;base64,UklGRqYEAABXRUJQVlA4IJoEAACwEwCdASpAAE
 function OATabBar({ homeArea }) {
   const platform = usePlatform();
   const t = useT();
-  const S = "#1b1b1f"; // WARP icon/label ink
+  const INK = "#1b1b1f";     // WARP text/icon default
+  const SUB = "#5c5c66";     // WARP subtle (Android inactive labels)
+  const ACTIVE = "#0063fb";  // navbar/icon-selected
   const android = platform === "android";
-  const ACTIVE = "#0063fb";
 
-  // Shared icon set — Android tints the whole item blue when active.
-  const finnMark = (
-    <svg width={android ? 26 : 30} height={android ? 13 : 15} viewBox="0 0 29.5 14.5" aria-hidden="true" style={{ overflow: "visible" }}>
-      <path d="M2 0.25 H4.8 C9.8 0.25 13.75 4.2 13.75 9.2 V12.25 A2 2 0 0 1 11.75 14.25 H2 A1.75 1.75 0 0 1 0.25 12.5 V2 A1.75 1.75 0 0 1 2 0.25 Z"
-        fill="#0063fb" stroke="#fdfdfe" strokeWidth="1.2" style={{ paintOrder: "stroke" }} />
-      <rect x="15.75" y="0.25" width="13.5" height="14" rx="1.75"
-        fill="#06befb" stroke="#fdfdfe" strokeWidth="1.2" style={{ paintOrder: "stroke" }} />
+  // ── Shared tab set — Figma "Tab bar - Vertical" (2052:5900, iOS) and
+  //    "Navigation Bar - Vertical items" (2052:6489, Android):
+  //    Home · Activity · Sell · Messages · Profile. ──
+  const L = {
+    home:     t({ en: "Home",     no: "Hjem" }),
+    activity: t({ en: "Activity", no: "Aktivitet" }),
+    sell:     t({ en: "Sell",     no: "Selg" }),
+    messages: t({ en: "Messages", no: "Meldinger" }),
+    profile:  t({ en: "Profile",  no: "Profil" }),
+  };
+
+  const houseIcon = (color, filled) => filled ? (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 10.4 L12 4.1 L20 10.4 V19.2 A1.5 1.5 0 0 1 18.5 20.7 H14.5 V14.8 H9.5 V20.7 H5.5 A1.5 1.5 0 0 1 4 19.2 Z" fill={color} />
+    </svg>
+  ) : (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4.7 10.7 L12 4.9 L19.3 10.7 V18.9 A1.3 1.3 0 0 1 18 20.2 H14.3 V14.6 H9.7 V20.2 H6 A1.3 1.3 0 0 1 4.7 18.9 Z" stroke={color} strokeWidth="1.9" strokeLinejoin="round" />
     </svg>
   );
   const bellIcon = (color) => (
-    <span style={{ position: "relative", display: "inline-flex" }}>
-      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M18.2 15.2 C17.5 13.9 17.1 12.2 17.1 10.1 C17.1 6.9 15 4.3 12 4.3 C9 4.3 6.9 6.9 6.9 10.1 C6.9 12.2 6.5 13.9 5.8 15.2 C5.5 15.8 5.9 16.4 6.5 16.4 H17.5 C18.1 16.4 18.5 15.8 18.2 15.2 Z"
-          stroke={color} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M10.1 19.4 A2.1 2.1 0 0 0 13.9 19.4" stroke={color} strokeWidth="2" strokeLinecap="round" />
-      </svg>
-      <span style={{ position: "absolute", top: -3, right: -4, width: 8.5, height: 8.5, borderRadius: 9999, background: "#d91f0a" }} />
-    </span>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M18.2 15.2 C17.5 13.9 17.1 12.2 17.1 10.1 C17.1 6.9 15 4.3 12 4.3 C9 4.3 6.9 6.9 6.9 10.1 C6.9 12.2 6.5 13.9 5.8 15.2 C5.5 15.8 5.9 16.4 6.5 16.4 H17.5 C18.1 16.4 18.5 15.8 18.2 15.2 Z"
+        stroke={color} strokeWidth="1.9" strokeLinejoin="round" />
+      <path d="M10.1 19.2 A2.1 2.1 0 0 0 13.9 19.2" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
   );
   const plusIcon = (color) => (
-    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9.4" stroke={color} strokeWidth="2" />
-      <path d="M12 7.9 V16.1 M7.9 12 H16.1" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9.1" stroke={color} strokeWidth="1.9" />
+      <path d="M12 8 V16 M8 12 H16" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
   const chatIcon = (color) => (
-    <span style={{ position: "relative", display: "inline-flex" }}>
-      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M7 4.4 H17 A3.4 3.4 0 0 1 20.4 7.8 V12.9 A3.4 3.4 0 0 1 17 16.3 H11.9 L8.7 19.8 V16.3 H7 A3.4 3.4 0 0 1 3.6 12.9 V7.8 A3.4 3.4 0 0 1 7 4.4 Z"
-          stroke={color} strokeWidth="1.9" strokeLinejoin="round" />
-        <path d="M7.8 9.5 A1.6 1.45 0 0 1 10.7 9.5" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
-        <path d="M13.3 9.5 A1.6 1.45 0 0 1 16.2 9.5" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
-        <path d="M8.7 12.1 A3.6 3.4 0 0 0 15.3 12.1" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
-      </svg>
-      <span style={{
-        position: "absolute", top: -6, right: -8, minWidth: 16.5, height: 16.5,
-        borderRadius: 9999, background: "#d91f0a", color: "#fff",
-        font: "600 10px/16.5px var(--sys-text)", textAlign: "center", padding: "0 4px",
-        boxSizing: "border-box",
-      }}>2</span>
-    </span>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 4.6 H17 A3.3 3.3 0 0 1 20.3 7.9 V12.8 A3.3 3.3 0 0 1 17 16.1 H11.9 L8.8 19.5 V16.1 H7 A3.3 3.3 0 0 1 3.7 12.8 V7.9 A3.3 3.3 0 0 1 7 4.6 Z"
+        stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M8 9.6 A1.5 1.4 0 0 1 10.7 9.6" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M13.3 9.6 A1.5 1.4 0 0 1 16 9.6" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M8.9 12 A3.4 3.2 0 0 0 15.1 12" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   );
   const personIcon = (color) => (
-    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9.2" stroke={color} strokeWidth="1.9" />
-      <circle cx="12" cy="10" r="3.1" stroke={color} strokeWidth="1.9" />
-      <path d="M6.4 18.5 C7.6 16.3 9.6 15.1 12 15.1 C14.4 15.1 16.4 16.3 17.6 18.5" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+      <circle cx="12" cy="10" r="3" stroke={color} strokeWidth="1.8" />
+      <path d="M6.5 18.3 C7.7 16.2 9.7 15 12 15 C14.3 15 16.3 16.2 17.5 18.3" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 
-  const L = {
-    home:     t({ en: "Home",          no: "Forside" }),
-    varsl:    t({ en: "Notifications", no: "Varslinger" }),
-    nyAnn:    t({ en: "New ad",        no: "Ny annonse" }),
-    meld:     t({ en: "Messages",      no: "Meldinger" }),
-    minFinn:  t({ en: "My FINN",       no: "Min FINN" }),
-  };
-
-  // ── Android: FINN's fixed, flat, edge-to-edge bottom navigation (per
-  //    the real app) — white, hairline top, active item tinted blue,
-  //    generic person icon on My FINN, no floating pill. ──
+  // ── Android — Material 3 navigation bar per Figma 2052:6489: white
+  //    surface, 64px nav row, active item gets a 56×32 #f0f0f2 pill and
+  //    filled icon, T6 12/16 labels, gesture handle in a 24px system bar. ──
   if (android) {
-    const aItem = (content, label, active) => (
-      <button key={label} className="press"
-        onClick={() => haptic("tap")}
+    const aDot = (
+      <span style={{ position: "absolute", left: 33, top: 4, width: 6, height: 6, borderRadius: 9999, background: "#d91f0a" }} />
+    );
+    const aCount = (
+      <span style={{
+        position: "absolute", left: 28, top: 0, minWidth: 16, height: 16,
+        borderRadius: 9999, background: "#d91f0a", color: "#fff",
+        font: "500 12px/16px var(--sys-text)", textAlign: "center", padding: "0 4px",
+        boxSizing: "border-box",
+      }}>2</span>
+    );
+    const aItem = (icon, label, active, badge) => (
+      <button key={label} className="press" onClick={() => haptic("tap")}
         style={{
           flex: 1, background: "transparent", border: 0, cursor: "pointer",
           display: "flex", flexDirection: "column", alignItems: "center",
-          justifyContent: "flex-end", gap: 5, padding: 0, fontFamily: "inherit",
+          justifyContent: "center", gap: 4, padding: "6px 0", fontFamily: "inherit",
         }}>
-        <span style={{ height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{content}</span>
-        <span style={{ font: `500 11px/1 var(--sys-text)`, color: active ? ACTIVE : S, letterSpacing: 0.1, whiteSpace: "nowrap" }}>{label}</span>
+        <span style={{
+          width: 56, height: 32, borderRadius: 16, position: "relative",
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          background: active ? "#f0f0f2" : "transparent",
+        }}>
+          {icon}
+          {badge}
+        </span>
+        <span style={{ font: "500 12px/16px var(--sys-text)", color: active ? INK : SUB, whiteSpace: "nowrap" }}>{label}</span>
       </button>
     );
     return (
-      <div style={{
-        position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 5,
-        background: "#fff", borderTop: "0.5px solid rgba(0,0,0,0.10)",
-        display: "flex", alignItems: "stretch",
-        padding: `9px 4px calc(9px + ${homeArea}px)`,
-      }}>
-        {aItem(finnMark, L.home, true)}
-        {aItem(bellIcon(S), L.varsl, false)}
-        {aItem(plusIcon(S), L.nyAnn, false)}
-        {aItem(chatIcon(S), L.meld, false)}
-        {aItem(personIcon(S), L.minFinn, false)}
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 5, background: "#fff", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "stretch", height: 64 }}>
+          {aItem(houseIcon(INK, true), L.home, true, null)}
+          {aItem(bellIcon(SUB), L.activity, false, aDot)}
+          {aItem(plusIcon(SUB), L.sell, false, null)}
+          {aItem(chatIcon(SUB), L.messages, false, aCount)}
+          {aItem(personIcon(SUB), L.profile, false, null)}
+        </div>
+        <div style={{ height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ width: 108, height: 4, borderRadius: 12, background: "#1b1b1f" }} />
+        </div>
       </div>
     );
   }
 
-  // ── iOS: liquid-glass floating pill per the Figma job ad. ──
-  const item = (content, label, active) => (
-    <button key={label} className="press"
-      onClick={() => haptic("tap")}
+  // ── iOS — WARP "Tab bar - Vertical" (iOS 26) per Figma 2052:5900:
+  //    inset glass pill (radius 296, #f0f0f2 @ ~50% + blur, 4px padding,
+  //    0 8 20 shadow), 54px tabs with icon + 10px label, the active tab
+  //    wrapped in a #cacad1 multiply pill with blue icon + label. ──
+  const iosDot = (
+    <span style={{ position: "absolute", top: -1, right: -4, width: 10, height: 10, borderRadius: 9999, background: "#d91f0a" }} />
+  );
+  const iosCount = (
+    <span style={{
+      position: "absolute", top: -5, right: -12, minWidth: 16.5, height: 16.5,
+      borderRadius: 9999, background: "#d91f0a", color: "#fff",
+      font: "500 12px/16.5px var(--sys-text)", textAlign: "center", padding: "0 4px",
+      boxSizing: "border-box",
+    }}>2</span>
+  );
+  const item = (icon, label, active, badge) => (
+    <button key={label} className="press" onClick={() => haptic("tap")}
       style={{
-        flex: 1, background: "transparent", border: 0, cursor: "pointer",
-        display: "flex", alignItems: "stretch", justifyContent: "center",
-        padding: 0, fontFamily: "inherit",
+        flex: 1, position: "relative", background: "transparent", border: 0,
+        cursor: "pointer", padding: 0, fontFamily: "inherit", display: "flex",
       }}>
+      {active && (
+        <span aria-hidden="true" style={{
+          position: "absolute", inset: 0, borderRadius: 9999,
+          background: "rgba(202,202,209,0.64)",
+        }} />
+      )}
       <span style={{
-        flex: 1, display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center", gap: 5,
-        padding: "9px 2px 8px", borderRadius: 9999,
-        background: active ? "#ececec" : "transparent",
-        transition: "background 200ms var(--ease-out)",
+        flex: 1, position: "relative", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 2, height: 54,
+        padding: "8px 6px", boxSizing: "border-box",
       }}>
-        <span style={{
-          position: "relative", height: 26,
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-        }}>{content}</span>
-        <span style={{ font: `${active ? 600 : 500} 12px/1 var(--sys-text)`, color: active ? "#0063fb" : S, letterSpacing: -0.15, whiteSpace: "nowrap" }}>{label}</span>
+        <span style={{ position: "relative", width: 24, height: 24, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+          {icon}
+          {badge}
+        </span>
+        <span style={{ font: "500 10px/12px var(--sys-text)", color: active ? ACTIVE : INK, whiteSpace: "nowrap" }}>{label}</span>
       </span>
     </button>
   );
   return (
     <div style={{
-      position: "absolute", left: 10, right: 10,
-      bottom: `calc(8px + ${homeArea}px)`, zIndex: 5,
-      display: "flex", alignItems: "stretch", padding: 5,
-      background: "rgba(254,254,254,0.92)",
-      WebkitBackdropFilter: "blur(24px) saturate(1.7)", backdropFilter: "blur(24px) saturate(1.7)",
-      borderRadius: 9999,
-      boxShadow: "0 10px 30px rgba(0,0,0,0.14), 0 0 0 0.5px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.75)",
+      position: "absolute", left: 21, right: 21,
+      bottom: Math.max(homeArea - 6, 8), zIndex: 5,
+      display: "flex", alignItems: "stretch", padding: 4, borderRadius: 9999,
+      background: "rgba(243,243,246,0.88)",
+      WebkitBackdropFilter: "blur(18px) saturate(1.6)", backdropFilter: "blur(18px) saturate(1.6)",
+      boxShadow: "0 8px 20px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.55)",
     }}>
-      {item(finnMark, L.home, true)}
-      {item(bellIcon(S), L.varsl, false)}
-      {item(plusIcon(S), L.nyAnn, false)}
-      {item(chatIcon(S), L.meld, false)}
-      {item(
-        <img src={OA_AVATAR} alt="" width={27} height={27}
-          style={{ borderRadius: 9999, display: "block", objectFit: "cover" }} />, L.minFinn, false)}
+      {item(houseIcon(ACTIVE, true), L.home, true, null)}
+      {item(bellIcon(INK), L.activity, false, iosDot)}
+      {item(plusIcon(INK), L.sell, false, null)}
+      {item(chatIcon(INK), L.messages, false, iosCount)}
+      {item(personIcon(INK), L.profile, false, null)}
     </div>
   );
 }
@@ -21450,7 +21663,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   // Feature flags (replaces the Version dropdown — there is one version
   // now). Each box ON = feature in the build; unticking shows the flow
   // without it. Toggling restarts the prototype so states stay coherent.
-  const [flags, setFlags] = useState({ wizard: true, oneClick: true, jobMatch: true, aiWriting: true, onePage: false });
+  const [flags, setFlags] = useState({ wizard: true, oneClick: true, jobMatch: true, aiWriting: true, onePage: false, chunked: false });
   function toggleFlag(k) {
     setFlags(f => ({ ...f, [k]: !f[k] }));
     OA_DRAFT = null;
@@ -22021,6 +22234,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
             { k: "jobMatch",  label: "Job match" },
             { k: "aiWriting", label: "AI Writing Assistant" },
             { k: "onePage",   label: "One Page Flow" },
+            { k: "chunked",   label: "Chunked Attachments" },
           ].map(f => (
             <button key={f.k} type="button" role="checkbox" aria-checked={flags[f.k]}
               className={"ff-row press" + (flags[f.k] ? " on" : "")}
