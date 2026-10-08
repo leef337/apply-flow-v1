@@ -1492,13 +1492,13 @@
   .dt-back:hover { text-decoration: underline; }
   .dt-h1 { margin: 22px 0 0; font: 700 28px/34px var(--sys-text); color: #1b1b1f; }
   .dt-adline { margin: 14px 0 0; font: 700 14px/18px var(--sys-text); color: #1b1b1f; }
-  .dt-intro { margin: 14px 0 0; font: 400 14px/18px var(--sys-text); color: #474750; }
+  .dt-intro { margin: 14px 0 0; font: 400 14px/20px var(--sys-text); color: #474750; }
   .dt-card { background: #f1f9ff; border-radius: 8px; padding: 16px; margin-top: 36px; }
   .dt-card h2 { margin: 0 0 18px; font: 700 22px/28px var(--sys-text); color: #1b1b1f; }
   .dt-field { margin-bottom: 18px; }
   .dt-field:last-child { margin-bottom: 2px; }
   .dt-label { display: block; margin: 0 0 6px; font: 700 14px/18px var(--sys-text); color: #1b1b1f; }
-  .dt-opt { font: 400 14px/18px var(--sys-text); color: #5c5c66; margin-left: 6px; }
+  .dt-opt { font: 400 13px/18px var(--sys-text); color: #5c5c66; margin-left: 6px; }
   .dt-input {
     width: 100%; height: 48px; box-sizing: border-box;
     border: 1px solid #84848f; border-radius: 4px; padding: 12px 8px;
@@ -1515,14 +1515,14 @@
   .dt-chip {
     display: inline-flex; align-items: center; gap: 6px;
     margin: 10px 0 18px; padding: 6px 12px;
-    background: #fff; border: 1.5px solid var(--w-s-color-border); border-radius: 8px;
+    background: #fff; border: 1.5px solid #c3c3c6; border-radius: 8px;
     font: 500 13px/1 var(--sys-text); font-family: inherit; color: #0063fb; cursor: pointer;
   }
   .dt-chip:hover { border-color: #0063fb; }
   .dt-q { margin-bottom: 20px; }
-  .dt-choice { display: flex; align-items: center; gap: 8px; margin: 7px 0; font: 400 14px/18px var(--sys-text); color: #1b1b1f; cursor: pointer; }
+  .dt-choice { display: flex; align-items: center; gap: 8px; margin: 7px 0; font: 400 14px/20px var(--sys-text); color: #1b1b1f; cursor: pointer; }
   .dt-choice input { width: 20px; height: 20px; margin: 0; accent-color: #0063fb; cursor: pointer; }
-  .dt-confirm { display: flex; align-items: flex-start; gap: 10px; margin-top: 26px; font: 400 14px/18px var(--sys-text); color: #1b1b1f; cursor: pointer; }
+  .dt-confirm { display: flex; align-items: flex-start; gap: 10px; margin-top: 26px; font: 400 14px/20px var(--sys-text); color: #1b1b1f; cursor: pointer; }
   .dt-confirm input { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: #0063fb; cursor: pointer; }
   .dt-confirm .lnk { color: #0063fb; }
   .dt-send {
@@ -3831,7 +3831,7 @@
   .oa-progress-seg.part::after { transform: scaleX(var(--segfill, 0.33)); }
   .oa-step-title {
     margin: 0; text-align: center;
-    font: 600 20px/26px var(--sys-text); letter-spacing: -0.45px; color: #000;
+    font: 600 20px/25px var(--sys-text); letter-spacing: -0.45px; color: #000;
   }
   /* Persistent step header: stays mounted across step changes so the
      title crossfades and the progress bar animates instead of sliding
@@ -3928,7 +3928,7 @@
   .oa-ai-help.oa-ai-full {
     align-self: stretch; width: 100%;
     justify-content: center;
-    border: 1px solid var(--w-s-color-border);
+    border: 1px solid #c3c3c6;
     padding: 14px 16px;
     font: 500 16px/22px var(--sys-text); font-family: inherit;
   }
@@ -4004,13 +4004,13 @@
   .oa-opt-row {
     display: flex; align-items: center; gap: 14px; width: 100%;
     padding: 14px 0; background: transparent; border: 0;
-    border-bottom: 0.5px solid var(--w-s-color-border);
+    border-bottom: 0.5px solid #ededed;
     text-align: left; cursor: pointer; font-family: inherit;
     transition: background 140ms var(--ease-out);
   }
   .oa-doc-card {
     display: flex; align-items: center; gap: 12px; width: 100%;
-    background: #fff; border: 1px solid var(--w-s-color-border); border-radius: 12px;
+    background: #fff; border: 1px solid #ededed; border-radius: 12px;
     padding: 16px; text-align: left; cursor: pointer; font-family: inherit;
     transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
   }
@@ -4035,23 +4035,23 @@
     transition: background 140ms var(--ease-out), color 140ms var(--ease-out), border-color 140ms var(--ease-out), transform 120ms var(--ease-tap);
   }
   .oa-chip.on { background: #0063fb; color: #fff; }
-  .oa-chip.outline { background: #fff; border-color: var(--w-s-color-border); }
+  .oa-chip.outline { background: #fff; border-color: #c3c3c6; }
   .oa-chip.outline.on { background: #eff5ff; border-color: #0063fb; color: #0063fb; font-weight: 500; }
   /* Review screen */
   .oa-match {
-    border: 1px solid rgba(5,158,111,0.45); background: var(--w-s-color-background-positive-subtle);
+    border: 1px solid rgba(5,158,111,0.45); background: #e9f8f1;
     border-radius: 8px; padding: 12px 16px; text-align: center;
     animation: fadeup 420ms var(--ease-modal) both;
   }
   .oa-match-title { margin: 0; font: 600 16px/22px var(--sys-text); color: #059e6f; }
-  .oa-match-sub   { margin: 2px 0 0; font: 300 14px/18px var(--sys-text); color: #059e6f; }
+  .oa-match-sub   { margin: 2px 0 0; font: 300 13px/18px var(--sys-text); color: #059e6f; }
   .oa-row {
     display: flex; align-items: center; gap: 16px;
     height: 76px; padding-left: 8px;
-    border-bottom: 0.5px solid var(--w-s-color-border);
+    border-bottom: 0.5px solid #ededed;
   }
-  .oa-row:first-child { border-top: 0.5px solid var(--w-s-color-border); }
-  .oa-row-title { font: 400 16px/22px var(--sys-text); letter-spacing: -0.43px; color: #000; }
+  .oa-row:first-child { border-top: 0.5px solid #ededed; }
+  .oa-row-title { font: 400 17px/22px var(--sys-text); letter-spacing: -0.43px; color: #000; }
   .oa-row-sub {
     font: 400 12px/1.3 var(--sys-text); color: #5c5c66;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -4059,7 +4059,7 @@
   .oa-row-sub.neg { color: #d91f0a; }
   .oa-edit {
     display: inline-flex; align-items: center; gap: 4px;
-    font: 400 16px/22px var(--sys-text); letter-spacing: -0.43px;
+    font: 400 17px/22px var(--sys-text); letter-spacing: -0.43px;
     color: #0063fb; background: transparent; border: 0;
     padding: 8px 0 8px 8px; cursor: pointer; font-family: inherit;
     flex-shrink: 0; min-height: 44px; border-radius: 8px;
@@ -4104,7 +4104,7 @@
   .oa-draft-toast {
     position: absolute; left: 16px; right: 16px;
     display: flex; align-items: center; gap: 10px;
-    background: var(--w-s-color-background-positive-subtle); border: 1px solid rgba(5,158,111,0.45);
+    background: #e9f8f1; border: 1px solid rgba(5,158,111,0.45);
     border-radius: 10px; padding: 12px 14px;
     font: 400 14px/1.35 var(--sys-text); color: #1b1b1f;
     box-shadow: 0 8px 24px rgba(0,0,0,0.14);
@@ -4119,7 +4119,7 @@
     .oa-btn.secondary:hover { background: #f0f5ff; }
     .oa-btn-small:hover { background: #f0f5ff; border-color: #0063fb; }
     .oa-opt-row:hover { background: #f7f7f9; }
-    .oa-doc-card:hover:not(.selected) { border-color: var(--w-s-color-border); }
+    .oa-doc-card:hover:not(.selected) { border-color: #c3c3c6; }
     .oa-doc-card.selected:hover { box-shadow: 0 0 0 0.5px #0063fb, 0 2px 10px rgba(0,99,251,0.12); }
     .oa-chip:hover:not(.on) { background: #e1edfe; }
     .oa-chip.outline:hover:not(.on) { background: #f7f7f9; border-color: #a8a8b3; }
@@ -5414,63 +5414,6 @@
   }
   .sm-legend .row { display: inline-flex; align-items: center; gap: 6px; }
   .sm-legend .swatch { width: 8px; height: 8px; border-radius: 50%; }
-
-  /* ═══ WARP alignment layer — 2026-10-08 ═══════════════════════════════
-     Added after the cross-platform audit (Apply Flow Platform Audit).
-     Fix 5: type + buttons on WARP's scale. Fix 6: semantic tokens.
-     Fix 7: Android / mobile-web sheet patterns. Fix 8: desktop footer CTA.
-     Values: @warp-ds/css v2 FINN tokens. Remove this block to revert the
-     styling (the font-size remaps and colour swaps above are separate). */
-  :root {
-    --w-s-color-text: #1b1b1f;            /* gray-900 */
-    --w-s-color-text-subtle: #5c5c66;     /* gray-600 */
-    --w-s-color-text-positive: #059e6f;   /* green-600 */
-    --w-s-color-border: #dedee3;          /* gray-200 */
-    --w-s-color-border-strong: #84848f;   /* gray-500 */
-    --w-s-color-background: #fff;
-    --w-s-color-background-subtle: #f0f0f2;            /* gray-100 */
-    --w-s-color-background-positive-subtle: #ebfff6;   /* green-50 */
-    --w-s-color-surface-sunken: #f6f6f6;               /* gray-50 */
-  }
-  /* Fix 5 — type: unitless line-heights and #000 text onto the scale */
-  .oa-step-title { font: 700 20px/26px var(--sys-text); letter-spacing: 0; color: var(--w-s-color-text); }
-  .oa-section-h { font: 700 22px/28px var(--sys-text); }          /* t3 */
-  .oa-section-h .opt, .oa-section-h .req, .oa-row-sub, .oa-req { font-size: 12px; line-height: 16px; }
-  .oa-doc-title { font: 500 16px/22px var(--sys-text); }
-  .oa-doc-meta { font-size: 12px; line-height: 16px; }
-  .oa-row-title, .oa-edit { letter-spacing: 0; color: var(--w-s-color-text); }
-  .oa-edit { color: #0063fb; }
-  /* Fix 5 — buttons: WARP big button = 12px padding + 24px line = 48px, bold */
-  .oa-btn { font: 700 16px/24px var(--sys-text); min-height: 48px; letter-spacing: 0; }
-  /* Fix 6 — positive banner border on the token */
-  .oa-match { border-color: var(--w-s-color-text-positive); }
-
-  /* Fix 7 — Android + mobile web: no iOS 26 glass. A plain pinned footer
-     (WARP modal footer / Material bottom bar), and a plain icon close. */
-  .platform-android .oa-footer,
-  .platform-web .oa-footer {
-    background: var(--w-s-color-background);
-    border-top: 1px solid var(--w-s-color-border);
-    padding: 12px 16px 0;
-  }
-  .platform-android .oa-footer-card,
-  .platform-web .oa-footer-card {
-    background: transparent; box-shadow: none; border-radius: 0; padding: 0;
-    -webkit-backdrop-filter: none; backdrop-filter: none;
-  }
-  .platform-android .oa-close,
-  .platform-web .oa-close { background: transparent !important; width: 40px !important; height: 40px !important; margin-right: -8px; }
-  /* Android: Material puts sheet titles at the start edge */
-  .platform-android .oa-stephead { align-items: stretch; }
-  .platform-android .oa-step-title { text-align: left; }
-  /* back arrow + title share one row on Android (Material top app bar) */
-  .platform-android .oa-stephead:has(button.press:not(.oa-seg-btn)) .oa-step-title { padding-left: 52px; }
-
-  /* Fix 8 — desktop drawer: footer CTA sits at the end edge, as in WARP's
-     modal footer. In-content buttons keep the Figma Side Draw left alignment. */
-  .dt-window .oa-panel-footer { align-items: flex-end; }
-  .dt-window .oa-panel-footer .oa-btn { align-self: flex-end; }
-  /* ═══ end WARP alignment layer ═══ */
 </style>
 </head>
 <body>
@@ -12969,9 +12912,9 @@ function OAFooter({ children, homeArea }) {
   const inPanel = React.useContext(FlowPanelCtx);
   if (inPanel) {
     return (
-      <div className="oa-panel-footer" style={{
+      <div style={{
         flexShrink: 0, background: "#fff",
-        borderTop: "1px solid var(--w-s-color-border)",
+        borderTop: "1px solid #eef0f2",
         padding: "16px 24px 24px",
         display: "flex", flexDirection: "column", gap: 12,
       }}>
@@ -13092,8 +13035,8 @@ function OAOptionRow({ icon, ai, title, sub, onClick, working }) {
         ) : ai ? <OASparkles size={26} /> : <Icon name={icon} size={24} color="#1b1b1f" stroke={1.7} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, font: "500 16px/22px var(--sys-text)", color: "#1b1b1f" }}>{title}</p>
-        <p style={{ margin: "2px 0 0", font: "400 12px/16px var(--sys-text)", color: "#5c5c66" }}>{sub}</p>
+        <p style={{ margin: 0, font: "500 16px/1.3 var(--sys-text)", color: "#1b1b1f" }}>{title}</p>
+        <p style={{ margin: "2px 0 0", font: "400 12px/1.4 var(--sys-text)", color: "#5c5c66" }}>{sub}</p>
       </div>
       <Icon name="chevron-right" size={18} color="#0063fb" stroke={2.4} />
     </button>
@@ -13113,14 +13056,14 @@ function OAPageHeader({ title, onBack, trailing }) {
           border: 0, cursor: "pointer", flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
         } : {
-          width: 44, height: 44, borderRadius: 9999, background: "var(--w-s-color-background-subtle)",
+          width: 44, height: 44, borderRadius: 9999, background: "#f5f5f7",
           border: 0, cursor: "pointer", flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "0 1px 4px rgba(0,0,0,0.10)",
         }}>
         <Icon name={android ? "arrow-left" : "chevron-left"} size={22} color="#1b1b1f" stroke={2.2} />
       </button>
-      <p style={{ margin: 0, font: "600 20px/26px var(--sys-text)", letterSpacing: -0.45, color: "#000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</p>
+      <p style={{ margin: 0, font: "600 20px/25px var(--sys-text)", letterSpacing: -0.45, color: "#000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</p>
       {trailing || <div style={{ width: 44, height: 44, flexShrink: 0 }} />}
     </div>
   );
@@ -13213,7 +13156,7 @@ function OAMatchBanner() {
       }}>
       <OAGauge size={34} color={good ? "#059e6f" : "#1b1b1f"} />
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: "block", font: "400 16px/22px var(--sys-text)", letterSpacing: -0.43, color: good ? "#059e6f" : "#1b1b1f" }}>
+        <span style={{ display: "block", font: "400 17px/22px var(--sys-text)", letterSpacing: -0.43, color: good ? "#059e6f" : "#1b1b1f" }}>
           {n}% {t({ en: "Job match", no: "jobbmatch" })}
         </span>
         <span key={tier} style={{ display: "block", margin: "2px 0 0", font: "300 14px/18px var(--sys-text)", color: "#1b1b1f", animation: "fadein 260ms var(--ease-out)" }}>
@@ -13230,7 +13173,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
   const t = useT();
   // Feature flags from the toolbox — defaults keep everything on when
   // the sheet is mounted without them.
-  const F = { wizard: true, jobMatch: true, aiWriting: true, oneClick: true, onePage: false, chunked: true, ...(flags || {}) };
+  const F = { wizard: true, jobMatch: true, aiWriting: true, oneClick: true, onePage: false, chunked: false, ...(flags || {}) };
   const { statusBarH, homeArea } = useMetrics();
   const platform = usePlatform();
   const inPanel = React.useContext(FlowPanelCtx);
@@ -13430,10 +13373,10 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
             <CompanyLogo size={48} radius={8} initials={OA_JOB.initials} color={OA_JOB.brandColor} />
             <div style={{ minWidth: 0 }}>
               <p style={{ margin: 0, font: "500 16px/22px var(--sys-text)", color: "#1b1b1f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{OA_JOB.title}</p>
-              <p style={{ margin: 0, font: "400 14px/18px var(--sys-text)", color: "#5c5c66" }}>{OA_JOB.company}</p>
+              <p style={{ margin: 0, font: "400 13px/18px var(--sys-text)", color: "#5c5c66" }}>{OA_JOB.company}</p>
             </div>
           </div>
-          <button className="press oa-close" onClick={close} aria-label={t({ en: "Close", no: "Lukk" })}
+          <button className="press" onClick={close} aria-label={t({ en: "Close", no: "Lukk" })}
             style={{
               width: 36, height: 36, borderRadius: 9999, background: "#f0f0f2", border: 0,
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
@@ -13443,7 +13386,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
           </button>
         </div>
       </div>
-      <div className="oa-sheet-rule" style={{ borderTop: "0.5px solid var(--w-s-color-border)", flexShrink: 0 }} />
+      <div style={{ borderTop: "0.5px solid #ededed", flexShrink: 0 }} />
     </>
   );
 
@@ -13474,7 +13417,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
           style={{
             position: "absolute", left: 16, top: 14, zIndex: 2,
             width: 44, height: 44, borderRadius: 9999, flexShrink: 0,
-            background: platform === "android" ? "transparent" : "var(--w-s-color-background-subtle)",
+            background: platform === "android" ? "transparent" : "#f5f5f7",
             border: 0, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: platform === "android" ? "none" : "0 1px 4px rgba(0,0,0,0.10)",
@@ -13790,16 +13733,14 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
           </button>
         </div>
       ) : (
+        /* Merged entry (Lee, Oct 8): writing and AI are one screen now,
+           so one row covers both — aligned with "Attach document". */
         <div>
-          {F.aiWriting && (
-            <OAOptionRow ai
-              title={t({ en: "Let us create a draft for you", no: "La oss lage et utkast for deg" })}
-              sub={t({ en: "Based on your job profile and this ad", no: "Basert på jobbprofilen din og denne annonsen" })}
-              onClick={() => push("letter", { mode: "ai" })} />
-          )}
           <OAOptionRow icon="edit"
-            title={t({ en: "Write yourself", no: "Skriv selv" })}
-            sub={t({ en: "Start with a blank page", no: "Start med en blank side" })}
+            title={t({ en: "Write a cover letter", no: "Skriv søknadsbrev" })}
+            sub={F.aiWriting
+              ? t({ en: "Start fresh or let us create a draft", no: "Start selv eller la oss lage et utkast" })
+              : t({ en: "Start with a blank page", no: "Start med en blank side" })}
             onClick={() => push("letter", { mode: "write" })} />
           <OAOptionRow icon="file-doc"
             title={t({ en: "Attach document", no: "Legg ved dokument" })}
@@ -14366,7 +14307,7 @@ function OAMyDocsPage({ onBack, onPick, onUpload, multi = false, initialSelected
           <button className="press" onClick={() => { haptic("tap"); onUpload(); }}
             style={{
               width: "100%", padding: "14px 16px", borderRadius: 8,
-              background: "#fff", border: "1px solid var(--w-s-color-border)", cursor: "pointer",
+              background: "#fff", border: "1px solid #c3c3c6", cursor: "pointer",
               display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
               font: "500 16px/22px var(--sys-text)", fontFamily: "inherit", color: "#0063fb",
               transition: "background 140ms var(--ease-out), border-color 140ms var(--ease-out)",
@@ -14442,31 +14383,27 @@ function OADocDetailsPage({ onBack, onSave, doc, homeArea }) {
   );
 }
 
-// Cover-letter editor — one component, two modes ("ai" | "write"), per the
-// Figma AI Assist / Writing own screens: helper toast until the first chip
-// tap, tone + language chips restream the draft, hand-written text is
-// stashed behind a restore chip when AI overwrites it, "Ferdig" appears in
-// the header while the keyboard is up, and one full-width "Use this Letter".
+// Cover-letter editor — ONE merged prompt-first screen (Figma "AI Assist ·
+// No text / Text"): style + language chips over a persistent helper, write
+// freely or tap a prompt to draft into the same editor, "Ferdig" in the
+// header while the keyboard is up, one full-width "Use this Letter".
 function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea, aiEnabled = true }) {
   const t = useT();
-  const [aiMode, setAiMode] = useState(mode === "ai");
-  // Per the Figma flow: "Let us create a draft for you" lands straight
-  // on the style-chips page (1592:30508) — helper panel, chips and the
-  // generated draft. "Write yourself" lands on 1592:30483: the blank
-  // page with the "Let us help you create a draft" pill, which brings
-  // you to the chips page ("chips") when tapped.
-  const [aiPhase, setAiPhase] = useState("chips");
+  // Merged prompt-first writer (Lee, Oct 8 — Figma "AI Assist · No text /
+  // Text"): ONE screen for writing and AI help. Opens blank; write freely,
+  // or tap a style prompt and the draft lands in the same editor. No
+  // write/AI mode split. The legacy mode="ai" entry (flag-off screen's
+  // "Let us create a draft for you" row) auto-drafts on open.
+  const autoDraft = mode === "ai" && !initialText && aiEnabled;
   const [tone, setTone] = useState("Formal");
   const [letterLang, setLetterLang] = useState(t({ en: "English", no: "Norsk" }));
-  const [generating, setGenerating] = useState(mode === "ai" && !initialText);
+  const [aiUsed, setAiUsed] = useState(autoDraft);
+  const [generating, setGenerating] = useState(autoDraft);
   const [text, setText] = useState(initialText);
-  const [stash, setStash] = useState(null);
-  // Chips render unselected until the user actually picks one — the
-  // frames show no highlighted chip (and the toast) on arrival, then a
-  // highlighted tone (and no toast) after picking.
+  // Chips render unselected until the user actually taps one — the mock
+  // shows no highlighted chip on arrival, "Formal" highlighted after use.
   const [toneUsed, setToneUsed] = useState(false);
   const [langUsed, setLangUsed] = useState(false);
-  const chipUsed = toneUsed || langUsed;
   const [focused, setFocused] = useState(false);
   const genTimer = useRef(null);
   useEffect(() => () => clearTimeout(genTimer.current), []);
@@ -14479,23 +14416,12 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
       setGenerating(false);
     }, 700);
   }
-  useEffect(() => { if (mode === "ai" && !initialText) regen(tone, letterLang); }, []);
+  useEffect(() => { if (autoDraft) regen(tone, letterLang); }, []);
   function pick(setter) {
-    return (l) => {
-      haptic("tap");
-      if (!generating && text.trim() && stash === null && text !== (OA_LETTERS[(letterLang === "Norsk" ? "no" : "en") + "-" + tone] || "")) setStash(text);
-      setter(l);
-    };
+    return (l) => { haptic("tap"); setter(l); };
   }
-  function pickTone(l) { setToneUsed(true); pick(setTone)(l); regen(l, letterLang); }
-  function pickLang(l) { setLangUsed(true); pick(setLetterLang)(l); regen(tone, l); }
-  function makeDraft() {
-    haptic("ok");
-    if (text.trim()) setStash(text);
-    setAiMode(true);
-    setAiPhase("chips");
-    regen(tone, letterLang);
-  }
+  function pickTone(l) { setToneUsed(true); setAiUsed(true); pick(setTone)(l); regen(l, letterLang); }
+  function pickLang(l) { setLangUsed(true); setAiUsed(true); pick(setLetterLang)(l); regen(tone, l); }
   const chip = (label, on, fn) => (
     <button key={label} className={"oa-chip press" + (on ? " on" : "")} onClick={() => fn(label)}>{label}</button>
   );
@@ -14519,24 +14445,10 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
           </button>
         ) : null} />
       <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 190px", display: "flex", flexDirection: "column", gap: 20 }}>
-        {aiMode ? (
-          /* AI path lands straight on the chips page (1592:30508). */
+        {aiEnabled && (
           <>
-            <div style={{
-              overflow: "hidden",
-              maxHeight: chipUsed ? 0 : 120, opacity: chipUsed ? 0 : 1,
-              transition: "max-height 320ms var(--ease-modal), opacity 220ms var(--ease-out)",
-            }}>
-              {/* Helper copy per Figma 1662:35894: left-aligned info
-                  panel, Caption 300 14/18 — one flowing paragraph, no
-                  hard break (the Figma text node has no line break). */}
-              <div className="oa-toast" role="note">
-                {t({
-                  en: "Pick a style to adjust the text. Edit it however you like. You can review and edit the draft to make it sound more like you.",
-                  no: "Velg en stil for å justere teksten. Rediger som du vil. Du kan se over og redigere utkastet slik at det høres mer ut som deg.",
-                })}
-              </div>
-            </div>
+            {/* Style prompts — per the merged mock they sit directly under
+                the title, above the helper, in both states. */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                 {["Formal", "Casual", "Confident"].map(l => chip(l, toneUsed && tone === l, pickTone))}
@@ -14545,15 +14457,16 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
                 {["Norsk", "English"].map(l => chip(l, langUsed && letterLang === l, pickLang))}
               </div>
             </div>
+            {/* Persistent helper (mock copy) — explains both paths, stays
+                visible in the no-text and text states alike. */}
+            <div className="oa-toast" role="note">
+              {t({
+                en: "Write on your own or tap a prompt above to let us create a draft for you. Edit it however you like. You can review and edit the draft to make it sound more like you.",
+                no: "Skriv selv, eller trykk på en stil over, så lager vi et utkast for deg. Rediger som du vil. Du kan se over og endre utkastet så det høres mer ut som deg.",
+              })}
+            </div>
           </>
-        ) : aiEnabled ? (
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <button className="oa-chip press" onClick={makeDraft} style={{ gap: 8 }}>
-              <OASparkles size={18} />
-              {t({ en: "Let us help you create a draft", no: "La oss hjelpe deg å lage et utkast" })}
-            </button>
-          </div>
-        ) : null}
+        )}
         {generating ? (
           <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 6 }}>
             {[100, 96, 98, 88, 94, 60].map((w, i) => (
@@ -14577,24 +14490,12 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
                 font: "300 16px/24px var(--sys-text)", color: "#1b1b1f",
                 animation: "fadein 300ms var(--ease-modal)",
               }} />
-            {stash && (
-              <div style={{ display: "inline-flex", alignSelf: "center", alignItems: "center", gap: 8, animation: "fadein 200ms" }}>
-                <span style={{ padding: "7px 12px", borderRadius: 9999, background: "#f0f0f3", color: "#474750", fontSize: 12, fontWeight: 500 }}>
-                  {t({ en: "Your own text is saved", no: "Din egen tekst er tatt vare på" })}
-                </span>
-                <button className="oa-btn-small press"
-                  onClick={() => { haptic("tap"); setText(stash); setStash(null); setAiMode(false); }}
-                  style={{ borderRadius: 9999, fontSize: 12, padding: "7px 14px" }}>
-                  {t({ en: "Use my version", no: "Bruk min versjon" })}
-                </button>
-              </div>
-            )}
           </>
         )}
       </div>
       <OAFooter homeArea={homeArea}>
         <button className="oa-btn primary press" disabled={generating || !text.trim()}
-          onClick={() => onSave(aiMode ? "ai" : "written", text)}>
+          onClick={() => onSave(aiUsed ? "ai" : "written", text)}>
           {t({ en: "Use this Letter", no: "Bruk dette brevet" })}
         </button>
       </OAFooter>
@@ -14612,7 +14513,7 @@ function OAATSPage({ onBack }) {
       <div style={{ padding: "12px 16px 0", display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
         <button className="press" onClick={() => { haptic("tap"); onBack(); }} aria-label={t({ en: "Close", no: "Lukk" })}
           style={{
-            width: 44, height: 44, borderRadius: 9999, background: "var(--w-s-color-background-subtle)", border: 0,
+            width: 44, height: 44, borderRadius: 9999, background: "#f5f5f7", border: 0,
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             boxShadow: "0 1px 4px rgba(0,0,0,0.10)",
           }}>
@@ -14748,7 +14649,7 @@ function WebSiteHeader({ desktop }) {
     </button>
   );
   return (
-    <div style={{ background: "#fff", borderBottom: "1px solid var(--w-s-color-border)" }}>
+    <div style={{ background: "#fff", borderBottom: "1px solid #ececf0" }}>
       <div style={desktop
         ? { maxWidth: 946, margin: "0 auto", height: 49, display: "flex", alignItems: "center", justifyContent: "space-between" }
         : { height: 49, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
@@ -15104,11 +15005,11 @@ function DTFastApplyScene({ onRestart, flags }) {
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
           <div style={{
             width: 56, height: 56, borderRadius: 12, background: "#fff",
-            border: "1px solid var(--w-s-color-border)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            border: "1px solid #ececf0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
             display: "flex", alignItems: "center", justifyContent: "center",
             font: "700 18px/1 var(--sys-text)", color: OA_JOB.brandColor, flexShrink: 0,
           }}>{OA_JOB.initials}</div>
-          <span style={{ flex: 1, minWidth: 0, font: "500 20px/26px var(--sys-text)", color: "#1b1b1f" }}>{OA_JOB.company}</span>
+          <span style={{ flex: 1, minWidth: 0, font: "500 18px/24px var(--sys-text)", color: "#1b1b1f" }}>{OA_JOB.company}</span>
           <button type="button" className="press" aria-label={t({ en: "Save", no: "Lagre" })}
             style={{ background: "transparent", border: 0, cursor: "pointer", padding: 6, display: "flex" }}>
             <Icon name="heart" size={22} color="#1b1b1f" stroke={1.8} />
@@ -15163,7 +15064,7 @@ function DTFastApplyScene({ onRestart, flags }) {
         <div style={{ display: "flex", gap: 14, margin: "36px 0 0" }}>
           <button type="button" className="press" style={{
             flexShrink: 0, width: 220, textAlign: "left", cursor: "pointer",
-            background: "#fff", border: "1px solid var(--w-s-color-border)", borderRadius: 16, padding: 16,
+            background: "#fff", border: "1px solid #e6e6e9", borderRadius: 16, padding: 16,
             fontFamily: "inherit", display: "flex", flexDirection: "column", gap: 26,
           }}>
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1b1b1f" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -15172,10 +15073,10 @@ function DTFastApplyScene({ onRestart, flags }) {
               <path d="M6 6.5h.01" />
             </svg>
             <div>
-              <p style={{ margin: 0, font: "500 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+              <p style={{ margin: 0, font: "500 15px/20px var(--sys-text)", color: "#1b1b1f" }}>
                 {t({ en: "Compare salary", no: "Sammenlign lønn" })}
               </p>
-              <p style={{ margin: "4px 0 0", font: "300 14px/18px var(--sys-text)", color: "#5c5c66" }}>
+              <p style={{ margin: "4px 0 0", font: "300 13px/18px var(--sys-text)", color: "#5c5c66" }}>
                 {t({ en: "How do I fit this position?", no: "Hvordan passer jeg til denne stillingen?" })}
               </p>
             </div>
@@ -15202,7 +15103,7 @@ function DTFastApplyScene({ onRestart, flags }) {
               no: "Du får eierskap til design fra ende til ende — fra innsikt og prototyping til testing og leveranse i designsystemet vårt — i tett samarbeid med utviklere, produktledere og fageksperter.",
             })}
           </p>
-          <h3 style={{ margin: "12px 0 0", font: "500 20px/26px var(--sys-text)", color: "#1b1b1f" }}>
+          <h3 style={{ margin: "12px 0 0", font: "500 18px/24px var(--sys-text)", color: "#1b1b1f" }}>
             {t({ en: "What you'll be doing", no: "Arbeidsoppgaver" })}
           </h3>
           <p style={{ margin: 0, font: "300 16px/24px var(--sys-text)", color: "#1b1b1f" }}>
@@ -15211,7 +15112,7 @@ function DTFastApplyScene({ onRestart, flags }) {
               no: "Lede designarbeidet i produktteamet ditt, gjennomføre brukerinnsikt og brukertesting, prototype og iterere på nye konsepter, og bidra til det felles designsystemet sammen med de andre designerne i direktoratet.",
             })}
           </p>
-          <h3 style={{ margin: "12px 0 0", font: "500 20px/26px var(--sys-text)", color: "#1b1b1f" }}>
+          <h3 style={{ margin: "12px 0 0", font: "500 18px/24px var(--sys-text)", color: "#1b1b1f" }}>
             {t({ en: "We offer", no: "Vi tilbyr" })}
           </h3>
           <p style={{ margin: 0, font: "300 16px/24px var(--sys-text)", color: "#1b1b1f" }}>
@@ -15576,7 +15477,7 @@ function OAJobAdScreen({ onApply, onDirectApply, hasDraft, oneClick = true }) {
         {/* Company row */}
         <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "0 24px 22px" }}>
           <div style={{
-            width: 56, height: 56, borderRadius: 10, border: "1px solid var(--w-s-color-border)",
+            width: 56, height: 56, borderRadius: 10, border: "1px solid #ededed",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: "#fff",
           }}>
             <CompanyLogo size={44} radius={8} initials={OA_JOB.initials} color={OA_JOB.brandColor} />
@@ -15600,7 +15501,7 @@ function OAJobAdScreen({ onApply, onDirectApply, hasDraft, oneClick = true }) {
             {OA_JOB.title}
           </h1>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
-            <p style={{ margin: 0, font: "400 14px/18px var(--sys-text)", color: "#1b1b1f" }}>
+            <p style={{ margin: 0, font: "400 14px/20px var(--sys-text)", color: "#1b1b1f" }}>
               {t({ en: "Temporary · Full-time · Oslo", no: "Vikariat · Fulltidsstilling · Oslo" })}
             </p>
           </div>
@@ -15610,18 +15511,18 @@ function OAJobAdScreen({ onApply, onDirectApply, hasDraft, oneClick = true }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "22px 16px", padding: "0 24px 32px" }}>
           {FACTS.map((f) => (
             <div key={f.l.en} style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, font: "400 14px/18px var(--sys-text)", color: "#5c5c66" }}>{t(f.l)}</p>
-              <p style={{ margin: "3px 0 0", font: "600 16px/22px var(--sys-text)", color: "#1b1b1f" }}>{t(f.v)}</p>
+              <p style={{ margin: 0, font: "400 13px/18px var(--sys-text)", color: "#5c5c66" }}>{t(f.l)}</p>
+              <p style={{ margin: "3px 0 0", font: "600 15px/20px var(--sys-text)", color: "#1b1b1f" }}>{t(f.v)}</p>
             </div>
           ))}
         </div>
 
         {/* Rask søknad + inline CTA (docks to the sticky card on scroll) */}
         <div style={{ padding: "0 24px 28px" }}>
-          <h2 style={{ margin: 0, font: "700 20px/26px var(--sys-text)", color: "#1b1b1f" }}>
+          <h2 style={{ margin: 0, font: "700 18px/24px var(--sys-text)", color: "#1b1b1f" }}>
             {t({ en: "Quick apply", no: "Rask søknad" })}
           </h2>
-          <p style={{ margin: "8px 0 18px", font: "400 14px/18px var(--sys-text)", color: "#1b1b1f" }}>
+          <p style={{ margin: "8px 0 18px", font: "400 14px/20px var(--sys-text)", color: "#1b1b1f" }}>
             {t({
               en: <>We fill it out for you using your <span style={{ color: "#0063fb", fontWeight: 600 }}>Job Profile</span>. You can review and edit before you send.</>,
               no: <>Vi fyller ut for deg med din <span style={{ color: "#0063fb", fontWeight: 600 }}>Jobbprofil</span>. Du kan se over og redigere før du sender.</>,
@@ -15634,7 +15535,7 @@ function OAJobAdScreen({ onApply, onDirectApply, hasDraft, oneClick = true }) {
         <div style={{ display: "flex", gap: 14, padding: "0 24px 32px", overflowX: "auto" }}>
           <button className="press" onClick={() => haptic("tap")} style={{
             flexShrink: 0, width: 200, textAlign: "left", cursor: "pointer",
-            background: "#fff", border: "1px solid var(--w-s-color-border)", borderRadius: 16, padding: 16,
+            background: "#fff", border: "1px solid #e6e6e9", borderRadius: 16, padding: 16,
             fontFamily: "inherit", display: "flex", flexDirection: "column", gap: 26,
           }}>
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1b1b1f" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -15643,10 +15544,10 @@ function OAJobAdScreen({ onApply, onDirectApply, hasDraft, oneClick = true }) {
               <path d="M6 6.5h.01" />
             </svg>
             <div>
-              <p style={{ margin: 0, font: "500 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+              <p style={{ margin: 0, font: "500 15px/20px var(--sys-text)", color: "#1b1b1f" }}>
                 {t({ en: "Compare salary", no: "Sammenlign lønn" })}
               </p>
-              <p style={{ margin: "4px 0 0", font: "400 14px/18px var(--sys-text)", color: "#5c5c66" }}>
+              <p style={{ margin: "4px 0 0", font: "400 13px/18px var(--sys-text)", color: "#5c5c66" }}>
                 {t({ en: "How do I fit this position?", no: "Hvordan passer jeg til denne stillingen?" })}
               </p>
             </div>
@@ -15661,31 +15562,31 @@ function OAJobAdScreen({ onApply, onDirectApply, hasDraft, oneClick = true }) {
               no: "Vil du jobbe med moderne teknologi i et viktig samfunnsoppdrag?",
             })}
           </h2>
-          <p style={{ margin: 0, font: "400 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+          <p style={{ margin: 0, font: "400 15px/22px var(--sys-text)", color: "#1b1b1f" }}>
             {t({
               en: "Mattilsynet is looking for a UX/UI designer to help shape digital services used across all of Norway. You'll join a cross-functional product team working user-centred and iteratively, with real impact on food safety, animal welfare and public health.",
               no: "Mattilsynet ser etter en UX-/UI-designer som vil være med på å forme digitale tjenester som brukes i hele Norge. Du blir en del av et tverrfaglig produktteam som jobber brukersentrert og iterativt, med reell innvirkning på mattrygghet, dyrevelferd og folkehelse.",
             })}
           </p>
-          <p style={{ margin: 0, font: "400 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+          <p style={{ margin: 0, font: "400 15px/22px var(--sys-text)", color: "#1b1b1f" }}>
             {t({
               en: "You'll own design end to end — from insight and prototyping to testing and delivery in our design system — in close collaboration with developers, product leads and subject-matter experts.",
               no: "Du får eierskap til design fra ende til ende — fra innsikt og prototyping til testing og leveranse i designsystemet vårt — i tett samarbeid med utviklere, produktledere og fageksperter.",
             })}
           </p>
-          <h3 style={{ margin: "10px 0 0", font: "700 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+          <h3 style={{ margin: "10px 0 0", font: "700 17px/23px var(--sys-text)", color: "#1b1b1f" }}>
             {t({ en: "What you'll be doing", no: "Arbeidsoppgaver" })}
           </h3>
-          <p style={{ margin: 0, font: "400 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+          <p style={{ margin: 0, font: "400 15px/22px var(--sys-text)", color: "#1b1b1f" }}>
             {t({
               en: "Lead design work in your product team, run user insight and usability testing, prototype and iterate on new concepts, and contribute to the shared design system together with the other designers in the directorate.",
               no: "Lede designarbeidet i produktteamet ditt, gjennomføre brukerinnsikt og brukertesting, prototype og iterere på nye konsepter, og bidra til det felles designsystemet sammen med de andre designerne i direktoratet.",
             })}
           </p>
-          <h3 style={{ margin: "10px 0 0", font: "700 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+          <h3 style={{ margin: "10px 0 0", font: "700 17px/23px var(--sys-text)", color: "#1b1b1f" }}>
             {t({ en: "We offer", no: "Vi tilbyr" })}
           </h3>
-          <p style={{ margin: 0, font: "400 16px/22px var(--sys-text)", color: "#1b1b1f" }}>
+          <p style={{ margin: 0, font: "400 15px/22px var(--sys-text)", color: "#1b1b1f" }}>
             {t({
               en: "A meaningful public mission, a modern tech stack, flexible working hours with partial remote, competitive public-sector terms and great colleagues in central Oslo.",
               no: "Et meningsfullt samfunnsoppdrag, en moderne teknologistack, fleksibel arbeidstid med delvis hjemmekontor, konkurransedyktige offentlige betingelser og hyggelige kollegaer sentralt i Oslo.",
@@ -15782,7 +15683,7 @@ function OAUploadPage({ onBack, onPick }) {
       <div style={{ padding: "16px 16px 8px", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div style={{ width: 76 }} />
-          <p style={{ margin: 0, font: "600 20px/26px var(--sys-text)", letterSpacing: -0.45, color: "#000" }}>
+          <p style={{ margin: 0, font: "600 20px/25px var(--sys-text)", letterSpacing: -0.45, color: "#000" }}>
             {t({ en: "Search", no: "Søk" })}
           </p>
           <div style={{ display: "flex", gap: 8, width: 76, justifyContent: "flex-end" }}>
@@ -15813,7 +15714,7 @@ function OAUploadPage({ onBack, onPick }) {
           </span>
         </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", borderBottom: "0.5px solid var(--w-s-color-border)", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", borderBottom: "0.5px solid #ededed", flexShrink: 0 }}>
         <Icon name="file-doc" size={20} color="#1b1b1f" stroke={1.7} />
         <p style={{ margin: 0, font: "400 15px/1.3 var(--sys-text)", color: "#8a8a90" }}>
           {t({ en: 'Name Contains "Cv"', no: 'Navn inneholder «Cv»' })}
@@ -21749,7 +21650,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   // Feature flags (replaces the Version dropdown — there is one version
   // now). Each box ON = feature in the build; unticking shows the flow
   // without it. Toggling restarts the prototype so states stay coherent.
-  const [flags, setFlags] = useState({ wizard: true, oneClick: true, jobMatch: true, aiWriting: true, onePage: false, chunked: true });
+  const [flags, setFlags] = useState({ wizard: true, oneClick: true, jobMatch: true, aiWriting: true, onePage: false, chunked: false });
   function toggleFlag(k) {
     setFlags(f => ({ ...f, [k]: !f[k] }));
     OA_DRAFT = null;
