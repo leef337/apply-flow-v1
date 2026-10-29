@@ -13499,7 +13499,16 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
           {t(STEP_TITLES[stepIdx])}
         </h2>
       ) : (
-        <div style={{ height: 55 }} aria-hidden="true" />
+        /* Review: steps are done, so the header space is free — the job
+           context (logo · title · company) returns here. Nice to see
+           what you're about to send (Lee, Oct 29). */
+        <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "18px 52px 2px 0", minHeight: 55, animation: "fadein 240ms var(--ease-out)" }}>
+          <CompanyLogo size={48} radius={8} initials={OA_JOB.initials} color={OA_JOB.brandColor} />
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, font: "500 16px/22px var(--sys-text)", color: "#1b1b1f", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{OA_JOB.title}</p>
+            <p style={{ margin: 0, font: "400 13px/18px var(--sys-text)", color: "#5c5c66" }}>{OA_JOB.company}</p>
+          </div>
+        </div>
       )}
       {step <= 2 && progressRow}
       <div aria-hidden="true" style={{ height: 1, background: "#f0f0f2" }} />
