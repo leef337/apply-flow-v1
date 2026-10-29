@@ -3848,6 +3848,14 @@
     max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0;
     pointer-events: none;
   }
+  /* Reduced header (Figma 2279:9832): compact block at the sheet top —
+     title row, progress, inset hairline. The 14px gap plus the segment
+     buttons' 10px tap padding lands the visual rhythm on the frame's
+     24px spacing. */
+  .oa-redhead {
+    display: flex; flex-direction: column; gap: 14px;
+    padding: 0 24px; background: #fff; flex-shrink: 0;
+  }
   .oa-title-swap { animation: oaTitleSwap 340ms var(--ease-modal) both; }
   @keyframes oaTitleSwap {
     from { opacity: 0; transform: translateY(6px); }
@@ -4026,6 +4034,15 @@
   .oa-doc-title { font: 500 16px/1.3 var(--sys-text); color: #1b1b1f; margin: 0; }
   .oa-doc-meta  { font: 400 12px/1.4 var(--sys-text); color: #5c5c66; margin: 2px 0 0; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
   .oa-doc-pill  { display: inline-flex; font: 500 11px/1 var(--sys-text); padding: 3px 6px; border-radius: 4px; }
+  /* Single scrollable prompt row (Lee, Oct 29): halves the chip block's
+     height; bleeds to the sheet edges, scrollbar hidden. */
+  .oa-chiprow {
+    display: flex; gap: 8px; align-items: center;
+    overflow-x: auto; margin: 0 -24px; padding: 2px 24px;
+    scrollbar-width: none;
+  }
+  .oa-chiprow::-webkit-scrollbar { display: none; }
+  .oa-chiprow .oa-chip { flex-shrink: 0; white-space: nowrap; }
   .oa-chip {
     display: inline-flex; align-items: center; gap: 6px;
     border-radius: 9999px; padding: 10px 16px;
@@ -13173,7 +13190,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
   const t = useT();
   // Feature flags from the toolbox — defaults keep everything on when
   // the sheet is mounted without them.
-  const F = { wizard: true, jobMatch: true, aiWriting: true, oneClick: true, onePage: false, chunked: false, ...(flags || {}) };
+  const F = { wizard: true, jobMatch: true, aiWriting: true, oneClick: true, onePage: false, chunked: false, reduced: false, ...(flags || {}) };
   const { statusBarH, homeArea } = useMetrics();
   const platform = usePlatform();
   const inPanel = React.useContext(FlowPanelCtx);
@@ -13198,6 +13215,9 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
   // pre-attached from the Job Profile (confirm, not choose — the
   // Glassdoor pattern), and the middle progress segment fills in thirds.
   const chunked = !!F.chunked && !reviewFirst && !onePage;
+  // "Reduced header" flag (Figma 2279:9832): the sheet drops the job
+  // header row on every step; the step title + progress move to the top.
+  const reducedHead = !!F.reduced && !onePage;
   const [subStep, setSubStep] = useState(0);
   const [subDir, setSubDir] = useState("push");
 
@@ -13402,34 +13422,9 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
     { en: "Additional Questions", no: "Tilleggsspørsmål" },
   ];
   const stepIdx = Math.min(step, 2);
-  const persistentStepHead = (
-    <div className={"oa-stephead" + (step > 2 ? " oa-stephead-out" : "")} aria-hidden={step > 2}>
-      {/* Chunked flow: back lives in the top bar beside the step title —
-          ← left / ✕ right, the same chrome as our pushed pages and the
-          Mobbin stepped-sheet pattern (Alma, Polarsteps, Lyft, Linktree).
-          The footer keeps one full-width, fully-labeled CTA. */}
-      {chunked && step >= 1 && step <= 2 && (
-        <button className="press" aria-label={t({ en: "Back", no: "Tilbake" })}
-          onClick={() => {
-            if (step === 1 && subStep > 0) { subBack(); }
-            else { haptic("tap"); oaBlur(); goStep(step - 1, "pop"); }
-          }}
-          style={{
-            position: "absolute", left: 16, top: 14, zIndex: 2,
-            width: 44, height: 44, borderRadius: 9999, flexShrink: 0,
-            background: platform === "android" ? "transparent" : "#f5f5f7",
-            border: 0, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: platform === "android" ? "none" : "0 1px 4px rgba(0,0,0,0.10)",
-            animation: "fadein 200ms var(--ease-out)",
-          }}>
-          <Icon name={platform === "android" ? "arrow-left" : "chevron-left"} size={22} color="#1b1b1f" stroke={2.2} />
-        </button>
-      )}
-      <h2 key={stepIdx} className="oa-step-title oa-title-swap">{t(STEP_TITLES[stepIdx])}</h2>
-      {/* Segments double as navigation: tap one to jump to that step.
-          Disabled entirely in review-first mode (One click apply off). */}
-      {!reviewFirst && (
+  // Segments double as navigation: tap one to jump to that step.
+  // Disabled entirely in review-first mode (One click apply off).
+  const progressRow = !reviewFirst && (
       <div className="oa-progress" role="tablist"
         aria-label={t({ en: `Step ${stepIdx + 1} of 3`, no: `Steg ${stepIdx + 1} av 3` })}>
         {[0, 1, 2].map(i => (
@@ -13454,7 +13449,70 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
           </button>
         ))}
       </div>
+  );
+  // Chunked back control, shared by both header variants.
+  const stepBack = (inline) => chunked && step >= 1 && step <= 2 && (
+        <button className="press" aria-label={t({ en: "Back", no: "Tilbake" })}
+          onClick={() => {
+            if (step === 1 && subStep > 0) { subBack(); }
+            else { haptic("tap"); oaBlur(); goStep(step - 1, "pop"); }
+          }}
+          style={{
+            ...(inline
+              ? { width: 36, height: 36 }
+              : { position: "absolute", left: 16, top: 14, zIndex: 2, width: 44, height: 44 }),
+            borderRadius: 9999, flexShrink: 0,
+            background: platform === "android" ? "transparent" : "#f5f5f7",
+            border: 0, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: platform === "android" ? "none" : "0 1px 4px rgba(0,0,0,0.10)",
+            animation: "fadein 200ms var(--ease-out)",
+          }}>
+          <Icon name={platform === "android" ? "arrow-left" : "chevron-left"} size={inline ? 20 : 22} color="#1b1b1f" stroke={2.2} />
+        </button>
+  );
+  const persistentStepHead = reducedHead ? (
+    /* Reduced header (Figma 2279:9832, "Reduced header" flag): the job
+       row (logo · title · company) is gone on every step — the step
+       title sits left-aligned on one line with the sheet's close ✕,
+       the progress bar follows directly, then the inset hairline. On
+       Review (no title/progress in the design) only the ✕ row stays. */
+    <div className="oa-redhead" style={{ position: "relative" }}>
+      {/* Back and ✕ float at top 24 — dropped below the sheet's 40px
+          corner arc so they sit inside the curve, not against it. The
+          title centres on the sheet's full width, optically centred on
+          the buttons' axis. */}
+      {chunked && step >= 1 && step <= 2 && (
+        <div style={{ position: "absolute", left: 24, top: 24, zIndex: 2 }}>{stepBack(true)}</div>
       )}
+      <button className="press" onClick={close} aria-label={t({ en: "Close", no: "Lukk" })}
+        style={{
+          position: "absolute", right: 24, top: 24, zIndex: 2,
+          width: 36, height: 36, borderRadius: 9999, background: "#f0f0f2", border: 0,
+          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+        <Icon name="x" size={18} color="#1b1b1f" stroke={2.2} />
+      </button>
+      {step <= 2 ? (
+        <h2 key={stepIdx} className="oa-step-title oa-title-swap"
+          style={{ margin: "30px 0 0", padding: "0 60px", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {t(STEP_TITLES[stepIdx])}
+        </h2>
+      ) : (
+        <div style={{ height: 55 }} aria-hidden="true" />
+      )}
+      {step <= 2 && progressRow}
+      <div aria-hidden="true" style={{ height: 1, background: "#f0f0f2" }} />
+    </div>
+  ) : (
+    <div className={"oa-stephead" + (step > 2 ? " oa-stephead-out" : "")} aria-hidden={step > 2}>
+      {/* Chunked flow: back lives in the top bar beside the step title —
+          ← left / ✕ right, the same chrome as our pushed pages and the
+          Mobbin stepped-sheet pattern (Alma, Polarsteps, Lyft, Linktree).
+          The footer keeps one full-width, fully-labeled CTA. */}
+      {stepBack(false)}
+      <h2 key={stepIdx} className="oa-step-title oa-title-swap">{t(STEP_TITLES[stepIdx])}</h2>
+      {progressRow}
     </div>
   );
 
@@ -13613,17 +13671,15 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
                   onClick={() => push("letter", { mode: "write" })} />
               )}
               <div>
-                {/* Behind the "AI Cover Letter assistant" flag. */}
-                {F.aiWriting && app.coverLetter !== "ai" && (
-                  <OAOptionRow ai
-                    title={t({ en: "Let us create a draft for you", no: "La oss lage et utkast for deg" })}
-                    sub={t({ en: "Based on your job profile and this ad", no: "Basert på jobbprofilen din og denne annonsen" })}
-                    onClick={() => push("letter", { mode: "ai" })} />
-                )}
-                {app.coverLetter !== "written" && (
+                {/* Merged entry (Lee, Oct 29): one row for writing and AI —
+                    the writer always opens on the prompt-first entry
+                    screen (1592:30508), helper + chips + focused editor. */}
+                {app.coverLetter !== "written" && app.coverLetter !== "ai" && (
                   <OAOptionRow icon="edit"
-                    title={t({ en: "Write yourself", no: "Skriv selv" })}
-                    sub={t({ en: "Start with a blank page", no: "Start med en blank side" })}
+                    title={t({ en: "Write a cover letter", no: "Skriv søknadsbrev" })}
+                    sub={F.aiWriting
+                      ? t({ en: "Start fresh or let us create a draft", no: "Start selv eller la oss lage et utkast" })
+                      : t({ en: "Start with a blank page", no: "Start med en blank side" })}
                     onClick={() => push("letter", { mode: "write" })} />
                 )}
                 {app.coverLetter !== "attached" && (
@@ -14249,7 +14305,7 @@ function OneApplyFlow({ onClose, onDraftClose, onSent, onOpenActivity, flags }) 
         )}
         {step === 4 ? confirmation : (
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
-            {sheetHeader}
+            {!reducedHead && sheetHeader}
             {/* Outer region is relative so sub-pages (My Docs, letter,
                 ATS…) can overlay BOTH the persistent step header and the
                 content; between main steps only the content slides while
@@ -14389,21 +14445,23 @@ function OADocDetailsPage({ onBack, onSave, doc, homeArea }) {
 // header while the keyboard is up, one full-width "Use this Letter".
 function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea, aiEnabled = true }) {
   const t = useT();
-  // Merged prompt-first writer (Lee, Oct 8 — Figma "AI Assist · No text /
-  // Text"): ONE screen for writing and AI help. Opens blank; write freely,
-  // or tap a style prompt and the draft lands in the same editor. No
-  // write/AI mode split. The legacy mode="ai" entry (flag-off screen's
-  // "Let us create a draft for you" row) auto-drafts on open.
+  // Remade to Figma 1592:30508 / 2177:18032 / 2285:10046 (Lee, Oct 29):
+  // ONE writer, three states. Entry: blue helper over centred prompt
+  // chips, editor focused so the keyboard is up. First interaction
+  // (tap into the editor, type, or tap a prompt) animates the helper
+  // away. A prompt tap selects its chip solid and shows "Undo changes"
+  // beside the provenance caption; the user's first edit retires Undo
+  // (2177 is that state). mode="ai" (legacy flag-off row) auto-drafts.
   const autoDraft = mode === "ai" && !initialText && aiEnabled;
   const [tone, setTone] = useState("Formal");
   const [letterLang, setLetterLang] = useState(t({ en: "English", no: "Norsk" }));
   const [aiUsed, setAiUsed] = useState(autoDraft);
   const [generating, setGenerating] = useState(autoDraft);
   const [text, setText] = useState(initialText);
-  // Chips render unselected until the user actually taps one — the mock
-  // shows no highlighted chip on arrival, "Formal" highlighted after use.
   const [toneUsed, setToneUsed] = useState(false);
   const [langUsed, setLangUsed] = useState(false);
+  // Helper dismissal — once true the blue box is gone for this visit.
+  const [touched, setTouched] = useState(autoDraft || !!initialText);
   const [focused, setFocused] = useState(false);
   const genTimer = useRef(null);
   useEffect(() => () => clearTimeout(genTimer.current), []);
@@ -14417,11 +14475,29 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
     }, 700);
   }
   useEffect(() => { if (autoDraft) regen(tone, letterLang); }, []);
+  // One-level undo: snapshot the editor before a prompt overwrites it.
+  // Lives until the user edits (then the draft is theirs — 2177 state).
+  const [prev, setPrev] = useState(null);
+  function snapshot() { setPrev({ text, aiUsed, toneUsed, langUsed, tone, letterLang }); }
+  function undo() {
+    if (!prev) return;
+    haptic("tap");
+    clearTimeout(genTimer.current);
+    setGenerating(false);
+    setText(prev.text); setAiUsed(prev.aiUsed);
+    setToneUsed(prev.toneUsed); setLangUsed(prev.langUsed);
+    setTone(prev.tone); setLetterLang(prev.letterLang);
+    setPrev(null);
+  }
   function pick(setter) {
     return (l) => { haptic("tap"); setter(l); };
   }
-  function pickTone(l) { setToneUsed(true); setAiUsed(true); pick(setTone)(l); regen(l, letterLang); }
-  function pickLang(l) { setLangUsed(true); setAiUsed(true); pick(setLetterLang)(l); regen(tone, l); }
+  // Undo only exists when the prompt tap overwrote something: text the
+  // user wrote, or an earlier prompt's draft. The very first prompt tap
+  // on an empty editor has nothing to go back to — no Undo (Lee, Oct 29).
+  const canUndo = () => !!text.trim() || toneUsed || langUsed;
+  function pickTone(l) { if (canUndo()) snapshot(); setTouched(true); setToneUsed(true); setAiUsed(true); pick(setTone)(l); regen(l, letterLang); }
+  function pickLang(l) { if (canUndo()) snapshot(); setTouched(true); setLangUsed(true); setAiUsed(true); pick(setLetterLang)(l); regen(tone, l); }
   const chip = (label, on, fn) => (
     <button key={label} className={"oa-chip press" + (on ? " on" : "")} onClick={() => fn(label)}>{label}</button>
   );
@@ -14444,28 +14520,52 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
             {t({ en: "Done", no: "Ferdig" })}
           </button>
         ) : null} />
-      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 190px", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="scroll-area" style={{ flex: 1, overflowY: "auto", padding: "0 24px 190px", display: "flex", flexDirection: "column", gap: 24 }}>
         {aiEnabled && (
           <>
-            {/* Style prompts — per the merged mock they sit directly under
-                the title, above the helper, in both states. */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
-              <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-                {["Formal", "Casual", "Confident"].map(l => chip(l, toneUsed && tone === l, pickTone))}
-              </div>
-              <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-                {["Norsk", "English"].map(l => chip(l, langUsed && letterLang === l, pickLang))}
+            {/* Blue helper (1662:35894 — Body 300 16/22 on selected):
+                present on arrival, animates away at the first
+                interaction with the editor or a prompt. */}
+            <div aria-hidden={touched} style={{
+              overflow: "hidden",
+              maxHeight: touched ? 0 : 160, opacity: touched ? 0 : 1,
+              marginBottom: touched ? -24 : 0,
+              transition: "max-height 360ms var(--ease-modal), opacity 240ms var(--ease-out), margin 360ms var(--ease-modal)",
+            }}>
+              <div className="oa-toast" role="note" style={{ font: "300 16px/22px var(--sys-text)" }}>
+                {t({
+                  en: "Write your own or click a prompt below and we will create a draft for you. You can review and edit the draft to make it sound more like you.",
+                  no: "Skriv selv, eller trykk på en stil under, så lager vi et utkast for deg. Du kan se over og endre utkastet så det høres mer ut som deg.",
+                })}
               </div>
             </div>
-            {/* Persistent helper (mock copy) — explains both paths, stays
-                visible in the no-text and text states alike. */}
-            <div className="oa-toast" role="note">
-              {t({
-                en: "Write on your own or tap a prompt above to let us create a draft for you. Edit it however you like. You can review and edit the draft to make it sound more like you.",
-                no: "Skriv selv, eller trykk på en stil over, så lager vi et utkast for deg. Rediger som du vil. Du kan se over og endre utkastet så det høres mer ut som deg.",
-              })}
+            {/* Prompt chips — centred, wrapping rows (1592:30524). */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", padding: "0 8px" }}>
+              {["Formal", "Casual", "Confident"].map(l => chip(l, toneUsed && tone === l, pickTone))}
+              {["Norsk", "English"].map(l => chip(l, langUsed && letterLang === l, pickLang))}
             </div>
           </>
+        )}
+        {/* Provenance (+ Undo while armed) — 2285:10079 / 2177 without
+            undo once the user has edited the draft. */}
+        {aiUsed && !generating && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <OASparkles size={16} color="#5c5c66" />
+            <p style={{ margin: 0, flex: 1, minWidth: 0, font: "300 14px/18px var(--sys-text)", color: "#5c5c66" }}>
+              {t({ en: "Draft created from job ad and your Job Profile", no: "Utkast laget fra annonsen og Jobbprofilen din" })}
+            </p>
+            {prev && (
+              <button className="press" onClick={undo}
+                style={{
+                  flexShrink: 0, background: "transparent", border: 0, cursor: "pointer",
+                  padding: "4px 8px", borderRadius: 8, fontFamily: "inherit",
+                  font: "500 14px/18px var(--sys-text)", color: "#0063fb",
+                  animation: "fadein 200ms var(--ease-out)",
+                }}>
+                {t({ en: "Undo changes", no: "Angre endringer" })}
+              </button>
+            )}
+          </div>
         )}
         {generating ? (
           <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 6 }}>
@@ -14479,18 +14579,17 @@ function OALetterPage({ onBack, onSave, mode = "ai", initialText = "", homeArea,
             ))}
           </div>
         ) : (
-          <>
-            <textarea className="oa-textarea" value={text}
-              placeholder={t({ en: "Write your cover letter…", no: "Skriv søknadsbrevet ditt …" })}
-              onChange={(e) => setText(e.target.value)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              style={{
-                border: 0, boxShadow: "none", padding: "6px 0", minHeight: 240,
-                font: "300 16px/24px var(--sys-text)", color: "#1b1b1f",
-                animation: "fadein 300ms var(--ease-modal)",
-              }} />
-          </>
+          <textarea className="oa-textarea" value={text} autoFocus={!autoDraft}
+            placeholder={t({ en: "Write your cover letter…", no: "Skriv søknadsbrevet ditt …" })}
+            onChange={(e) => { setText(e.target.value); setTouched(true); setPrev(null); }}
+            onPointerDown={() => setTouched(true)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            style={{
+              border: 0, boxShadow: "none", padding: "6px 0", minHeight: 240,
+              font: "300 16px/24px var(--sys-text)", color: "#1b1b1f",
+              animation: "fadein 300ms var(--ease-modal)",
+            }} />
         )}
       </div>
       <OAFooter homeArea={homeArea}>
@@ -21650,7 +21749,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
   // Feature flags (replaces the Version dropdown — there is one version
   // now). Each box ON = feature in the build; unticking shows the flow
   // without it. Toggling restarts the prototype so states stay coherent.
-  const [flags, setFlags] = useState({ wizard: true, oneClick: true, jobMatch: true, aiWriting: true, onePage: false, chunked: false });
+  const [flags, setFlags] = useState({ wizard: true, oneClick: true, jobMatch: true, aiWriting: true, onePage: false, chunked: false, reduced: false });
   function toggleFlag(k) {
     setFlags(f => ({ ...f, [k]: !f[k] }));
     OA_DRAFT = null;
@@ -22222,6 +22321,7 @@ function AppShell({ fullscreen = false, authUser = null, onSignOut = null }) {
             { k: "aiWriting", label: "AI Writing Assistant" },
             { k: "onePage",   label: "One Page Flow" },
             { k: "chunked",   label: "Chunked Attachments" },
+            { k: "reduced",   label: "Reduced header" },
           ].map(f => (
             <button key={f.k} type="button" role="checkbox" aria-checked={flags[f.k]}
               className={"ff-row press" + (flags[f.k] ? " on" : "")}
